@@ -44,16 +44,20 @@ before Slack Water.
 
 Four of the seven put an object into a kit-runner's hands in this shift, and none of them does it at every phase:
 Roald's coat at the end of The Turning, the warden's fid at Low Water, the night crew's whistle at the end of The Run,
-and the bench's own blunt mending knife off the rack at Low Water along with the rack. Grissel Toft's heat-glove is
-handed over at The Turning and mended back onto her own hand before that hour passes, so it never takes a worn slot.
-Sable Kearn hands over nothing: the seized block stays on her bench. Maud Bray hands over nothing either, and her
+and Grissel Toft's heat-glove at the pot at The Turning, which is mended back onto her own hand before that hour
+passes and so never takes a worn slot. Tam Verrow is the fifth: his bent coat hook is offered into the kit-runner's
+hands at the causeway head at The Turning and refused, so that handoff does not happen and the hook never reaches a
+worn slot. The bench's own blunt mending knife comes off the rack at Low Water along with the rack and is not a
+resident's to give. Sable Kearn hands over nothing: the seized block stays on her bench. Maud Bray hands over
+nothing either, and her
 mark is on the coat Roald brings, which he brings without being asked to. The yard's opinion of the kit-runner is
 carried entirely by what is on the rack at the end, not by anything anybody says to them on the way there.
 
 ### Warden Ottmar Vell
 
 **Role** -- The shift boss. Carries the shingle slate under one arm from Low Water onward and is the person who reads the
-satchel aloud at Slack Water and signs it or defers it. He is the yard's only authority over the roster and he uses it
+satchel aloud at Slack Water, at the yard end of the causeway, and signs it or defers it there. He is the yard's only
+authority over the roster and he uses it
 about twice a shift, both times on the water rather than on anybody.
 
 **Want** -- To get the packet boat off the blocks and across the channel on the evening tide, which needs his bone fid
@@ -80,8 +84,12 @@ water between them and that is where he is when the shift is read out.
 
 **Want** -- To bring his sister across from the town at Slack Water without her feet going in the water. She is on the
 far bank with a doctor who will not send her out with anybody but the yard, and the crossing at slack is the only
-one there will be this week. The want is checkable: it is the coat's job, and the coat as it stands will not do it.
-He is on the wrong bank of the water to do it himself, which is why at slack the crossing that matters is somebody
+one there will be this week. The want is checkable: it is the coat's job, because what the coat's record is about
+is the hands of whoever is wearing it, and hands that stay above the water are hands that can hold somebody else -
+one passenger, held against you, at a walk, in front of anybody on the bank. The coat as it stands, with the wax
+gone hard in the cloth along both elbows and the left shoulder seam open to the lining, will not do it, because
+that is exactly what those two faults take away. He is on the wrong bank of the water to do it himself, which is
+why at slack the crossing that matters is somebody
 else's and has to be made on what the shift mended.
 
 **What they hand you to mend** -- His waxed tar-coat. The wax has gone hard in the cloth along both elbows, so it holds

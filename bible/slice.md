@@ -10,15 +10,16 @@ chosen here and none are implied.
 **Length target** is 30 to 60 minutes. The beat budgets below total 41 minutes, which is the floor of the target
 rather than its middle: the slice should not outstay its welcome at any speed.
 
-**Phase shape** is the tide's four hours in order. It opens in **The Turning**, roughly four in the morning, at full
-water with the slipway under, and it ends at **Slack Water**, at the bench end of the causeway, with the town's
-evening work lit on the far bank. Nothing skips an hour and nothing goes back.
+**Phase shape** is the tide's four hours in order. It opens in **The Turning**, roughly four in the morning, at the
+top of the small hours' water - the water up against the foot of the wall, the flood not yet over it - with the
+slipway under, and it ends at **Slack Water**, at the bench end of the causeway, with the town's evening work lit
+on the far bank. Nothing skips an hour and nothing goes back.
 
 **The one line the slice exists to test:** whether a build authored by subtraction - a shape made of other people's
 cast-offs, with what was spent still readable in it - is legible and worth its loss to a player who has never been
 told what the mechanic is, and who can afterwards say what they could not carry and why.
 
-## Beat 1 - full water (Budget: 6 minutes)
+## Beat 1 - the top of the night's water (Budget: 6 minutes)
 
 **Place** -- The long bench under the lean-to, the rack of hooks beside it, the causeway head and the wall above it.
 The slipway is under water and the wall is a cliff; the yard is wet stone and a pot being lit.
@@ -65,7 +66,8 @@ wait at the bench that carries the hour from The Turning to Low Water, and it pa
 ## Beat 2 - the hour with light in it (Budget: 13 minutes)
 
 **Place** -- The whole yard floor, which is walkable for the only time in the shift; the bench; the rack of hooks;
-the foot of the slipway, where the packet boat is on the hard and can be worked on at no other hour.
+the foot of the slipway, where the hull lies on the hard and can be got under at no other hour, and the packet boat
+is up on the blocks and can be worked on at no other hour.
 
 **Phase** -- Low Water.
 
@@ -97,15 +99,19 @@ fid rewrites `Climb` from slow and audible to quiet, and takes
 the slow deliberate climb away; carrying the coat rewrites `Wade` so his hands stay above the water and stay usable,
 and takes the dive at the yard's foot away for the rest of the shift. The bench's blunt mending knife is off the rack
 and takes a worn slot of its own, because `Unpick` has exactly one source in this slice and the rack will not unpick
-a mend without it. Counting the knife, that is four reachable objects against four worn slots and the cap binds: a
-kit-runner at the rack holding the fid, the coat, the whistle and the knife is carrying everything there is, and the
-next thing the yard offers has to stay on the rack. The binding decision is the rack, which
+a mend without it. Counting the knife, that is four reachable objects against four worn slots, and the cap binds
+on the path where nothing has been fused - at the rack by the end of The Run, once the whistle is in hand, and not
+here: at this hour the satchel holds the fid, the coat and the knife, and the fourth slot stands empty until the
+night crew comes across the causeway. Then a kit-runner at the rack holding the fid, the coat, the whistle and
+the knife is carrying everything there is, and the next thing the yard offers has to stay on the rack. A
+kit-runner who has fused ends the shift carrying one thing lighter, because the fusion spends two slots and gives
+one back. The binding decision is the rack, which
 fuses two mended pieces into one heirloom. In this slice there is exactly one reachable pair - the fid and the coat
-- and before committing, the rack shows the preview and the preview is the only look the player gets: the heirloom's
-name as the bench will say it, `the quiet coat`, its full verb list including the two kept forms and the inherited
-one, and underneath, in plain text and
-named piece by named piece, exactly what is lost forever. The player commits or does not, and there is no third
-option and no way back.
+- and before committing, the rack shows the preview, and that one look is the only look the player gets: the
+heirloom's name as the bench will say it, `the quiet coat`, its full verb list including the two kept forms and the
+inherited one, and underneath, in plain text and
+named piece by named piece, exactly what is lost forever. There is no second look at the same loss afterwards. The
+player commits or does not, and there is no third option and no way back.
 
 **System exercised** -- Mending and fusion with its preview, which is the load-bearing interaction of the slice.
 Item-granted verbs, at their first good form. The residents' phase-gated dialogue: this is the version of each ask
@@ -114,8 +120,9 @@ that arrives as a story about an owner, and the last version any of them will ge
 ## Beat 3 - the water coming back (Budget: 11 minutes)
 
 **Place** -- The shed, the bench, the rack, and the causeway, which is now the only ground. The slipway goes under
-within the first quarter of the phase, the flood tops the wall by the middle of it, and there is nothing at all across
-the water.
+within the first quarter of the phase, the flood tops the wall by the middle of it, and across the water the town
+is still there and the crossing is still there and still passable. What is not there at this hour is anybody on the
+far side who will take a kit-runner off it in a run, which is a different thing from the water being impassable.
 
 **Phase** -- The Run.
 
@@ -131,18 +138,20 @@ the water.
   to call the night crew in off the channel where the sound dies. She is not in this yard at the start of the phase
   and she is not in the yard before the end of it; what she has to say is said after she has crossed, and again at
   Slack Water, which is her hour.
-- *Sable Kearn*, who is present, and brief, and offers nothing further. She asked for the hoist at The Turning and she
-  has not been given it, and she does not put the question a second time.
+- *Sable Kearn*, who is present, and brief, and offers nothing further. Her hour was Low Water, the hoist has not
+  been given to her, and she does not put the question a second time.
 
 Grissel Toft is not in this beat. She is gone before The Run, which is before her own deadline falls.
 
 **What the player mends or earns** -- `Call`, which no other object in the yard grants and which takes nothing away
 because there was nothing to take: put a name out over the channel and be answered back, without going near the edge.
-And the crossing. The kit-runner goes out along the causeway toward the far bank and is refused - there is no
-crossing at this hour and nobody on the far side will take a kit-runner off the water in a run - and the return is
-the one that the shift's own work decides. With the fid and the coat together the crossing is quiet and short and
-both hands are available. With one cheap verb kept on its own, it gets across slowly, audibly, twice, in front of the
-whole yard, which is the same crossing at three times the length and with an audience.
+And the crossing. The kit-runner goes out along the causeway toward the far bank and is refused: the crossing is
+there and it will carry him, and nobody on the far side will take a kit-runner off the water in a run, and the
+refusal is given on the wall in front of the yard. What comes back is nothing - no passenger, no errand done
+across - and only how the crossing is made is the shift's own work. With the fid and the coat together the
+crossing is quiet and short and both hands are free. With one cheap verb kept on its own it is made slowly, in full
+view of anybody on the bank, one cheap verb at a time, which is the same crossing at three times the length and
+with an audience.
 
 **System exercised** -- Item-granted verbs under load, including a grant with no rewrite under it. The residents'
 phase-gated dialogue: this is the last version of an ask before the shift is read out, and a resident whose hour it
@@ -159,7 +168,7 @@ to the yard end of the same causeway, which is where the shift is read out.
 **Who speaks** --
 - *Roald Fisk*, who is on the town bank with his sister and cannot do it himself. He crossed over earlier in the shift
   and the flood closed the water between them, and the doctor will not send her out with anybody but the yard, so he
-  is at the far end of the causeway with nothing to hold her up on. He wants her across with her feet out of the water,
+  is at the town end of the causeway with nothing to hold her up on. He wants her across with her feet out of the water,
   and the only way it happens at this hour is if the kit-runner makes it.
 - *Margit Brack*, who has the night crew to call in off the channel and one note to do it with.
 - No one else on the crossing itself. These two are the voices at the two ends of the causeway for the length of the
@@ -167,14 +176,18 @@ to the yard end of the same causeway, which is where the shift is read out.
   people coming across now have come to collect. The reading at the yard end is the next beat and everybody in the
   yard is standing in it.
 
-**What the player mends or earns** -- Nothing new; the beat spends everything the shift made. The crossing out with a
-passenger is possible in the way it is only possible at this hour, and it is possible in the way the build allows.
-With the quiet coat fused it is `Shelter`: somebody under you and the weather off both of you, in one trip, and
-nothing about the two of you is announced. Unfused, the coat's hands-kept `Wade` and the fid's quiet `Climb` get her
-across slowly and in full view of anyone on the bank, one crossing at a time, and she is put down at the far end of
-it. The whistle is how a name is put out over the water and answered, so the far side knows to wait. Nothing in this
-beat wants the line's `Haul`, the hook's reach or the lamp's `Steady`: none of those three is in this yard this
-shift, and the crossing is built out of what is. The beat is
+**What the player mends or earns** -- Nothing new; the beat spends everything the shift made. The crossing with a
+passenger is possible in the way it is only possible at this hour, and it is loaded the way the causeway is loaded:
+out empty to the town bank, back with her, and put down on the yard end of the causeway, where the warden is
+standing. It is the same crossing The Run refused, made on the strength of what the shift mended and with her
+weight on top of it, so the build decides what one trip is worth to her. With the quiet coat fused it is
+`Shelter`: somebody under you and the weather off both of you, in one trip, and nothing about the two of you
+announced. Unfused, the coat's hands-kept `Wade` and the fid's quiet `Climb` are what she comes over on instead, and
+she comes over one crossing at a time, with the whole bank watching every one of them, her feet out of the water
+and her brother's face doing the rest. The whistle is how a name is put out over the water and answered, so the
+far side knows to wait. Nothing in this
+beat wants the line's `Haul`, the hook's `Hook` or the lamp's `Steady`: none of those three can be carried this
+shift, and the crossing is built out of what can. The beat is
 deliberately short, because the crossing is the whole argument of the slice and a long one would be an argument
 about something else.
 
@@ -221,9 +234,12 @@ the hour they have been saving.
 The far shore is a bank with evening work on it and nowhere else. No night shift, no roster beyond the week of
 nights the signature buys. No second shift's worth of asks. No object that grants a number. Four items
 `bible/systems.md` holds as backlog - the tarred line, the bend hook, the shuttered lamp and the winch bar -
-are not reachable in this slice: none of `Haul`, `Hook` or `Steady` is in the yard at any hour, and no recipe is
-exercised for a pair the player cannot reach. The fifth item that used to be on that list is the bench's own blunt
-mending knife, and it is in the slice: it is at the rack from Low Water, it takes a worn slot, and without it there
+are not reachable in this slice: none of `Haul`, `Hook` or `Steady` can be carried this shift, and no recipe is
+exercised for a pair the player cannot reach. Not reachable is not the same as not present: the bent hook is off the
+rack and in a child's hands at The Turning, and the tarred line is on the end of Sable Kearn's own bench at Low
+Water, and where they are kept is not what this section is about. The fifth item that used to be on that list is the
+bench's own blunt mending knife, and it is in the slice: it is at the rack from Low Water, it takes a worn slot, and
+without it there
 is no `Unpick` and no heirloom. The one reachable pair is still the fid and the coat.
 
 ## Known limits this slice is built on
@@ -245,9 +261,14 @@ are restated here rather than smoothed over, and none of them is fixed by this f
 - A rule conditions on the standing phase once the phase condition lands, and on nothing else. No rule reads what the
   kit-runner is carrying or what the rack took, so every beat below is written as its plain default: a resident's
   version of an ask changes with the hour and with nothing else, and nothing anybody says here is a condition on the
-  satchel. A rule also cannot hide a resident, so nobody is ever asleep or absent; who is awake is carried entirely
-  by what each of them says. The reading at the ending beat is therefore reported by the warden's own line, not by
-  the game explaining the satchel.
+  satchel. What that limit does not touch is what the items and recipes already say - how hard the Slack Water
+  crossing is, and whether the satchel holds an heirloom when the warden reads it, are read out of the heirloom's
+  verb list and the recipe records, not out of a rule's conditions on the satchel. A rule also cannot hide a
+  resident, and a resident written off the stage is off the stage rather than switched off: Grissel Toft is not in
+  the yard before The Run, Margit Brack is not in it until the end of that phase, and Roald Fisk is across the water
+  for the crossing in Beat 4, and all three of those are said in the beats rather than enforced by the engine
+  refusing to find them. Who is awake is carried entirely by what each of them says. The reading at the ending beat
+  is therefore reported by the warden's own line, not by the game explaining the satchel.
 - The transition-payload trick that lets a resident speak on entering a phase works only in the woven player, fires on
   the transition rather than the standing state, and needs `"once": false` written on it deliberately. It is what the
   slice ships on today, because the phase condition is engine work still landing.
@@ -266,8 +287,8 @@ one commits this slice to something it can no longer be read any other way.
 2. **The bench knife is in the slice.** It is reachable at the rack, it occupies one of the four worn slots, and it is
    required for any fusion, so `Unpick` is in the yard from Low Water and the slice's centrepiece can actually be
    exercised. **This commits the slice to** four reachable objects - the bone fid, the waxed tar-coat, the tin whistle
-   and the bench knife - against four worn slots, with the cap binding rather than sitting idle, and to the knife
-   being spent like anything else if it goes into a fusion.
+   and the bench knife - against four worn slots, with the cap binding rather than sitting idle on the path where
+   nothing has been fused, and to the knife being spent like anything else if it goes into a fusion.
 3. **The shingle is signed at the yard end of the causeway.** It is read and signed at the bench, on the yard side,
    with the warden and the slate and the town's evening work lit across the water, and `bible/world.md` now says so
    rather than putting the signature in the town. **This commits the slice to** nothing on the ending beat crossing the
