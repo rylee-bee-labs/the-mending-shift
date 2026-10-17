@@ -24,16 +24,16 @@ morning and wrong at noon. The stone is wet for two hours after the flood and dr
 talk about the yard's mood by talking about its stone.
 
 The flood channel is the reason the yard is where it is and the reason the game has a shape. The channel runs
-between the yard and the town proper, and it is crossable twice in a shift: dry-footed and easy at Low Water, and
-once more at Slack Water when the run has died out of it. There is a causeway at the yard end of the slipway; the
-rest of the crossing is stepping and a plank and nerve. The town on the far bank holds the evening work, and it is
-the far side of the channel rather than the other half of the yard - nothing there is signed and nothing there is
-read out. The shingle is read and signed at the yard end of the causeway, at the bench, with the warden and the
-slate. The kit-runner can reach the town side at Low Water and again at Slack Water. At The Run the channel is
-running faster than a person walks: the crossing is still there and still passable, and nobody will take a
-kit-runner off the water in it, which is a different thing from the water being impassable and is the whole of why
-the crossing is a Slack Water business. The channel is not a puzzle and not an obstacle course. It is a wall that is
-sometimes a wall.
+between the yard and the town proper, and the town side can be reached twice in a shift: dry-footed and easy at
+Low Water, and once more at Slack Water when the run has died out of it. There is a causeway at the yard end of the
+slipway; the rest of the crossing is stepping and a plank and nerve. The town on the far bank holds the evening
+work, and it is the far side of the channel rather than the other half of the yard - nothing there is signed and
+nothing there is read out. The shingle is read and signed at the yard end of the causeway, at the bench, with the
+warden and the slate. At The Run the town side is not one of the two hours: the causeway is walkable out to the
+far step with water over the coping and running faster than a person walks, and going out along it is not a
+crossing. Nobody will take a kit-runner off the water in a run, so the refusal at that hour is about people and
+not about the water, and it is the whole of why the crossing is a Slack Water business. The channel is not a puzzle
+and not an obstacle course. It is a wall that is sometimes a wall.
 
 The bench is the second place that matters. It is long, it is worn, and it belongs to the yard rather than to any
 one person: anybody at the bench may sit, and the person at the bench is whoever got there first that hour. What you
@@ -123,15 +123,17 @@ the phase the flood has topped the wall: for the length of the run's high water 
 yard's inner stones are wet. That stretch of the shift is short and it is inside the shift, which is what makes a
 deadline like "the pot down and covered before the water is over the wall" a thing with a deadline to it. What is
 open: the shed, the bench, the rack, and the crossing for anyone with a reason to be on it. Who is speaking: fewer
-of them, and the ones who stayed. Nobody in the yard is unkind at this hour; they are simply too late in the shift
-for an ask to be a story any more, and an hour of flood is an hour in which nothing can be put right. This is the
-phase in which the player crosses out and is refused: the town is there, the crossing is there, the answer is no,
+of them, and the ones who stayed. Roald Fisk is not one of them: he went across to the town bank before the flood
+to see his sister, the run put the water between him and the yard, and he is on the far side for the whole of this
+phase, saying what the water is doing from the far end of the causeway. He comes back with her at Slack Water. Nobody in the yard is unkind at this hour; they are simply too late in the
+shift for an ask to be a story any more, and an hour of flood is an hour in which nothing can be put right. This is
+the phase in which the player crosses out and is refused: the town is there, the crossing is there, the answer is no,
 and the refusal is given on the wall in front of the yard. What comes back is nothing - no passenger, no errand
 done across - and the crossing itself is slow to make, though how it is made is the shift's own work: quiet and
 short, with both hands free, where the fid and the coat are together; slow and in full view of anybody on the
 bank, one cheap verb at a time, where they are not. At the end of this phase the night crew comes across the
-causeway in the dark, Margit Brack among them, with objects that have been carried in the cold for an hour before
-anybody sees them.
+causeway in the low light off the water at the back of the afternoon, the last daylight of the shift, Margit Brack
+among them, with objects that have been carried in the cold for an hour before anybody sees them.
 
 **Slack Water (the late afternoon, going into the evening; the end of the shift).** The channel stops moving. Water
 is high but lazy, the current is gone out of it, and the crossing is possible in the way it is only possible at

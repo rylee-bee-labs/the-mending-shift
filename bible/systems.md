@@ -31,7 +31,9 @@ Two keys, then: `grants` is what the item gives, and `writes` is what it takes t
 from you. Nothing else in an item record is load-bearing, and this needs saying plainly because several entries
 below describe a cost in prose: where an item is written up as costing a hand, a habit or an arm, that is the yard
 describing what it watches a kit-runner do with the thing. It is not a third kind, it is not read by any rule, and
-it does not remove a capability. Only `grants` and `writes` change what the kit-runner is able to do.
+it does not remove a capability. Only `grants` and `writes` change what the kit-runner is able to do. So where an
+item's prose below talks about taking a dive away, it is talking about the superseded `Wade` form - the one that
+puts both hands under the water - and not about a third kind of effect.
 
 ### The bone fid
 
@@ -67,10 +69,12 @@ Roald Fisk's coat, waxed inside out by a diver and never got back.
 
 It rewrites `Wade` so your hands stay above the water and stay usable. What changes: you can work a
 thing - a line, a knot, a latch, a person - in the water instead of committing both hands to not
-drowning. What you can no longer do afterwards is go under. The coat is waxed and thick and it is not
-made for submersion, so the dive that used to be available at the yard's foot during Low Water is
-gone for the rest of the shift. The record is about the hands of whoever is wearing it, and hands that
-stay above the water are hands that can hold somebody else: that is what answers its owner's want - one
+drowning. What you can no longer do afterwards is go under. The dive at the yard's foot on the hard during Low
+Water is the `Wade` form that puts both hands under the water, and the coat supersedes that form, so what is gone
+for the rest of the shift is the old hands-under form and not a third capability the coat takes away some other
+way. The coat is waxed and thick and it is not made for submersion, which is why the hands stay out of it.
+The record is about the hands of whoever is wearing it, and hands that stay above the water are hands that can
+hold somebody else: that is what answers its owner's want - one
 passenger, held against you, at a walk, in front of anybody on the bank - and the coat as it stands,
 with the wax gone hard and the seam open, will not do it. The single trip with the weather off both of
 you is the inherited verb on the quiet coat.
@@ -191,9 +195,20 @@ can run away from you. What you can no longer do afterwards is haul away from th
 channel, on the causeway, out in the dark - because the bar's version is anchored to the bench end of
 the yard. If the kit-runner has no `Haul` at all when the bar is mended in, the bar grants it outright.
 
+**The heat-glove is the one mendable object in the slice that is deliberately not an item record.** Grissel Toft's
+heat-glove comes to the bench with the left cuff burnt out at the wrist and the cloth inside it gone to powder,
+and the bone comes out of the fire on it: with that cuff as it is, nobody can get a whole hand under the collar
+bone, so the pot's own work goes on unwound until the glove is mended. It has no id, no `grants` and no `writes`,
+it is in no satchel and in no worn slot, and it appears in no recipe: it is handed over at the pot at The Turning
+and goes straight back onto her own hand, mended, before that hour passes. It takes no worn slot because it never
+occupies one, grants no verb and rewrites no verb because a mend to the yard's own tool is not a mend to the
+kit-runner's build, and it is written here rather than in a record above because an object with nothing in it for a
+rule to read is exactly what it is meant to be.
+
 ### Reachability in the slice
 
-Eight items are specified because eight items with fuse pairs is the scope `pitches/pitch-a.md` set.
+Eight item records are specified because eight items with fuse pairs is the scope `pitches/pitch-a.md` set, and
+the heat-glove above is the one mendable object in the slice that is deliberately not one of the eight.
 Four of them are reachable in the 30-60 minute slice: the bone fid, the waxed tar-coat, the tin whistle
 and the bench knife. The knife is in the slice because fusing is the centrepiece of the pitch and
 `Unpick` has exactly one source, so without the knife in a worn slot there is no fusing at all. That makes
@@ -206,7 +221,9 @@ slots and gives one back, and the slot it gives back has two spent names on it. 
 line, the bend hook, the shuttered lamp and the winch bar - are the backlog the recipe table below is written
 against, and they are not reachable in this slice until gate 4 says so, which is a different claim from where
 they are kept: the hook is off the rack and in a child's hands at The Turning, and the line is on the end of
-somebody's own bench.
+somebody's own bench. Nothing in the slice is mended outside those four except the heat-glove, and it is not a
+fifth reachable item: it never takes a worn slot and it is on Grissel Toft's own hand again before The Turning
+ends, so the count of what the player can be carrying stays four.
 
 ## Mending recipes
 
@@ -292,7 +309,8 @@ What each one keeps and what it destroys, read off the `keeps` key and rule 4:
 - **quiet-coat** ("the quiet coat") keeps the quiet `Climb` and the hands-kept `Wade`, and carries `Shelter` - getting
   somebody under you and keeping the weather off both of you. Spent forever: the slow `Climb` and the
   `Wade` that put your hands under the water. After this heirloom exists there is no way to climb the
-  wall slowly or to dive at the yard's foot, and the two pieces that knew how are not anywhere.
+  wall slowly or to go under at the yard's foot on the hard, which is what that hands-under `Wade` was and is
+  the only form of going under the slice has, and the two pieces that knew how are not anywhere.
 - **thrown-whistle** ("the thrown whistle") keeps `Call` and `Haul` and carries `Reach` - putting something out to arm's
   length across a gap that you cannot cross. Spent forever: the line's own anchoring habit and the
   whistle's plainness. It is now a thing you throw rather than a thing you blow, and if you drop it in
@@ -388,12 +406,18 @@ it takes is a phase key in the rule's conditions:
 
 ```json
 {
-  "id": "the-wall-goes-under-while-he-is-counting",
+  "id": "the-bench-end-goes-under-while-she-is-counting",
   "when": {"phase": "the-run"},
   "once": false,
-  "then": [{"say": "Roald Fisk", "line": "Two fathoms on the causeway and rising."}]
+  "then": [{"say": "Sable Kearn", "line": "Water's over the coping. Bench end's going under."}]
 }
 ```
+
+The speaker cannot be Roald Fisk at this phase, and the record says so here so it cannot drift back: he crossed
+to the town bank before the flood, The Run closes the water between him and the yard, and he is on the far side
+for the whole of it, speaking from the far end of the causeway and coming back with his sister at Slack Water.
+The resident who is at the bench through every phase and short of time at this one is Sable Kearn, and she says
+what she says by where things sit rather than by what they are called.
 
 What that condition does *not* buy is a condition on the kit-runner's own pockets. Nothing in this pack
 conditions on what the player happens to be carrying or on what the rack took, beyond what items, recipes and
@@ -479,9 +503,12 @@ and what it did for the person who owned it before it was somebody else's, and e
 the yard lost when it changed hands. The reading is done in the yard's own words because that is the
 only register anyone at the bench speaks in: an object is named by its use, and a build is legible
 because the things in the satchel are named, not because the game explains what they do. Where a piece
-is an heirloom it is read as one object with two patches on it and both names still showing, because
-the yard knows what was spent and does not hide it. Where an ask was never brought to the bench its
-absence is audible: the name simply is not read, and the warden does not fill the gap with a
+is an heirloom it is read as one object with two patches on it, and the two names the warden reads on it are
+the two spent pieces' names - for the quiet coat, the bone fid and the waxed tar-coat - because the yard knows
+what was spent and does not hide it. A mending mark is not one of those names: Maud Bray's scratch is not a name
+on the object but the record of a hand on a seam, and fusion unpicks the seam and spends it with the hand that
+laid it, so the heirloom carries what was spent and not who mended it. Where an ask was never brought to the bench
+its absence is audible: the name simply is not read, and the warden does not fill the gap with a
 compliment.
 
 **What the shingle signs or defers.** Three outcomes, decided by what the satchel holds rather than
