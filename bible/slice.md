@@ -55,8 +55,8 @@ with an apron, an empty satchel, four worn slots and exactly two verbs in the fo
 form, which announces him to anyone on the wall above, and `Wade` in the form that puts both hands under the water.
 He tries the two of them where they are meant to be used - at the wall, which is a cliff at this hour, and out at the
 foot of the causeway, which is a walkway with water on both sides of it and no crossing at this hour either - and both
-fail him in the open, at the hour when the yard is emptiest and most likely to hear it. He refuses Tam's bent hook back
-into his hand, because it is not his mend
+fail him in the open, at the hour when the yard is emptiest and most likely to hear it. Tam offers him the bent
+hook and he refuses it, because it is not his mend
 to make, and he earns the tar-coat, which is handed to him at the end of the beat and sits unmended in the satchel
 until the bench. One worn slot is filled by the end of the beat and three are empty.
 
@@ -80,9 +80,9 @@ is up on the blocks and can be worked on at no other hour.
 - *Warden Ottmar Vell*, at his hour, with the shingle slate under his arm. He wants the fid mended sound and back in
   his hand before the evening tide, and he hands it over at this hour because this is the hour with light in it.
 - *Roald Fisk*, at the bench before he goes under the hull, which is the only hour it can be done. His ask in its
-  full form, as a story about who owns the coat and why it stopped working: he has crossed to the town bank to see
-  his sister, ahead of the flood, and The Run is what is going to put the water between them; she is over there with
-  a doctor who will
+  full form, as a story about who owns the coat and why it stopped working: he goes under, and after that he crosses
+  to the town bank to see his sister, ahead of the flood, and The Run is what is going to put the water between
+  them; she is over there with a doctor who will
   not send her out with anybody but the yard, and the crossing at slack is the only one there will be this week.
 - *Sable Kearn*, who is at the bench through every phase including the ones she ought not to be, and who wants the
   packet's hoist up once, in front of the town, at Slack Water. She will not say that. She says the gear wants doing,
@@ -98,13 +98,13 @@ Grissel Toft is not in this beat. She is at the pot with the mended glove back o
 need her at the bench, so she does not come.
 
 **What the player mends or earns** -- The two repairs, and then the decision. The fid's split stem, opened at the top
-and closed at the bottom, mended so that the stem is sound: closed from the ferrule up, whole and sound, which is the
+and closed at the bottom, mended so that the stem is sound: closed from the ferrule down, whole and sound, which is the
 condition the warden states and can check for himself rather than take on trust. The coat's wax gone hard along both
-elbows and the left shoulder seam open to the lining, re-laid with Maud's scratch on the new stitching. Carrying the
-fid rewrites `Climb` from slow and audible to quiet, and takes
+elbows and the left shoulder seam open to the lining, both faults mended and the seam re-laid with Maud's scratch on
+the new stitching. Carrying the fid rewrites `Climb` from slow and audible to quiet, and takes
 the slow deliberate climb away; carrying the coat rewrites `Wade` to the hands-kept form, which supersedes the old form
-that puts both hands under the water, and that old form was how he went under at the yard's foot on the hard at Low
-Water, so going under is what is gone for the rest of the shift. The bench's blunt mending knife is off the rack
+that puts both hands under the water, and that old form is how Roald goes under at the yard's foot on the hard at
+Low Water, so going under is what is gone for the rest of the shift. The bench's blunt mending knife is off the rack
 and takes a worn slot of its own, because `Unpick` has exactly one source in this slice and the rack will not unpick
 a mend without it. Counting the knife, that is four reachable objects against four worn slots, and the cap binds
 on the path where nothing has been fused - at the rack by the end of The Run, once the whistle is in hand, and not

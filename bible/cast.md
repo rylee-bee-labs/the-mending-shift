@@ -80,16 +80,16 @@ he says the hour, and you work out what he meant.
 
 **Role** -- The diver, and the yard's tide-watcher for as long as he is in the yard: he is at the bench, and he goes
 under the hull on the hard at Low Water, which is the only hour it can be done, and everyone at the bench stops what
-they are saying when he comes up. He says what the channel is doing before it has finished doing it, and he crossed
-to the town bank before the flood to see his sister; The Run puts the water between him and the yard, so
-for the whole of that phase he is across it, on the far side, saying what the water is doing from the far end of the
-causeway, and he comes back with her at Slack Water. He is not in the yard for any of The Run.
+they are saying when he comes up. He says what the channel is doing before it has finished doing it, and after that
+hour he crossed to the town bank, before the flood, to see his sister; The Run puts the water between him and the
+yard, so for the whole of that phase he is across it, on the far side, saying what the water is doing from the far end
+of the causeway, and he comes back with her at Slack Water. He is not in the yard for any of The Run.
 
 **Want** -- To bring his sister across from the town at Slack Water without her feet going in the water. She is on the
 far bank with a doctor who will not send her out with anybody but the yard, and the crossing at slack is the only
 one there will be this week. The want is checkable: it is the coat's job, because what the coat's record is about
 is the hands of whoever is wearing it, and hands that stay above the water are hands that can hold somebody else -
-one passenger, held against you, at a walk, in front of anybody on the bank. The coat as it stands, with the wax
+a passenger, held against you, at a walk, in front of anybody on the bank. The coat as it stands, with the wax
 gone hard in the cloth along both elbows and the left shoulder seam open to the lining, will not do it, because
 that is exactly what those two faults take away. He is on the wrong bank of the water to do it himself, which is
 why at slack the crossing that matters is somebody
