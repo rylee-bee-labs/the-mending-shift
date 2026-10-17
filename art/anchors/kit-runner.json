@@ -1,0 +1,10 @@
+{
+  "model": "codex (gpt-image-2)",
+  "prompt": "Kit-runner character anchor: one character, one pose, three-quarter view, standing at the long bench. Bryn Aukett, fifteen, four days in as the newest kit-runner at Sallowquay Boat-yard. Wears an apron with four worn slots stitched into it at the front, each slot sized for a hand; the fourth has a split in the stitching that a good mend has to go around. Carries an empty satchel. No class, no stat sheet, no armour and no weapon on display: what he can do comes from other people's objects, never from a rating. Read: ordinary, competent, slightly out of place at the bench he was apprenticed at. Nothing heroic - he is the newest kit-runner, which is an embarrassment rather than a destiny. Weathered working clothes, tar and brine, muted coastal-industrial palette, same palette as the yard.",
+  "aspect": "3:4",
+  "ref": "palette.png",
+  "files": [
+    "kit-runner.png"
+  ],
+  "at": "2026-10-16T23:20:17-0500"
+}

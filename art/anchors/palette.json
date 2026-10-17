@@ -1,0 +1,10 @@
+{
+  "model": "codex (gpt-image-2)",
+  "prompt": "Yard palette for Sallowquay Boat-yard. A low stone yard on the wrong side of the flood channel; everything about its layout is an argument with the water. Palette: cold wet grey-green stone, black rock and weed on the slipway, brine blue-green for the channel, tar-black, hot pitch amber only where the pot is lit, waxed ochre on canvas, bone yellow-white on tools, white foam lines. Values are low and coastal: the water is the darkest mass and the stone the mid, with light off the water at the back of the afternoon as the one warm source. Rules: no saturated hue anywhere except the pitch pot when it is lit; the stone is wet and dark for two hours after the flood and dry-feeling for the rest of the shift; replaced stitching is a slightly wrong colour, never a matching one; patches show the original cloth at the corners. Four hours, four light states of one palette: The Turning, low and blue before the light; Low Water, the only hour with enough light in the yard to see what you are about to give up; The Run, sea over the coping; Slack Water, high and lazy, with the town's evening work lit across the water.",
+  "aspect": "16:9",
+  "ref": null,
+  "files": [
+    "palette.png"
+  ],
+  "at": "2026-10-16T23:12:03-0500"
+}

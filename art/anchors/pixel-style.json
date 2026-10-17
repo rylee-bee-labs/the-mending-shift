@@ -1,0 +1,10 @@
+{
+  "model": "codex (gpt-image-2)",
+  "prompt": "Pixel style for The Mending Shift: limited-palette pixel art, hard pixels, no anti-aliasing, no gradients, one pixel is one pixel of the source at 1x. Register: working, plain, coastal-industrial - competent and slightly worn, like the bench. Scale rules: one place shown whole, never a close-up of a corner; the yard reads end to end at a glance - the wall, the slipway, the shed, the long bench under a lean-to, the rack of hooks by the bench, the causeway head, and the town's evening work lit on the far bank. A standing person is small in frame but always a readable silhouette: apron, satchel, and the four worn slots stitched into the apron at the front. Water is the largest single shape on screen and its level is legible at a glance, because the tide sets the clock. No fantasy machinery, no monsters, no glowing artefacts, no magic lighting; all light comes from the sky, the water, or the pitch pot.",
+  "aspect": "16:9",
+  "ref": "palette.png",
+  "files": [
+    "pixel-style.png"
+  ],
+  "at": "2026-10-16T23:16:12-0500"
+}

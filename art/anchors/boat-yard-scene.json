@@ -1,0 +1,10 @@
+{
+  "model": "codex (gpt-image-2)",
+  "prompt": "One boat-yard scene, wide, at the slice's real size: the whole of Sallowquay Boat-yard and nothing beyond it. Foreground, wet stone yard floor. Middle, one long bench under a lean-to with a rack of hooks beside it where finished work hangs; one shed; the pitch pot with a low fire under it; the wall the length of the yard, a few feet above the night's high water and a few feet below the top of the flood. Left, the slipway: a ramp of black rock and weed running down to the water. Right, the causeway head running out from the yard with water on both sides of it, and the flood channel beyond, with the far town bank and its evening work lit small in the distance. Four people at most in frame, small - forty-odd people use this yard across a day and the number never goes much above a dozen in one place at one hour. Low stone, brine and hot pitch, tar, wet rock. No monsters, no magic, no chosen one; this is a working yard and an argument with the water.",
+  "aspect": "16:9",
+  "ref": "palette.png",
+  "files": [
+    "boat-yard-scene.png"
+  ],
+  "at": "2026-10-16T23:14:39-0500"
+}
