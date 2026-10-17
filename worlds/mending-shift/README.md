@@ -90,3 +90,21 @@ VEFR_DIR=/path/to/vefr python3 worlds/mending-shift/acceptance.py
 
 which adds `uv run --project $VEFR_DIR vefr check --pack <pack>` and requires
 exit 0.
+
+## Engine fit (Claude, 2026-10-17)
+
+Run on the host against VEFR main 08fd8767, `vefr check` passes and `vefr weave` builds a playable file that
+boots in Chromium with no errors. To make it pass:
+- `town.pois` uses the engine's `{"x,y": "label"}` shape.
+- `say.who` is the speaker id; the full written name is that speaker's `name`.
+- The engine's recipe holds only `id, inputs, output, say`. systems.md's `keeps`, `carries` and `read_aloud` live in
+  `design/recipes.json`, and the behaviour is the output item's `grants`: the kept verbs plus the carried one.
+  acceptance.py checks the two agree.
+- Two heirloom button labels were shortened to the engine's 60-character limit.
+- The resident id is `grissel-toft`, matching the canon spelling.
+
+Not done yet (M2b): the woven title screen still shows the engine's default cover art; the anchor art in
+`art/anchor-r3/` is not wired in.
+
+CI: `.github/workflows/pack.yml` runs the bible gates and `VEFR_DIR=.vefr python3 worlds/mending-shift/acceptance.py`
+against VEFR main on every PR and push.

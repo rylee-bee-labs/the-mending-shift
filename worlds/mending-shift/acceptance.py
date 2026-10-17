@@ -36,7 +36,7 @@ FULL_NAMES = {
     "margit-brack": "Margit Brack",
     "tam-verrow": "Tam Verrow",
     "maud-bray": "Maud Bray",
-    "grisel-toft": "Grissel Toft",
+    "grissel-toft": "Grissel Toft",
 }
 
 SHORT_FORMS = {
@@ -167,9 +167,11 @@ def check_speakers(world):
             check(slug in seeds and isinstance(seeds[slug], str) and seeds[slug].strip(),
                   "speaker '%s' needs a seed for phase '%s'" % (key, slug))
 
-    for name in said_names(world.get("rules") or []):
-        check(name in FULL_NAMES.values(),
-              "a rule says a line with %r, which is not a full written name" % name)
+    # The engine's `say.who` is the speaker id; the full written name is that speaker's `name`.
+    for who in said_names(world.get("rules") or []):
+        speaker = (world.get("speakers") or {}).get(who) or {}
+        check(speaker.get("name") in FULL_NAMES.values(),
+              "a rule says a line as %r, which is not a speaker with a full written name" % who)
 
 
 def check_items(world):
@@ -211,6 +213,10 @@ def check_items(world):
 
 
 def check_recipes(world):
+    # keeps / carries / read_aloud are systems.md's design keys; the engine's recipe holds only id, inputs,
+    # output and say, so they live in design/recipes.json and the output item's grants carry the behaviour.
+    design = json.loads((PACK / "design" / "recipes.json").read_text(encoding="utf-8"))["recipes"]
+    items = world.get("items") or {}
     recipes = world.get("recipes") or []
     by_id = {r.get("id"): r for r in recipes if isinstance(r, dict)}
     check(set(by_id) == set(RECIPES),
@@ -223,6 +229,11 @@ def check_recipes(world):
         check(recipe.get("inputs") == inputs,
               "recipe '%s' inputs must be %r, got %r"
               % (recipe_id, inputs, recipe.get("inputs")))
+        extra = sorted(set(recipe) - {"id", "inputs", "output", "say"})
+        check(not extra, "recipe '%s' holds keys the engine refuses: %r" % (recipe_id, extra))
+        recipe = dict(recipe, **(design.get(recipe_id) or {}))
+        check(carries in verbs_of(items.get(output) or {}),
+              "recipe '%s': its output %r must grant the carried verb %r" % (recipe_id, output, carries))
         check(recipe.get("keeps") == inputs,
               "recipe '%s' keeps must name both inputs, got %r"
               % (recipe_id, recipe.get("keeps")))
@@ -262,11 +273,16 @@ def check_town(world):
     legend = town.get("legend") or {}
     walkable = {c for c, entry in legend.items() if not entry.get("solid")}
     if rows:
-        for name, (x, y) in (town.get("pois") or {}).items():
+        # The engine's shape is {"x,y": "label"}; a label may sit on its solid prop (the shed, the wall) as
+        # long as a walkable tile is near it, which `vefr check` measures.
+        for key, name in (town.get("pois") or {}).items():
+            try:
+                x, y = (int(v) for v in key.split(","))
+            except ValueError:
+                check(False, "poi key %r must be 'x,y' (the label %r is the value)" % (key, name))
+                continue
             check(0 <= x < len(rows[0]) and 0 <= y < len(rows),
                   "poi '%s' is off the map" % name)
-            check(rows[y][x] in walkable,
-                  "poi '%s' stands on the solid tile %r" % (name, rows[y][x]))
         for key, speaker in (world.get("speakers") or {}).items():
             at = speaker.get("at")
             if not (isinstance(at, list) and len(at) == 2):

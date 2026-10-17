@@ -1,0 +1,33 @@
+name: pack
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: bibles + Mending Shift pack against VEFR main
+    runs-on: ${{ vars.CI_RUNNER_LIGHT || vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: VEFR engine (public, main)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rylee-bee-labs/vefr
+          path: .vefr
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: bible gates
+        run: |
+          for f in bible/check_bible.py bible/check_continuity.py bible/check_continuity_2.py \
+                   bible/check_continuity_3.py bible/check_continuity_4.py; do
+            python3 "$f"
+          done
+      - name: pack acceptance, including vefr check
+        env:
+          VEFR_DIR: ${{ github.workspace }}/.vefr
+        run: python3 worlds/mending-shift/acceptance.py
