@@ -83,7 +83,7 @@ under the hull on the hard at Low Water, which is the only hour it can be done, 
 they are saying when he comes up. He says what the channel is doing before it has finished doing it, and after that
 hour he crossed to the town bank, before the flood, to see his sister; The Run puts the water between him and the
 yard, so for the whole of that phase he is across it, on the far side, saying what the water is doing from the far end
-of the causeway, and he comes back with her at Slack Water. He is not in the yard for any of The Run.
+of the causeway, and he is at the town end of the causeway when the kit-runner brings her over at Slack Water. He is not in the yard for any of The Run.
 
 **Want** -- To bring his sister across from the town at Slack Water without her feet going in the water. She is on the
 far bank with a doctor who will not send her out with anybody but the yard, and the crossing at slack is the only
