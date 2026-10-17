@@ -698,7 +698,10 @@
    ],
    "then": [
     {
-     "say": "Two repairs, both on the bench while there is light. The fid's split stem closed from the ferrule down, whole and sound, which is the condition the warden states and can check for himself rather than take on trust. The coat's wax gone hard at both elbows, and the left shoulder seam re-laid from the armhole down with Maud Bray's scratch cut across the new stitching."
+     "say": "Two repairs, both on the bench while there is light. The fid's split stem closed from the ferrule down, whole and sound, which is the condition the warden states and can check for himself rather than take on trust."
+    },
+    {
+     "say": "The coat's wax gone hard at both elbows, and the left shoulder seam re-laid from the armhole down with Maud Bray's scratch cut across the new stitching."
     },
     {
      "say": {
@@ -741,7 +744,10 @@
    ],
    "then": [
     {
-     "say": "The bench turns the two of them over once, before anything is spent. The quiet coat. Climb, and do it quiet. Wade, and keep your hands. And Shelter: somebody under you, and the weather off both of you. Gone for good, piece by piece: Ottmar's bone fid. Roald Fisk's waxed tar-coat. That is the whole of the look, and there is no second one and no way back."
+     "say": "The bench turns the two of them over once, before anything is spent. The quiet coat. Climb, and do it quiet. Wade, and keep your hands. And Shelter: somebody under you, and the weather off both of you."
+    },
+    {
+     "say": "Gone for good, piece by piece: Ottmar's bone fid. Roald Fisk's waxed tar-coat. That is the whole of the look, and there is no second one and no way back."
     }
    ],
    "once": true
@@ -766,7 +772,10 @@
      }
     },
     {
-     "say": "The rack takes the fid and the coat off the hooks and gives back one coat with two patches on it. Bone fid. Waxed tar-coat. Both names read on it by the yard, and neither piece in the yard for the rest of the shift. The slow climb and the hands-under wade went with them and are nowhere now."
+     "say": "The rack takes the fid and the coat off the hooks and gives back one coat with two patches on it. Bone fid. Waxed tar-coat."
+    },
+    {
+     "say": "Both names read on it by the yard, and neither piece in the yard for the rest of the shift. The slow climb and the hands-under wade went with them and are nowhere now."
     },
     {
      "set": "quiet-coat-made"
@@ -873,7 +882,10 @@
    ],
    "then": [
     {
-     "say": "You go out along the causeway as far as the far step. Water over the coping, running faster than a person walks, and nobody on the far side will take a kit-runner off the water in a run. The refusal is given on the wall in front of the yard, and it is about people and not about the water. What comes back is nothing: no passenger, no errand done across."
+     "say": "You go out along the causeway as far as the far step. Water over the coping, running faster than a person walks, and nobody on the far side will take a kit-runner off the water in a run."
+    },
+    {
+     "say": "The refusal is given on the wall in front of the yard, and it is about people and not about the water. What comes back is nothing: no passenger, no errand done across."
     },
     {
      "say": {
@@ -994,7 +1006,10 @@
    ],
    "then": [
     {
-     "say": "Out empty to the town bank, and back with her held against you under the one coat. Shelter: somebody under you, and the weather off both of you, in one trip, with nothing about the two of you announced. Her feet are out of the water the whole way, and she is put down on the yard end of the causeway, where the warden is standing."
+     "say": "Out empty to the town bank, and back with her held against you under the one coat. Shelter: somebody under you, and the weather off both of you, in one trip, with nothing about the two of you announced."
+    },
+    {
+     "say": "Her feet are out of the water the whole way, and she is put down on the yard end of the causeway, where the warden is standing."
     }
    ],
    "once": true
@@ -1092,7 +1107,13 @@
     {
      "say": {
       "who": "warden-ottmar-vell",
-      "line": "He reads what is in the satchel and he reads it accurately: the fid with its stem closed from the ferrule down, the coat with both elbows and the shoulder seam, the knife, the whistle. Nothing in there was made out of two other things. The work is good. The shift decided nothing. Come back at The Turning."
+      "line": "He reads what is in the satchel and he reads it accurately: the fid with its stem closed from the ferrule down, the coat with both elbows and the shoulder seam, the knife, the whistle."
+     }
+    },
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Nothing in there was made out of two other things. The work is good. The shift decided nothing. Come back at The Turning."
      }
     },
     {

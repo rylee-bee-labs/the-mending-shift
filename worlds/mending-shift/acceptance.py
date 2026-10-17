@@ -477,6 +477,20 @@ def check_outcome_partition(by_id):
                     return
 
 
+SPEECH_BOX = 280   # the engine's speech box: `vefr check` refuses a longer say line
+
+
+def check_say_lengths(world):
+    for rule in world.get("rules") or []:
+        for action in rule.get("then") or []:
+            say = action.get("say") if isinstance(action, dict) else None
+            line = say.get("line") if isinstance(say, dict) else say
+            if isinstance(line, str):
+                check(len(line) <= SPEECH_BOX,
+                      "rule '%s' says a %d-character line; the speech box holds %d (split it into two say actions)"
+                      % (rule.get("id"), len(line), SPEECH_BOX))
+
+
 def check_rules(world):
     """The M2b line: the beats, the phases, the speakers, the outcomes."""
     rules = world.get("rules") or []
@@ -589,6 +603,7 @@ def main():
     check_recipes(world)
     check_reachability(world)
     check_rules(world)
+    check_say_lengths(world)
     check_named_items(world)
     check_town(world)
     run_vefr_check()
