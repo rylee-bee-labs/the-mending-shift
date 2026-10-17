@@ -1,0 +1,6 @@
+- Stiff at the elbow. She'll take water at the elbow.
+- Twelve fathom at the armhole, and not a fathom more.
+- Water's running over your coping and faster than a person walks.
+- Don't go out on it. The crossing is at slack.
+- It's the coat's job, not anybody else's.
+- Her feet stay out of the water.

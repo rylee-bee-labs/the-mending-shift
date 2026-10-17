@@ -1,0 +1,584 @@
+{
+ "name": "mending-shift",
+ "title": "The Mending Shift",
+ "description": "One shift at Sallowquay Boat-yard, along four hours of the tide.",
+ "surface": "plain",
+ "phases": {
+  "the-turning": "the top of the night's water, the ebb just set off, and the pot being lit.",
+  "low-water": "the water out, the whole yard floor walkable, and the loudest hour of the shift.",
+  "the-run": "the water coming back faster than a person walks, and half the yard gone quiet.",
+  "slack-water": "the channel lazy and high, the night crew in, and the evening work lit across the water."
+ },
+ "time": {
+  "rest": true,
+  "rail": "locked",
+  "persist": true
+ },
+ "verbs": [
+  "Climb",
+  "Wade"
+ ],
+ "items": {
+  "bone-fid": {
+   "name": "Ottmar's bone fid",
+   "grants": [
+    {
+     "verb": "Climb",
+     "label": "climb, and do it quiet"
+    }
+   ],
+   "writes": "Climb",
+   "changes": {
+    "Climb": {
+     "atk": 0
+    }
+   }
+  },
+  "tar-coat": {
+   "name": "Roald Fisk's waxed tar-coat",
+   "grants": [
+    {
+     "verb": "Wade",
+     "label": "wade, and keep your hands"
+    }
+   ],
+   "writes": "Wade",
+   "changes": {
+    "Wade": {
+     "atk": 0
+    }
+   }
+  },
+  "tin-whistle": {
+   "name": "the night crew's tin whistle",
+   "grants": [
+    {
+     "verb": "Call",
+     "label": "call a name across the water, and be heard back"
+    }
+   ]
+  },
+  "bench-knife": {
+   "name": "the bench's blunt mending knife",
+   "grants": [
+    {
+     "verb": "Unpick",
+     "label": "unpick a mend, and go the whole way down"
+    }
+   ]
+  },
+  "tarred-line": {
+   "name": "twelve fathoms of tarred line",
+   "grants": [
+    {
+     "verb": "Haul",
+     "label": "haul, with the weight on the line and not on you"
+    }
+   ]
+  },
+  "bend-hook": {
+   "name": "the bent coat hook",
+   "grants": [
+    {
+     "verb": "Hook",
+     "label": "hook, and hold on from where you are standing"
+    }
+   ]
+  },
+  "shuttered-lamp": {
+   "name": "the shed's shuttered lamp",
+   "grants": [
+    {
+     "verb": "Steady",
+     "label": "stand steady on the thing that is moving"
+    }
+   ]
+  },
+  "winch-bar": {
+   "name": "the rack's winch bar",
+   "grants": [
+    {
+     "verb": "Haul",
+     "label": "haul from the rack, both feet on the stone"
+    }
+   ],
+   "writes": "Haul",
+   "changes": {
+    "Haul": {
+     "atk": 0
+    }
+   }
+  },
+  "quiet-coat": {
+   "name": "the quiet coat",
+   "grants": [
+    {
+     "verb": "Climb",
+     "label": "climb, and do it quiet"
+    },
+    {
+     "verb": "Wade",
+     "label": "wade, and keep your hands"
+    },
+    {
+     "verb": "Shelter",
+     "label": "get somebody under you, and keep the weather off both of you"
+    }
+   ]
+  },
+  "thrown-whistle": {
+   "name": "the thrown whistle",
+   "grants": [
+    {
+     "verb": "Call",
+     "label": "call a name across the water, and be heard back"
+    },
+    {
+     "verb": "Haul",
+     "label": "haul, with the weight on the line and not on you"
+    },
+    {
+     "verb": "Reach",
+     "label": "put something out to arm's length across a gap"
+    }
+   ]
+  },
+  "grapnel-line": {
+   "name": "the grapnel line",
+   "grants": [
+    {
+     "verb": "Haul",
+     "label": "haul, with the weight on the line and not on you"
+    },
+    {
+     "verb": "Hook",
+     "label": "hook, and hold on from where you are standing"
+    },
+    {
+     "verb": "Anchor",
+     "label": "set something and hold it against the pull"
+    }
+   ]
+  },
+  "dark-mend": {
+   "name": "the dark mend",
+   "grants": [
+    {
+     "verb": "Steady",
+     "label": "stand steady on the thing that is moving"
+    },
+    {
+     "verb": "Unpick",
+     "label": "unpick a mend, and go the whole way down"
+    },
+    {
+     "verb": "Trace",
+     "label": "feel, by hand, where a mend was unpicked before you were"
+    }
+   ]
+  },
+  "short-haul": {
+   "name": "the short haul",
+   "grants": [
+    {
+     "verb": "Haul",
+     "label": "haul from the rack, both feet on the stone"
+    },
+    {
+     "verb": "Hook",
+     "label": "hook, and hold on from where you are standing"
+    },
+    {
+     "verb": "Draw",
+     "label": "bring a thing up to you without letting go"
+    }
+   ],
+   "writes": "Haul",
+   "changes": {
+    "Haul": {
+     "atk": 0
+    }
+   }
+  },
+  "spliced-line": {
+   "name": "the spliced line",
+   "grants": [
+    {
+     "verb": "Haul",
+     "label": "haul, with the weight on the line and not on you"
+    },
+    {
+     "verb": "Unpick",
+     "label": "unpick a mend, and go the whole way down"
+    },
+    {
+     "verb": "Lay",
+     "label": "lay a length out flat and true with no knot in it"
+    }
+   ]
+  }
+ },
+ "recipes": [
+  {
+   "id": "fuse-fid-coat",
+   "inputs": [
+    "bone-fid",
+    "tar-coat"
+   ],
+   "output": "quiet-coat",
+   "say": "Two patches now, one coat, and the wall and the water on the same body."
+  },
+  {
+   "id": "fuse-whistle-line",
+   "inputs": [
+    "tin-whistle",
+    "tarred-line"
+   ],
+   "output": "thrown-whistle",
+   "say": "Twelve fathoms with a whistle on the end, for calling somebody you cannot reach."
+  },
+  {
+   "id": "fuse-hook-line",
+   "inputs": [
+    "bend-hook",
+    "tarred-line"
+   ],
+   "output": "grapnel-line",
+   "say": "Line out and the hook on it, and it holds on the second pull."
+  },
+  {
+   "id": "fuse-lamp-knife",
+   "inputs": [
+    "shuttered-lamp",
+    "bench-knife"
+   ],
+   "output": "dark-mend",
+   "say": "Half a lamp and a blunt point, for finding the seam somebody unpicked first."
+  },
+  {
+   "id": "fuse-bar-hook",
+   "inputs": [
+    "winch-bar",
+    "bend-hook"
+   ],
+   "output": "short-haul",
+   "say": "The bar and the hook together, and the pull comes to you instead of going."
+  },
+  {
+   "id": "fuse-knife-line",
+   "inputs": [
+    "bench-knife",
+    "tarred-line"
+   ],
+   "output": "spliced-line",
+   "say": "Line spliced with a blunt point, and laid out straight for once."
+  }
+ ],
+ "speakers": {
+  "warden-ottmar-vell": {
+   "name": "Warden Ottmar Vell",
+   "at": [
+    7,
+    3
+   ],
+   "near": "the bench",
+   "voice_file": "voices/warden-ottmar-vell.md",
+   "seeds": {
+    "the-turning": "There you are. Bench is warm enough. Boat's on the blocks at low water and the stem's split, and I don't hand a thing over I haven't looked at.",
+    "low-water": "Take the fid to the bench. Split's open at the top and shut at the bottom. Get it sound and it's mine again, and no patched stem on my evening tide.",
+    "the-run": "Water's over the coping. If the stem's whole, she goes across on the evening.",
+    "slack-water": "Slate's under my arm. I'll read the satchel before I put a name on anything."
+   }
+  },
+  "roald-fisk": {
+   "name": "Roald Fisk",
+   "at": [
+    5,
+    4
+   ],
+   "near": "the bench",
+   "voice_file": "voices/roald-fisk.md",
+   "seeds": {
+    "the-turning": "Coat came out stiff. It'll take water at both elbows now, and the left shoulder seam's open to the lining. It's yours till the bench.",
+    "low-water": "I'm going under the hull while there's hard to go under on. Twelve fathom at the armhole, and not a fathom more.",
+    "the-run": "I'm at the far end of the causeway and the water's running over your coping. Don't go out on it. The crossing is at slack, and it's the coat's job.",
+    "slack-water": "She's at the far end with the doctor's hand on her. Bring her across and her feet stay out of the water."
+   }
+  },
+  "sable-kearn": {
+   "name": "Sable Kearn",
+   "at": [
+    8,
+    4
+   ],
+   "near": "the bench",
+   "voice_file": "voices/sable-kearn.md",
+   "seeds": {
+    "the-turning": "Gear wants doing. Don't stand in my light and don't ask me what I haven't said.",
+    "low-water": "Seized sheave on the standing end of my line. New rope won't bring it back. The block stays on my bench — the becket's parting at the top third, and the gear comes before the block.",
+    "the-run": "Still here. Nothing further from me this hour.",
+    "slack-water": "Hoist goes up once, in front of the town, and it'll be seen from the far bank. I'd like it seen."
+   }
+  },
+  "margit-brack": {
+   "name": "Margit Brack",
+   "at": [
+    9,
+    1
+   ],
+   "near": "the rack",
+   "voice_file": "voices/margit-brack.md",
+   "seeds": {
+    "the-turning": "Night crew's on the far bank. Nothing of mine to say at this hour, and I'm not pretending otherwise.",
+    "low-water": "Not in your yard yet. Been at the blocks an hour before you'll see me.",
+    "the-run": "Crossed at the back of the afternoon. Whistle's yours — tongue's filed near flat, fipple split at the top. One thin note and it dies on the causeway.",
+    "slack-water": "I want one note that carries across the water and calls the crew in off the channel where the shout dies. Thirty years I've done it by hand."
+   }
+  },
+  "tam-verrow": {
+   "name": "Tam Verrow",
+   "at": [
+    4,
+    4
+   ],
+   "near": "the bench",
+   "voice_file": "voices/tam-verrow.md",
+   "seeds": {
+    "the-turning": "Hook's off the rack. I bent it. Shank's drawn a third along and the bend won't come back without a vice. Two. That's two. What's the third?",
+    "low-water": "Four slots. I've counted the stitching. You're holding three and the fourth's split.",
+    "the-run": "Whistle's yours now, so that's four. Whatever comes next stays on the rack.",
+    "slack-water": "Say out loud that I was a hand at the rack. Not a carrier. A hand."
+   }
+  },
+  "maud-bray": {
+   "name": "Maud Bray",
+   "at": [
+    6,
+    4
+   ],
+   "near": "the bench",
+   "voice_file": "voices/maud-bray.md",
+   "seeds": {
+    "the-turning": "That seam's open to the lining and my scratch is under the wax. Re-lay it and keep the mark.",
+    "low-water": "Fusion takes it off. I say it now, at the bench, so nobody can say afterwards I didn't. Both elbows and the shoulder, and my scratch on the new stitching.",
+    "the-run": "Bench, still. Coat's with you and I'm not asking after it.",
+    "slack-water": "Is my scratch on it? That's the only question I've come over with."
+   }
+  },
+  "grissel-toft": {
+   "name": "Grissel Toft",
+   "at": [
+    2,
+    6
+   ],
+   "near": "the pitch pot",
+   "voice_file": "voices/grissel-toft.md",
+   "seeds": {
+    "the-turning": "Two more handfuls, then it's down and it's covered. Cuff's gone — I can't get a whole hand under that bone.",
+    "low-water": "Bone's whole and the glove's back on my hand, before the water's over the wall.",
+    "the-run": "Gone before the run. Nothing of mine wants doing after this hour.",
+    "slack-water": "Pot's cold and covered. I'm not at the bench tonight."
+   }
+  }
+ },
+ "rules": [
+  {
+   "id": "roald-fisk-hands-over-the-coat",
+   "when": {
+    "comes-near": {
+     "who": "roald-fisk",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "the-turning"
+    }
+   ],
+   "then": [
+    {
+     "give": "tar-coat"
+    },
+    {
+     "say": {
+      "who": "roald-fisk",
+      "line": "Coat's yours. Wax gone hard at both elbows, seam open to the lining. Bring it back to the bench mended."
+     }
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-warden-hands-over-the-fid",
+   "when": {
+    "comes-near": {
+     "who": "warden-ottmar-vell",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "low-water"
+    }
+   ],
+   "then": [
+    {
+     "give": "bone-fid"
+    },
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Stem's split through from the ferrule, two hands down. Open at the top, shut at the bottom. Get it sound."
+     }
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-knife-comes-off-the-rack",
+   "when": {
+    "comes-near": {
+     "who": "the rack",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "low-water"
+    }
+   ],
+   "then": [
+    {
+     "give": "bench-knife"
+    },
+    {
+     "say": "The bench's own mending knife is off the rack, blunted at the point on purpose. Nothing gets unpicked in this yard without it."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "margit-brack-hands-over-the-whistle",
+   "when": {
+    "comes-near": {
+     "who": "margit-brack",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "the-run"
+    }
+   ],
+   "then": [
+    {
+     "give": "tin-whistle"
+    },
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "Night crew's whistle. Loop of tarred twine, three names ground into the rim. Put a name out on it and the far side will answer."
+     }
+    }
+   ],
+   "once": true
+  }
+ ],
+ "town": {
+  "tile": 32,
+  "bg": "#12100e",
+  "hero_start": [
+   6,
+   5
+  ],
+  "hero_color": "#e8e5df",
+  "watch": {
+   "tower": [
+    6,
+    0
+   ],
+   "r_by_phase": {
+    "the-turning": 1,
+    "low-water": 1,
+    "the-run": 1,
+    "slack-water": 1
+   },
+   "overlay": "rgba(0,0,0,0.3)"
+  },
+  "sanctuary_tiles": [
+   "."
+  ],
+  "water_by_phase": {
+   "the-turning": "low",
+   "low-water": "low",
+   "the-run": "low",
+   "slack-water": "low"
+  },
+  "flood_tiles": [],
+  "legend": {
+   "#": {
+    "base": [
+     "#2b2f33"
+    ],
+    "solid": true
+   },
+   ".": {
+    "base": [
+     "#3a3a34"
+    ]
+   },
+   "s": {
+    "base": [
+     "#4a3f2f"
+    ]
+   },
+   "b": {
+    "base": [
+     "#5a4632"
+    ]
+   },
+   "k": {
+    "base": [
+     "#46403a"
+    ]
+   },
+   "p": {
+    "base": [
+     "#54402c"
+    ]
+   },
+   "w": {
+    "base": [
+     "#33403a"
+    ]
+   },
+   "~": {
+    "base": [
+     "#23333f"
+    ],
+    "solid": true
+   }
+  },
+  "map": [
+   "############",
+   "#.ss....kk.#",
+   "#.ss....kk.#",
+   "#....bbbb..#",
+   "#....bbbb..#",
+   "#..........#",
+   "#.p........#",
+   "#...wwww...#",
+   "#..~~~~~...#",
+   "############"
+  ],
+  "pois": {
+   "3,1": "the shed",
+   "9,1": "the rack",
+   "6,3": "the bench",
+   "2,6": "the pitch pot",
+   "5,7": "the slipway",
+   "6,1": "the wall",
+   "8,7": "the causeway head"
+  }
+ }
+}

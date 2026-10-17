@@ -1,0 +1,6 @@
+- Hook's off the rack. I bent it.
+- Shank's drawn a third along. Bend won't come back.
+- Two. That's two. What's the third?
+- Four slots. I've counted the stitching.
+- You're holding three and the fourth's split.
+- Say out loud that I was a hand. Not a carrier.

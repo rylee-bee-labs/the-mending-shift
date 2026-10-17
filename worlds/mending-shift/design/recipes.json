@@ -1,0 +1,53 @@
+{
+ "_note": "The canon recipe design from bible/systems.md that the engine's recipe shape (id, inputs, output, say) does not hold. The engine behaviour is the output item's grants: the kept verbs plus the carried one; acceptance.py checks the two agree.",
+ "recipes": {
+  "fuse-fid-coat": {
+   "keeps": [
+    "bone-fid",
+    "tar-coat"
+   ],
+   "carries": "Shelter",
+   "read_aloud": "the quiet coat"
+  },
+  "fuse-whistle-line": {
+   "keeps": [
+    "tin-whistle",
+    "tarred-line"
+   ],
+   "carries": "Reach",
+   "read_aloud": "the thrown whistle"
+  },
+  "fuse-hook-line": {
+   "keeps": [
+    "bend-hook",
+    "tarred-line"
+   ],
+   "carries": "Anchor",
+   "read_aloud": "the grapnel line"
+  },
+  "fuse-lamp-knife": {
+   "keeps": [
+    "shuttered-lamp",
+    "bench-knife"
+   ],
+   "carries": "Trace",
+   "read_aloud": "the dark mend"
+  },
+  "fuse-bar-hook": {
+   "keeps": [
+    "winch-bar",
+    "bend-hook"
+   ],
+   "carries": "Draw",
+   "read_aloud": "the short haul"
+  },
+  "fuse-knife-line": {
+   "keeps": [
+    "bench-knife",
+    "tarred-line"
+   ],
+   "carries": "Lay",
+   "read_aloud": "the spliced line"
+  }
+ }
+}

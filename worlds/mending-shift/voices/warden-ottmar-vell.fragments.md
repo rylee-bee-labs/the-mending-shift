@@ -1,0 +1,7 @@
+- There you are. Bench is warm enough.
+- Stem's open at the top and shut at the bottom.
+- Get it sound. Patched stem, she crosses once and that's all.
+- Water's over the coping.
+- Slack water. If the stem's whole, she goes across.
+- Slate's under my arm.
+- I don't hand a thing over I haven't looked at.

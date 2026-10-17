@@ -1,0 +1,6 @@
+- Two more handfuls. Then it's down and it's covered.
+- Cuff's gone. I can't get a whole hand under that bone.
+- Bone comes out on the glove, and the glove's got a minute in it.
+- Bone's whole and glove's back on my hand.
+- Before the water's over the wall.
+- Gone before the run.

@@ -1,0 +1,6 @@
+- That seam's open to the lining and my scratch is under the wax.
+- Re-lay it and keep the mark.
+- Both elbows and the shoulder. And my scratch on the new stitching.
+- Fusion takes it off. I say it now so nobody can say I didn't.
+- It'll hold. It won't hold long. Those aren't the same.
+- Is my scratch on it?

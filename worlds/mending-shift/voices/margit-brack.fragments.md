@@ -1,0 +1,6 @@
+- Been at the blocks an hour before you'll see me.
+- Tongue's filed near flat. Fipple split at the top.
+- One thin note, and it dies on the causeway.
+- Three names ground into the rim.
+- Put a name out on it and the far side answers.
+- I want one note that carries. Thirty years I've done it by hand.
