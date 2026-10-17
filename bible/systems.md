@@ -37,7 +37,7 @@ puts both hands under the water - and not about a third kind of effect.
 
 ### The bone fid
 
-Ottmar's fid, whittled flat at the shoulder by thirty years of the same grip.
+Ottmar's fid, whittled flat by thirty years of the same grip.
 
 ```json
 {
@@ -74,7 +74,7 @@ Water is the `Wade` form that puts both hands under the water, and the coat supe
 for the rest of the shift is the old hands-under form and not a third capability the coat takes away some other
 way. The coat is waxed and thick and it is not made for submersion, which is why the hands stay out of it.
 The record is about the hands of whoever is wearing it, and hands that stay above the water are hands that can
-hold somebody else: that is what answers its owner's want - one
+hold somebody else: that is what his owner's want is made of - one
 passenger, held against you, at a walk, in front of anybody on the bank - and the coat as it stands,
 with the wax gone hard and the seam open, will not do it. The single trip with the weather off both of
 you is the inherited verb on the quiet coat.
@@ -101,7 +101,7 @@ carrying somebody's coat and you did not give it back" is enforced most cheaply 
 
 ### The tarred line
 
-Twelve fathoms of tarred line off the rack, with the lay of it gone soft where it has been wet and dried
+Twelve fathoms of tarred line, with the lay of it gone soft where it has been wet and dried
 too many times.
 
 ```json
@@ -313,7 +313,8 @@ What each one keeps and what it destroys, read off the `keeps` key and rule 4:
   the only form of going under the slice has, and the two pieces that knew how are not anywhere.
 - **thrown-whistle** ("the thrown whistle") keeps `Call` and `Haul` and carries `Reach` - putting something out to arm's
   length across a gap that you cannot cross. Spent forever: the line's own anchoring habit and the
-  whistle's plainness. It is now a thing you throw rather than a thing you blow, and if you drop it in
+  whistle's plainness. It is now a thing you throw rather than a thing you blow, so what `Call` is on it now is the
+  name going out and the answer coming back, and if you drop it in
   the channel it is on the bottom and not in the yard's rack.
 - **grapnel-line** ("the grapnel line") keeps `Haul` and `Hook` and carries `Anchor` - set something and hold it against the
   pull. Spent forever: the free hauling without a hook, which is the shape that got you across the
@@ -346,7 +347,7 @@ named piece, so that `bone-fid` and `tar-coat` are not merely gone but are *read
 
 One scoping sentence so this is not read as a breach of the world bible's absolutes. The preview is rack
 UI: it is not narration and it is not a resident's line, and it is the one place in the game where the game
-itself names a verb and names a loss. `bible/world.md`'s refusal to explain the mechanic out loud is a rule
+itself names a verb and names what a mechanic spends. `bible/world.md`'s refusal to explain the mechanic out loud is a rule
 about prose, and this is prose's exception rather than a contradiction of it; the words on the preview are
 still the bench's words and not a rulebook's. The second absolute it has to answer is the one about fusing
 itself - that a fusion is never reversible, previewed twice, or undoable - and it answers it by count: one
@@ -413,7 +414,8 @@ it takes is a phase key in the rule's conditions:
 }
 ```
 
-The speaker cannot be Roald Fisk at this phase, and the record says so here so it cannot drift back: he crossed
+The speaker cannot be Roald Fisk at this phase, and the record says so here so it cannot drift back: he went
+under the hull at Low Water, and after that hour he crossed
 to the town bank before the flood, The Run closes the water between him and the yard, and he is on the far side
 for the whole of it, speaking from the far end of the causeway and coming back with his sister at Slack Water.
 The resident who is at the bench through every phase and short of time at this one is Sable Kearn, and she says

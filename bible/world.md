@@ -123,8 +123,9 @@ the phase the flood has topped the wall: for the length of the run's high water 
 yard's inner stones are wet. That stretch of the shift is short and it is inside the shift, which is what makes a
 deadline like "the pot down and covered before the water is over the wall" a thing with a deadline to it. What is
 open: the shed, the bench, the rack, and the crossing for anyone with a reason to be on it. Who is speaking: fewer
-of them, and the ones who stayed. Roald Fisk is not one of them: he went across to the town bank before the flood
-to see his sister, the run put the water between him and the yard, and he is on the far side for the whole of this
+of them, and the ones who stayed. Roald Fisk is not one of them: he went under the hull at Low Water, and after
+that hour, before the flood, he crossed to the town bank to see his sister, the run put the water between him and
+the yard, and he is on the far side for the whole of this
 phase, saying what the water is doing from the far end of the causeway. He comes back with her at Slack Water. Nobody in the yard is unkind at this hour; they are simply too late in the
 shift for an ask to be a story any more, and an hour of flood is an hour in which nothing can be put right. This is
 the phase in which the player crosses out and is refused: the town is there, the crossing is there, the answer is no,
@@ -179,8 +180,10 @@ mysterious old stranger who explains the rules, no sense that the yard was waiti
 refuses to explain the mechanic out loud. The game never says "this item grants a verb"; residents say what the
 thing is for and what it did for them, and the player works out the rest, because being slightly too late to that
 realisation is the intended feeling. That refusal is about prose - narration and residents' lines. The one place
-the game does name a verb and does name a loss is the rack's own preview before a fusion, which is rack UI and not
-a line anybody says, and it says so in the bench's plain words rather than in rules language. It is one look at one
+the game does name a verb and does name what a mechanic spends is the rack's own preview before a fusion, which is
+rack UI and not a line anybody says, and it says so in the bench's plain words rather than in rules language; a
+resident naming what a fusion will take off her own hand's work is talking about her work and not about the game's.
+It is one look at one
 loss, given once, before the piece is spent, which is what the absolute below is about rather than against. It refuses villainy: there is nobody in this world whose plan the yard's work
 would stop, and the three asks in one shift are asks, not a conspiracy. It refuses the player's exceptionalism -
 being the newest kit-runner on the bench is an embarrassment, not a destiny, and the goal is a signature on a
