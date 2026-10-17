@@ -43,15 +43,20 @@ The slipway is under water and the wall is a cliff; the yard is wet stone and a 
   mending has to be done while she is still in the yard. The bone comes out of the fire on the heat-glove, which is
   what she puts in his hands: the left cuff is burnt out at the wrist, so nobody can get a whole hand under the bone
   until that glove is mended, and the glove goes straight back onto her hand at the end of the hour rather than into
-  a worn slot.
+  a worn slot. The glove is the one mend in the slice that takes no worn slot and is not one of the four reachable
+  objects: it has no item record in `bible/systems.md` - no id, no `grants`, no `writes`, no satchel and no recipe -
+  because a mend to the yard's own tool is not a mend to the kit-runner's build. It grants no verb and rewrites no
+  verb, and it is on her own hand again before The Turning is out of it.
 
 **What the player mends or earns** -- Nothing that can be carried usefully yet, and one mend that goes straight back
 onto the hand that brought it in: the heat-glove, mended at the bench inside this beat and returned before the hour
 passes. The kit-runner stands at the bench
 with an apron, an empty satchel, four worn slots and exactly two verbs in the forms that fail: `Climb` in its slow
 form, which announces him to anyone on the wall above, and `Wade` in the form that puts both hands under the water.
-He tries to get down the wall and across the causeway and the two verbs fail in the open, at the hour when the yard
-is emptiest and most likely to hear it. He refuses Tam's bent hook back into his hand, because it is not his mend
+He tries the two of them where they are meant to be used - at the wall, which is a cliff at this hour, and out at the
+foot of the causeway, which is a walkway with water on both sides of it and no crossing at this hour either - and both
+fail him in the open, at the hour when the yard is emptiest and most likely to hear it. He refuses Tam's bent hook back
+into his hand, because it is not his mend
 to make, and he earns the tar-coat, which is handed to him at the end of the beat and sits unmended in the satchel
 until the bench. One worn slot is filled by the end of the beat and three are empty.
 
@@ -75,8 +80,9 @@ is up on the blocks and can be worked on at no other hour.
 - *Warden Ottmar Vell*, at his hour, with the shingle slate under his arm. He wants the fid mended sound and back in
   his hand before the evening tide, and he hands it over at this hour because this is the hour with light in it.
 - *Roald Fisk*, at the bench before he goes under the hull, which is the only hour it can be done. His ask in its
-  full form, as a story about who owns the coat and why it stopped working: he crossed to the town side earlier in
-  the shift and the flood has since closed the water between them, his sister is over there with a doctor who will
+  full form, as a story about who owns the coat and why it stopped working: he has crossed to the town bank to see
+  his sister, ahead of the flood, and The Run is what is going to put the water between them; she is over there with
+  a doctor who will
   not send her out with anybody but the yard, and the crossing at slack is the only one there will be this week.
 - *Sable Kearn*, who is at the bench through every phase including the ones she ought not to be, and who wants the
   packet's hoist up once, in front of the town, at Slack Water. She will not say that. She says the gear wants doing,
@@ -96,8 +102,9 @@ and closed at the bottom, mended so that the stem is sound: closed from the ferr
 condition the warden states and can check for himself rather than take on trust. The coat's wax gone hard along both
 elbows and the left shoulder seam open to the lining, re-laid with Maud's scratch on the new stitching. Carrying the
 fid rewrites `Climb` from slow and audible to quiet, and takes
-the slow deliberate climb away; carrying the coat rewrites `Wade` so his hands stay above the water and stay usable,
-and takes the dive at the yard's foot away for the rest of the shift. The bench's blunt mending knife is off the rack
+the slow deliberate climb away; carrying the coat rewrites `Wade` to the hands-kept form, which supersedes the old form
+that puts both hands under the water, and that old form was how he went under at the yard's foot on the hard at Low
+Water, so going under is what is gone for the rest of the shift. The bench's blunt mending knife is off the rack
 and takes a worn slot of its own, because `Unpick` has exactly one source in this slice and the rack will not unpick
 a mend without it. Counting the knife, that is four reachable objects against four worn slots, and the cap binds
 on the path where nothing has been fused - at the rack by the end of The Run, once the whistle is in hand, and not
@@ -120,9 +127,10 @@ that arrives as a story about an owner, and the last version any of them will ge
 ## Beat 3 - the water coming back (Budget: 11 minutes)
 
 **Place** -- The shed, the bench, the rack, and the causeway, which is now the only ground. The slipway goes under
-within the first quarter of the phase, the flood tops the wall by the middle of it, and across the water the town
-is still there and the crossing is still there and still passable. What is not there at this hour is anybody on the
-far side who will take a kit-runner off it in a run, which is a different thing from the water being impassable.
+within the first quarter of the phase and the flood tops the wall by the middle of it. The town side is not one of the
+two hours it can be reached in: the causeway is walkable out to the far step with water over the coping and running
+faster than a person walks, and going out along it is not a crossing. What is not there at this hour is anybody on the
+far side who will take a kit-runner off the water in a run, so the refusal is about people and not about the water.
 
 **Phase** -- The Run.
 
@@ -130,14 +138,17 @@ far side who will take a kit-runner off it in a run, which is a different thing 
 - *Warden Ottmar Vell*, who wants his fid back for the evening tide. He states it once more, in the flat way he states
   facts, and he does not raise it again after this hour: that is the whole of his line here, and what became of the
   fid is not said out loud by anybody, because the rack at the end of the shift is where the yard reads it.
-- *Roald Fisk*, on the wall, saying what the channel is doing before it has finished doing it. The ask in the flood,
-  in the hour that is his - the water is over the wall by the middle of the phase - and what he is saying is that the
-  crossing is at slack, the water is on the rise, and it is the coat's job and not anybody else's.
-- *Margit Brack*, who comes across the causeway at the end of this phase with objects that have been carried in the
-  cold for an hour, and who hands over the night crew's tin whistle. She wants one note that carries across the water
+- *Roald Fisk*, who is not in this yard. He crossed to the town bank before the flood, The Run has the water between
+  him and the yard, and he is across it for the whole of this phase, saying what the channel is doing before it has
+  finished doing it from the far end of the causeway. The ask in the flood, in the hour that is his - the water is over
+  the wall by the middle of the phase - and what he is saying is that the crossing is at slack, the water is on the
+  rise, and it is the coat's job and not anybody else's. He is on the wrong bank of it to do anything himself.
+- *Margit Brack*, who comes across the causeway at the end of this phase, in the low light off the water at the back of
+  the afternoon, with objects that have been carried in the cold for an hour, and who hands over the night crew's tin
+  whistle. She wants one note that carries across the water
   to call the night crew in off the channel where the sound dies. She is not in this yard at the start of the phase
   and she is not in the yard before the end of it; what she has to say is said after she has crossed, and again at
-  Slack Water, which is her hour.
+  Slack Water, which is her hour, and the blocks and the moorings are worked in the dark of that hour and not this one.
 - *Sable Kearn*, who is present, and brief, and offers nothing further. Her hour was Low Water, the hoist has not
   been given to her, and she does not put the question a second time.
 
@@ -145,9 +156,9 @@ Grissel Toft is not in this beat. She is gone before The Run, which is before he
 
 **What the player mends or earns** -- `Call`, which no other object in the yard grants and which takes nothing away
 because there was nothing to take: put a name out over the channel and be answered back, without going near the edge.
-And the crossing. The kit-runner goes out along the causeway toward the far bank and is refused: the crossing is
-there and it will carry him, and nobody on the far side will take a kit-runner off the water in a run, and the
-refusal is given on the wall in front of the yard. What comes back is nothing - no passenger, no errand done
+And the crossing. The kit-runner goes out along the causeway as far as the far step and is refused: he is in the water
+for it, and nobody on the far side will take a kit-runner off the water in a run, and the refusal is given on the
+wall in front of the yard. What comes back is nothing - no passenger, no errand done
 across - and only how the crossing is made is the shift's own work. That is not measured in this beat, where nothing
 comes back to measure it with. It is measured at Slack Water, where somebody is put down on the yard end of the
 causeway with her feet out of the water, and the shift finds out then what one crossing was worth - which is the
@@ -166,9 +177,10 @@ to the yard end of the same causeway, which is where the shift is read out.
 **Phase** -- Slack Water.
 
 **Who speaks** --
-- *Roald Fisk*, who is on the town bank with his sister and cannot do it himself. He crossed over earlier in the shift
-  and the flood closed the water between them, and the doctor will not send her out with anybody but the yard, so he
-  is at the town end of the causeway with nothing to hold her up on. He wants her across with her feet out of the water,
+- *Roald Fisk*, who is across the water for the whole of The Run and comes back with his sister at this hour, and
+  cannot do it himself. He crossed to the town bank before the flood and has been on the far side since, and the
+  doctor will not send her out with anybody but the yard, so he is at the town end of the causeway with nothing to
+  hold her up on. He wants her across with her feet out of the water,
   and the only way it happens at this hour is if the kit-runner makes it.
 - *Margit Brack*, who has the night crew to call in off the channel and one note to do it with.
 - No one else on the crossing itself. These two are the voices at the two ends of the causeway for the length of the
@@ -215,7 +227,10 @@ warden's arm.
 **What the player mends or earns** -- Nothing at all; this is the beat where the yard reads what the player did. The
 objects are read in the order they were mended, each named for what it was for and what it did for the person who
 owned it first, and each named for what the yard lost when it changed hands. An heirloom is read as one object with
-two patches on it and both names still showing, because the yard knows what was spent and does not hide it. An ask
+two patches on it, and the two names the warden reads on it are the two spent pieces' names - the bone fid and the
+waxed tar-coat - because the yard knows what was spent and does not hide it. A mending mark is not one of those
+names: Maud Bray's scratch is not a name on the object but the record of a hand on a seam, and fusion unpicks the
+seam and spends it with the hand that laid it, so the heirloom carries what was spent and not who mended it. An ask
 that was never brought to the bench is audible as an absence: the name is simply not read. Then the slate. **Signed**
 if the satchel holds at least one heirloom - a build means a decision, and a kit-runner who mended and carried and
 decided nothing is not read out for a signature; the name goes on the slate, the slate is held up, and the week of
@@ -237,8 +252,8 @@ nights the signature buys. No second shift's worth of asks. No object that grant
 are not reachable in this slice: none of `Haul`, `Hook` or `Steady` can be carried this shift, and no recipe is
 exercised for a pair the player cannot reach. Not reachable is not the same as not present: the bent hook is off the
 rack and in a child's hands at The Turning, and the tarred line is on the end of Sable Kearn's own bench at Low
-Water, and where they are kept is not what this section is about. The fifth item that used to be on that list is the
-bench's own blunt mending knife, and it is in the slice: it is at the rack from Low Water, it takes a worn slot, and
+Water, and where they are kept is not what this section is about. The bench's own blunt mending knife is not on that
+list and never was: it is one of the four reachable items, it is at the rack from Low Water, it takes a worn slot, and
 without it there
 is no `Unpick` and no heirloom. The one reachable pair is still the fid and the coat.
 
@@ -266,8 +281,8 @@ are restated here rather than smoothed over, and none of them is fixed by this f
   verb list and the recipe records, not out of a rule's conditions on the satchel. A rule also cannot hide a
   resident, and a resident written off the stage is off the stage rather than switched off: Grissel Toft is not in
   the yard before The Run, Margit Brack is not in it until the end of that phase, and Roald Fisk is across the water
-  for the crossing in Beat 4, and all three of those are said in the beats rather than enforced by the engine
-  refusing to find them. Who is awake is carried entirely by what each of them says. The reading at the ending beat
+  for the whole of The Run and comes back with his sister at Slack Water, and all three of those are said in the beats
+  rather than enforced by the engine refusing to find them. Who is awake is carried entirely by what each of them says. The reading at the ending beat
   is therefore reported by the warden's own line, not by the game explaining the satchel.
 - The transition-payload trick that lets a resident speak on entering a phase works only in the woven player, fires on
   the transition rather than the standing state, and needs `"once": false` written on it deliberately. It is what the

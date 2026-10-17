@@ -19,8 +19,10 @@ of person the bench stops talking about.
 He would never ask for it - asking is how the yard hears you as somebody who wants a thing - so instead he says he wants
 the work, and he is at the bench earlier than he needs to be. The want is checkable and it is not free: the fid in this
 yard belongs to Warden Ottmar Vell, and it either goes back to Ottmar whole, goes onto the rack as somebody's tool, or
-comes out of a fusion with his name nowhere on it. Bryn has not worked out that he is asking for one of three outcomes
-and that he is the only person in the yard for whom all three are the same loss.
+is spent into a fusion, where it is a patch on somebody else's heirloom and the warden reads that heirloom under the
+two names of what it cost - the bone fid and the waxed tar-coat - with nothing on it that is Bryn's to hold. Bryn has
+not worked out that he is asking for one of three outcomes and that he is the only person in the yard for whom all
+three are the same loss.
 
 **How they speak** -- Short declaratives, mostly about handling. He answers a question with the next action rather than
 with the answer. He repeats the last three words somebody said to him when he is unsure, which is how the yard learns he
@@ -76,11 +78,12 @@ he says the hour, and you work out what he meant.
 
 ### Roald Fisk
 
-**Role** -- The diver, and the yard's tide-watcher in the ordinary sense: he stands on the wall at the flood and says what
-the channel is doing before it has finished doing it. He goes under the hull on the hard at Low Water, which is the
-only hour it can be done, and everyone at the bench stops what they are saying when he comes up. He crossed to the
-town side earlier in the shift, before the flood had the channel running, to see his sister; the run then closed the
-water between them and that is where he is when the shift is read out.
+**Role** -- The diver, and the yard's tide-watcher for as long as he is in the yard: he is at the bench, and he goes
+under the hull on the hard at Low Water, which is the only hour it can be done, and everyone at the bench stops what
+they are saying when he comes up. He says what the channel is doing before it has finished doing it, and he crossed
+to the town bank before the flood to see his sister; The Run puts the water between him and the yard, so
+for the whole of that phase he is across it, on the far side, saying what the water is doing from the far end of the
+causeway, and he comes back with her at Slack Water. He is not in the yard for any of The Run.
 
 **Want** -- To bring his sister across from the town at Slack Water without her feet going in the water. She is on the
 far bank with a doctor who will not send her out with anybody but the yard, and the crossing at slack is the only
@@ -127,10 +130,12 @@ her own sentence when she means it twice.
 
 ### Margit Brack
 
-**Role** -- Night crew. Comes across the causeway at the end of The Run and not before it, and is there for Slack Water,
-and the yard is used to that: she has nothing to say at The Turning or at Low Water and does not pretend otherwise.
-She works the blocks and the moorings in the dark, where nobody can watch, and the objects she brings to the bench
-have been carried in the cold for an hour before you see them.
+**Role** -- Night crew. Comes across the causeway at the end of The Run and not before it, in the low light off the
+water at the back of the afternoon, the last daylight there is in the shift; she crosses in daylight and she works in
+Slack Water, which is her own hour and the one the light is gone out of. The yard is used to that: she has nothing
+to say at The Turning or at Low Water and does not pretend otherwise. She works the blocks and the moorings in the
+dark of her own hour, where nobody can watch, and the objects she brings to the bench have been carried in the cold
+for an hour before you see them.
 
 **Want** -- To call the night crew in off the boat at Slack Water with one note that carries across the water. She is not
 calling them early; she is calling them off the channel where the sound dies, and she has done it by hand and by shout
@@ -174,8 +179,9 @@ them leave.
 cut across the left shoulder seam of Roald's waxed tar-coat: she re-laid that seam years ago, it is still her work, and
 it is the only mark in the yard with her name on it that anybody can read from the bench. She wants the seam opened and
 re-laid again with her scratch kept on the new stitching, and she wants it said in advance, at the bench, that fusion
-will take it off, because whoever ends up holding an heirloom of hers will be holding it with no name on it at all.
-The want is checkable against the coat and against nothing else, and it is checkable even though the coat is Roald's
+will take it off, because fusion unpicks the seam and spends the scratch with the hand that laid it: whoever ends up
+holding an heirloom of hers will be holding the two pieces that were spent and no hand of hers on it at all. The want
+is checkable against the coat and against nothing else, and it is checkable even though the coat is Roald's
 and not hers, which is the whole of why she says it out loud in front of people instead of to him.
 
 **What they hand you to mend** -- Nothing of her own, and she makes no attempt to pretend otherwise. The mark is on the
@@ -205,10 +211,13 @@ cuff of that glove is burnt out at the wrist, so she cannot get a whole hand und
 other way to lift it. The want is checkable against the glove and against nothing else in this shift. She checks the
 glove for as long as she is in the yard - The Turning and Low Water - and asks about it without asking about it.
 
-**What they hand you to mend** -- Her heat-glove for the pot. The left cuff is burnt through at the wrist and the cloth
+**What they hand you to mend** -- Her heat-glove for the pot. The left cuff is burnt out at the wrist and the cloth
 inside it has gone to powder, so the glove has about a minute in it and then it is a glove full of pitch ash. It is
-handed over at the pot at The Turning and it is mended back onto her own hand before that hour passes, so it is never
-in a worn slot and never in a satchel.
+handed over at the pot at The Turning and it is mended back onto her own hand before that hour passes. It is the one
+mendable object in the slice that is deliberately not an item record: no id, no `grants`, no `writes`, no worn slot,
+no satchel and no recipe, and it grants no verb and rewrites no verb, because a mend to the yard's own tool is not a
+mend to the kit-runner's build. `bible/systems.md` writes it down in words instead of in a record, and the count of
+what the player can be carrying stays four.
 
 **How they speak** -- Gives instructions she has given a hundred times, at the volume of somebody who has never been in a
 room this quiet. Counts the fire in handfuls. Everything she says has an order in it, even the parts about herself.
