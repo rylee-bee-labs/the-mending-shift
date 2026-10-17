@@ -148,10 +148,10 @@ because there was nothing to take: put a name out over the channel and be answer
 And the crossing. The kit-runner goes out along the causeway toward the far bank and is refused: the crossing is
 there and it will carry him, and nobody on the far side will take a kit-runner off the water in a run, and the
 refusal is given on the wall in front of the yard. What comes back is nothing - no passenger, no errand done
-across - and only how the crossing is made is the shift's own work. With the fid and the coat together the
-crossing is quiet and short and both hands are free. With one cheap verb kept on its own it is made slowly, in full
-view of anybody on the bank, one cheap verb at a time, which is the same crossing at three times the length and
-with an audience.
+across - and only how the crossing is made is the shift's own work. That is not measured in this beat, where nothing
+comes back to measure it with. It is measured at Slack Water, where somebody is put down on the yard end of the
+causeway with her feet out of the water, and the shift finds out then what one crossing was worth - which is the
+whole argument of the next beat.
 
 **System exercised** -- Item-granted verbs under load, including a grant with no rewrite under it. The residents'
 phase-gated dialogue: this is the last version of an ask before the shift is read out, and a resident whose hour it
