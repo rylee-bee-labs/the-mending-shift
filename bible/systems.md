@@ -28,7 +28,10 @@ the superseded form sits inert in the satchel until something is fused, which is
 having a rack.
 
 Two keys, then: `grants` is what the item gives, and `writes` is what it takes the old version of away
-from you. Nothing else in an item record is load-bearing.
+from you. Nothing else in an item record is load-bearing, and this needs saying plainly because several entries
+below describe a cost in prose: where an item is written up as costing a hand, a habit or an arm, that is the yard
+describing what it watches a kit-runner do with the thing. It is not a third kind, it is not read by any rule, and
+it does not remove a capability. Only `grants` and `writes` change what the kit-runner is able to do.
 
 ### The bone fid
 
@@ -51,12 +54,12 @@ with it. The climb is not faster. It is quieter and you can no longer choose the
 
 ### The waxed tar-coat
 
-Sable's coat, waxed inside out by somebody who wades for a living and never got it back.
+Roald Fisk's coat, waxed inside out by a diver and never got back.
 
 ```json
 {
   "id": "tar-coat",
-  "name": "Sable's waxed tar-coat",
+  "name": "Roald Fisk's waxed tar-coat",
   "grants": [{"verb": "Wade", "label": "wade, and keep your hands"}],
   "writes": "Wade"
 }
@@ -66,8 +69,8 @@ It rewrites `Wade` so your hands stay above the water and stay usable. What chan
 thing - a line, a knot, a latch, a person - in the water instead of committing both hands to not
 drowning. What you can no longer do afterwards is go under. The coat is waxed and thick and it is not
 made for submersion, so the dive that used to be available at the yard's foot during Low Water is
-gone for the rest of the shift. It is also the coat that is on somebody else's back all morning, and
-carrying it is the yard knowing where it went.
+gone for the rest of the shift. It is also the coat of the yard's diver, handed over at Low Water with the wax
+gone hard at both elbows, and carrying it is the yard knowing where it went.
 
 ### The tin whistle
 
@@ -102,14 +105,15 @@ too many times.
 
 It grants `Haul`: you can take a load - including a passenger's weight - onto the line and let the line
 carry it, instead of putting it on your shoulder and announcing the crossing by your own two feet.
-Nothing is rewritten. What you cannot do afterwards is haul anything at all with your hands alone, and
-a line that is not anchored is a line that will put you in the channel, so hauling is a thing you do
-twice.
+Nothing is rewritten and nothing is taken away, because the kit-runner had no `Haul` at all to lose. What
+the entry describes is the habit of the thing: hauling comes with the line rather than with the arms, an
+unanchored line will put you in the channel, and a yard that has watched somebody learn that puts the habit
+in front of you twice. None of that is in the record; it is what the yard sees you do with a line.
 
 ### The bend hook
 
-A hook off the rack bent by a hull that wanted to be elsewhere, ground back to an edge by somebody who
-did not have a new one.
+The rack's bend hook - a coat hook with the shank drawn and a bend set in it hard enough that it will not
+open back without a vice.
 
 ```json
 {
@@ -120,8 +124,9 @@ did not have a new one.
 ```
 
 It grants `Hook`: catch and hold a line, a gunwale or a stanchion from a distance you do not have to
-cross. Nothing is rewritten. What you lose by taking it is the hands: a hook is a thing you use one
-handed, and the hand it takes is the same hand the whistle wants when you are calling for somebody.
+cross. Nothing is rewritten and nothing is taken away, because the kit-runner had no `Hook` to lose. What
+the entry describes is the handling: a hook is a thing you use one handed, and the free hand is the one the
+whistle wants when you are calling for somebody. The record does not take a hand; the arranging is yours.
 
 ### The shuttered lamp
 
@@ -137,8 +142,10 @@ The shed's lamp with a shutter on it that only opens halfway, so it lights a boa
 
 It grants `Steady`: hold a position against the run of the water - the causeway when the channel is
 moving fast, a plank with one end loose - long enough for somebody else to cross behind you. Nothing is
-rewritten. What it costs is the whole arm: you cannot steady and hold anything else at the same time,
-and the crossing it makes possible is the crossing on which you are the last thing in the water.
+rewritten and nothing is taken away, because the kit-runner had no `Steady` to lose. What the entry
+describes is what steadying takes: it is an arm's worth of holding for as long as the other person is on
+the plank, which is why the yard watches somebody steady rather than help, and why the crossing it makes
+possible is the crossing on which you are the last thing in the water. None of that is in the record.
 
 ### The bench knife
 
@@ -180,11 +187,14 @@ the yard. If the kit-runner has no `Haul` at all when the bar is mended in, the 
 ### Reachability in the slice
 
 Eight items are specified because eight items with fuse pairs is the scope `pitches/pitch-a.md` set.
-Three of them are reachable in the 30-60 minute slice, per the pitch: the bone fid, the waxed tar-coat
-and the tin whistle. The other five - the line, the hook, the lamp, the knife and the bar - are the
-backlog the recipe table below is written against, and none of them is in the slice until gate 4 says
-so. The slice's three usable objects against four worn slots is the pitch's arithmetic and this file
-does not improve on it.
+Four of them are reachable in the 30-60 minute slice: the bone fid, the waxed tar-coat, the tin whistle
+and the bench knife. The knife is in the slice because fusing is the centrepiece of the pitch and
+`Unpick` has exactly one source, so without the knife in a worn slot there is no fusing at all. That makes
+four carried objects against four worn slots, so the cap
+binds rather than sits idle: a kit-runner at the rack holding the fid, the coat, the whistle and the knife
+is full, and the fifth thing somebody offers is a thing that has to stay on the rack. The other four - the tarred line, the bend hook, the shuttered lamp and the winch
+bar - are the backlog the recipe table below is written against, and they are not in the slice until gate
+4 says so.
 
 ## Mending recipes
 
@@ -195,12 +205,19 @@ slice; a pair not in this table cannot be fused, and there is no second table.
 The rule for what survives, stated once and applied to every pair below:
 
 1. The heirloom's verb list is the union of the two inputs' verb lists.
-2. Where the union holds two forms of one verb, exactly one survives - the one the recipe names - and
-   the other is spent with the piece that carried it.
+2. Every recipe carries a `keeps` key, and it is load-bearing: it names, by input item id, the forms that
+   survive into the heirloom. Where the union holds two forms of one verb, `keeps` names exactly one of the
+   two - the one that survives - and the other form is spent with the piece that carried it. Where the two
+   inputs bring one form of a verb between them, as every pair in the table below does, `keeps` names both
+   inputs and rule 2 spends nothing on its own; the losses listed under the table come from rule 4. The key
+   is on every record so that the heirloom's verb list is readable out of the data and not out of the prose.
 3. The heirloom also carries one further verb, the one thing the two pieces were mended with together.
    This is the pitch's answer to "builds capped rather than deepened", and it is the only thing that
    comes out of the spent mending.
 4. Everything else those two pieces could do is gone. There is no second version of them anywhere.
+
+Every recipe also carries `read_aloud`, the heirloom's name as the bench will say it, because the preview is
+required to show it and there is nowhere else in the record for it to live.
 
 ```json
 {
@@ -208,74 +225,99 @@ The rule for what survives, stated once and applied to every pair below:
     {
       "id": "fuse-fid-coat",
       "inputs": ["bone-fid", "tar-coat"],
+      "keeps": ["bone-fid", "tar-coat"],
       "output": "quiet-coat",
+      "read_aloud": "the quiet coat",
       "say": "Two patches now, one coat, and the wall and the water on the same body."
     },
     {
       "id": "fuse-whistle-line",
       "inputs": ["tin-whistle", "tarred-line"],
+      "keeps": ["tin-whistle", "tarred-line"],
       "output": "thrown-whistle",
+      "read_aloud": "the thrown whistle",
       "say": "Twelve fathoms with a whistle on the end, for calling somebody you cannot reach."
     },
     {
       "id": "fuse-hook-line",
       "inputs": ["bend-hook", "tarred-line"],
+      "keeps": ["bend-hook", "tarred-line"],
       "output": "grapnel-line",
+      "read_aloud": "the grapnel line",
       "say": "Line out and the hook on it, and it holds on the second pull."
     },
     {
       "id": "fuse-lamp-knife",
       "inputs": ["shuttered-lamp", "bench-knife"],
-      "output": "the-dark-mend",
+      "keeps": ["shuttered-lamp", "bench-knife"],
+      "output": "dark-mend",
+      "read_aloud": "the dark mend",
       "say": "Half a lamp and a blunt point, for finding the seam somebody unpicked first."
     },
     {
       "id": "fuse-bar-hook",
       "inputs": ["winch-bar", "bend-hook"],
+      "keeps": ["winch-bar", "bend-hook"],
       "output": "short-haul",
+      "read_aloud": "the short haul",
       "say": "The bar and the hook together, and the pull comes to you instead of going."
     },
     {
       "id": "fuse-knife-line",
       "inputs": ["bench-knife", "tarred-line"],
+      "keeps": ["bench-knife", "tarred-line"],
       "output": "spliced-line",
+      "read_aloud": "the spliced line",
       "say": "Line spliced with a blunt point, and laid out straight for once."
     }
   ]
 }
 ```
 
-What each one keeps and what it destroys:
+What each one keeps and what it destroys, read off the `keeps` key and rule 4:
 
-- **quiet-coat** keeps the quiet `Climb` and the hands-kept `Wade`, and carries `Shelter` - getting
+- **quiet-coat** ("the quiet coat") keeps the quiet `Climb` and the hands-kept `Wade`, and carries `Shelter` - getting
   somebody under you and keeping the weather off both of you. Spent forever: the slow `Climb` and the
   `Wade` that put your hands under the water. After this heirloom exists there is no way to climb the
   wall slowly or to dive at the yard's foot, and the two pieces that knew how are not anywhere.
-- **thrown-whistle** keeps `Call` and `Haul` and carries `Reach` - putting something out to arm's
+- **thrown-whistle** ("the thrown whistle") keeps `Call` and `Haul` and carries `Reach` - putting something out to arm's
   length across a gap that you cannot cross. Spent forever: the line's own anchoring habit and the
   whistle's plainness. It is now a thing you throw rather than a thing you blow, and if you drop it in
   the channel it is on the bottom and not in the yard's rack.
-- **grapnel-line** keeps `Haul` and `Hook` and carries `Anchor` - set something and hold it against the
+- **grapnel-line** ("the grapnel line") keeps `Haul` and `Hook` and carries `Anchor` - set something and hold it against the
   pull. Spent forever: the free hauling without a hook, which is the shape that got you across the
   channel in a hurry and now belongs to neither spent piece.
-- **the-dark-mend** keeps `Steady` and `Unpick` and carries `Trace` - feeling, by hand, where a mend
+- **dark-mend** ("the dark mend") keeps `Steady` and `Unpick` and carries `Trace` - feeling, by hand, where a mend
   was unpicked before you were. Spent forever: the knife's plain work on a whole object and the lamp's
   plain light on a board. Nothing in the world can now be opened in the ordinary way and nothing can
   be properly seen.
-- **short-haul** keeps the bar's planted `Haul` and `Hook` and carries `Draw` - bringing a thing up to
-  where you are standing without letting go of it. Spent forever: the line's hauling and the hook's
-  reach. This is the deliberate bad fusion in the table, kept in the bible on purpose: it is one verb
-  fewer than its inputs looked like, and it is the answer if a player does it knowingly.
-- **spliced-line** keeps `Haul` and `Unpick` and carries `Lay` - laying a length out flat and true with
+- **short-haul** takes the winch bar and the bend hook and nothing else - the tarred line is not an input
+  to this recipe and nothing of the line's hauling is spent by it. It keeps the bar's planted `Haul` and the
+  hook's `Hook` and carries `Draw` - bringing a thing up to where you are standing without letting go of it.
+  Spent forever: no *form* of either verb, because these two inputs never brought a second form of either
+  between them, which is the point. What the fusion does spend is both tools as separate objects - neither
+  the bar nor the hook is anywhere for the rest of the shift - and what it leaves is a heirloom built on the
+  bar's `Haul`, which is anchored to the rack's end of the yard and does not travel. This is the deliberate
+  thin fusion in the table, kept in the bible on purpose: two working tools go in and the pull comes to you
+  instead of going, and a kit-runner who does it knowingly gets a build they cannot take off the rack.
+- **spliced-line** ("the spliced line") keeps `Haul` and `Unpick` and carries `Lay` - laying a length out flat and true with
   no knot in it. Spent forever: the knife as a knife and the line as a loose coil.
 
 ### The preview
 
 Before the player commits, the rack shows the preview and the preview is the only look they get. It
-shows, in this order: the heirloom's name as the bench will say it (`quiet-coat` read aloud as "the
-quiet coat"), the heirloom's full verb list including the two kept forms and the one inherited verb, and
+shows, in this order: the heirloom's name as the bench will say it, taken from the recipe's `read_aloud`
+- `the quiet coat`, `the thrown whistle`, `the grapnel line`, `the dark mend`, `the short haul`,
+`the spliced line`, one for each of the six heirlooms - then the heirloom's full verb list including the two
+kept forms and the one inherited verb, and
 underneath, in plain text and not as a warning icon, exactly what is lost forever - named piece by
 named piece, so that `bone-fid` and `tar-coat` are not merely gone but are *readable as gone*.
+
+One scoping sentence so this is not read as a breach of the world bible's absolutes. The preview is rack
+UI: it is not narration and it is not a resident's line, and it is the one place in the game where the game
+itself names a verb and names a loss. `bible/world.md`'s refusal to explain the mechanic out loud is a rule
+about prose, and this is prose's exception rather than a contradiction of it; the words on the preview are
+still the bench's words and not a rulebook's.
 
 The preview is load-bearing and the reasons are stated here so no later draft quietly drops it. Fusing
 is irreversible: there is no undo verb, no bench action that unpicks a fused piece, and no way to
@@ -288,7 +330,9 @@ lost something the player cannot get back.
 ## Time
 
 One shift is four phases, named as `bible/world.md` names them: **The Turning**, **Low Water**, **The
-Run**, **Slack Water**. The pack's phase keys are those four names; each is a tone sentence, and one
+Run**, **Slack Water**. The pack's phase keys are lowercase slugs of those names - `the-turning`,
+`low-water`, `the-run`, `slack-water` - and the names as written are what the residents say and what the
+player reads; the slug is what a rule payload carries. Each phase is a tone sentence, and one
 line per resident per phase is written against them.
 
 ```json
@@ -316,20 +360,35 @@ would charge on its own.
 forward one phase at a time, in order, from the phase the player is standing in. There is no control
 that carries the kit-runner to Low Water from Slack Water, no button for the hour the player wants, and
 no back. A rail that a player can click freely is fast travel with a tide attached, and the four phases
-stop being four places. This is the reading of `bible/world.md`'s line that there is no way to skip an
-hour and that moving between phases is the yard being different rather than the player paying: the
-rail is the tide, and the tide only goes one way.
+stop being four places. This is `bible/world.md`'s no-fast-travel absolute read against the cost of a phase
+move: the rail is the tide, the tide only goes one way, and the hour it carries you past does not come back.
 
 **`persist: true` - the hour survives a reload.** A kit-runner who has waited out three phases and
 reloads is still standing in the fourth, with the same satchel, the same mend history and the same
 hour. Without that, the four phases are a conversation with a page refresh in the middle of it.
 
-**A rule cannot condition on the standing phase.** `research/A2-feasibility.md` records this as two
-separate gaps. The rule vocabulary's closed set of conditions has no phase key, so no rule can say
-"while it is The Turning"; and the `on:` field, which is the nearest thing to a phase gate, is refused
-by the validator because phases are not things. The one phase-aware lever a pack can actually ship is
-the transition payload, and it is what this pack uses: a rule keyed on entering a phase, whose action
-puts a line in a resident's mouth.
+**A rule conditions on the standing phase.** This is engine work landing for this milestone, and the shape
+it takes is a phase key in the rule's conditions:
+
+```json
+{
+  "id": "the-wall-goes-under-while-he-is-counting",
+  "when": {"phase": "the-run"},
+  "once": false,
+  "then": [{"say": "Roald Fisk", "line": "Two fathoms on the causeway and rising."}]
+}
+```
+
+What that condition does *not* buy is a condition on the kit-runner's own pockets. Nothing in this pack
+conditions on what the player happens to be carrying or on what the rack took, beyond what items, recipes and
+rules already express, so a beat written "if the thing she wanted is what the rack took" can only ever be its
+untoggled default and must not be written.
+
+`research/A2-feasibility.md` records the gap this closes as two separate ones: the rule vocabulary's closed
+set of conditions had no phase key, and the `on:` field, the nearest thing to a phase gate, is refused by
+the validator because phases are not things. Until the phase condition lands, the one phase-aware lever a
+pack can actually ship today is the transition payload: a rule keyed on entering a phase, whose action puts
+a line in a resident's mouth.
 
 ```json
 {
@@ -348,39 +407,48 @@ only works in the woven player: the standalone rails move time and run no rules 
 
 ### Known limits, stated rather than smoothed over
 
-Four things the pack is asking for are not built today, and every one of them is recorded in
-`research/A2-feasibility.md` rather than guessed at here.
+Three things the pack is asking for are not built today, and every one of them is recorded in
+`research/A2-feasibility.md` rather than guessed at here. A fourth - the rest verb and the rail lock - is
+engine work landing for this milestone, and is written up differently because it is not a limit the slice
+has to be balanced around.
 
 1. **The phase does not survive a reload.** Phase is in-memory state in the player; a reload returns
    the kit-runner to the pack's first phase. So `persist: true` above is a request, not a description:
    until it lands, a reload silently rewinds the shift, and the pack must not be balanced around a
    persistence it does not have.
-2. **The phase jump is free, and it stays free until a rest verb exists.** The rail writes the clicked
-   phase straight into state with no cost, no delay and no check, and there is no wait, rest or sleep
-   verb in the bindable action list to charge. What that means for this slice is blunt: **the rail
-   lock in this section is not enforced today.** A player in the current engine can click any of the
-   four phases at any time, which is precisely the thing `rail: locked` is written to forbid. The pack
-   ships in the meantime by making the four phases descriptive rather than metrical - the rack fills on
-   the yard's own schedule, the asks are met at their phase, and skipping an hour loses you the
-   resident whose hour it was, without pretending that a button cost you anything.
-3. **The standalone rails fire no rules.** A phase-changed rule only speaks in the woven player. If the
-   slice is ever demonstrated on a served shell rather than woven, the resident who only speaks at one
-   hour does not speak at all.
-4. **The rest verb does not exist.** Until it does, `rest: true` has no verb to hang on, and the only
-   way to change phase is the rail, which is free.
+2. **The standalone rails fire no rules.** A phase-changed rule only speaks in the woven player, and the
+   same goes for a phase condition. If the slice is ever demonstrated on a served shell rather than woven,
+   the resident who only speaks at one hour does not speak at all.
+3. **No rule conditions on what the player carries or what is on the rack.** The phase condition above is
+   the whole of what the rule layer gains for this milestone. Satchel and rack state beyond what items,
+   recipes and rules already express stays out of the slice, and a beat that reads the player's satchel to
+   decide how a resident talks is a beat that can never fire. The residents' lines in `bible/slice.md`
+   that lean on it are written as their default version instead.
 
-One tension to put in front of Rylee at gate 4 rather than resolve here. `bible/world.md` lists among
-its absolutes that moving between phases is never a cost the player pays for being elsewhere, and this
-section writes a rest that spends an hour and a place at the bench. The draft position is that the cost
-is the yard's and not the economy's - there is no bar and no currency, and the cost is being somewhere
-else - but the two drafts do not say the same thing about a phase move, and only the owner can settle
-which one the game ends up with.
+**The rest verb and the rail lock are landing for this milestone.** `research/A2-feasibility.md` records
+the action list as closed with no wait, rest or sleep verb in it, and the rail as writing the clicked phase
+straight into state with no cost, no delay and no check. That is the state the rest of this section was
+written against and it is what the Rest action, the locked rail and the standing-phase condition above are
+the engine work for. Until they land, the honest position is that `rest: true` has no verb to hang on and
+the rail lock is not enforced: a player in today's engine can still click any of the four phases at any
+time, which is precisely what `rail: locked` forbids. The pack ships in the meantime by paying the hour in
+prose and in the residents' lines rather than in a button - the rack fills on the yard's own schedule, the
+asks are met at their phase, and an hour passed is an hour the kit-runner was not at the bench - and not by
+pretending a free click cost anything.
+
+The tension this section used to carry is closed by decision rather than by draft: `bible/world.md`'s
+no-fast-travel absolute now stands with the cost of a phase move written into it, and the cost is the
+yard's and not the economy's - no bar, no currency, and the price of a phase move is the hour you leave and
+the place at the bench. What is left for Rylee at gate 4 is the persistence gap above and the four
+reachable items, not the shape of a phase move.
 
 ## The shingle ending
 
-The ending beat is at Slack Water, at the bench end of the causeway, with the town's evening work lit
-on the far bank. The shingle is the slate. The kit-runner wants a name on it because a name on it is
-the night roster, and the whole shift has been spent earning a signature rather than a level.
+The ending beat is at Slack Water, at the bench end of the causeway on the yard side, with the warden, the
+bench and the slate, and with the town's evening work lit across the water on the far bank. The shingle is
+read and signed there, in the yard and not in the town; the far bank is where the work it is signing for
+happens, and nothing on this beat crosses to do it. The kit-runner wants a name on it because a name on it
+is the night roster, and the whole shift has been spent earning a signature rather than a level.
 
 **What is read aloud.** The warden stands at the bench and reads the satchel. Not the build, not the
 stats, not the verbs - the objects, in the order they were mended, each one named by what it was for

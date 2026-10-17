@@ -10,8 +10,8 @@ are implied.
 ## The place
 
 Sallowquay Boat-yard is a low stone yard on the wrong side of the flood channel. Everything about its layout is an
-argument with the water. The yard sits a few feet above high water, so at the top of a tide the sea is visible over
-the wall and you can hear it working against the stones; at low water the wall is a cliff and the slipway is a
+argument with the water. The yard sits a few feet above high water, so at the top of a tide the sea comes over the
+wall and you can hear it working against the stones; at low water the wall is a cliff and the slipway is a
 ramp of black rock and weed you can walk down and up without getting wet. There is one shed, one long bench under a
 lean-to, and one rack of hooks by the bench where finished work hangs. Forty-odd people use the yard across a day
 and the number never goes much above a dozen in one place at one hour.
@@ -22,11 +22,16 @@ morning and wrong at noon. The stone is wet for two hours after the flood and dr
 talk about the yard's mood by talking about its stone.
 
 The flood channel is the reason the yard is where it is and the reason the game has a shape. The channel runs
-between the yard and the town proper, and it is crossable at exactly one part of the shift. There is a causeway at
-the yard end of the slipway; the rest of the crossing is stepping and a plank and nerve. The town on the far bank
-is where the shingle is signed, where the evening work is, and where the kit-runner cannot get to at
-flood without a good reason. The channel is not a puzzle and not an obstacle course. It is a wall that is sometimes
-a wall.
+between the yard and the town proper, and it is crossable twice in a shift: dry-footed and easy at Low Water, and
+once more at Slack Water when the run has died out of it. There is a causeway at the yard end of the slipway; the
+rest of the crossing is stepping and a plank and nerve. The town on the far bank holds the evening work, and it is
+the far side of the channel rather than the other half of the yard - nothing there is signed and nothing there is
+read out. The shingle is read and signed at the yard end of the causeway, at the bench, with the warden and the
+slate. The kit-runner can reach the town side at Low Water and again at Slack Water. At The Run the channel is
+running faster than a person walks: the crossing is still there and still passable, and nobody will take a
+kit-runner off the water in it, which is a different thing from the water being impassable and is the whole of why
+the crossing is a Slack Water business. The channel is not a puzzle and not an obstacle course. It is a wall that is
+sometimes a wall.
 
 The bench is the second place that matters. It is long, it is worn, and it belongs to the yard rather than to any
 one person: anybody at the bench may sit, and the person at the bench is whoever got there first that hour. What you
@@ -41,7 +46,9 @@ hook, a length of line that has stopped doing the one thing it was bought to do.
 then you give it back or you keep working on it. Nothing you own at the start is capable of anything, and nothing you
 will ever hold is powerful in the way a weapon is powerful.
 
-A carried object either grants a verb you did not have or rewrites one you did. There is no third kind. A bone fid
+A carried object either grants a verb you did not have or rewrites one you did. There is no third kind. Where an
+object is described as costing a hand, a habit or an arm, that is the yard describing what it watches a kit-runner
+do with the thing, and not a third kind the record keeps track of. A bone fid
 does not make you stronger; it changes how you climb, from slow and announcing yourself to quiet and slow. A waxed
 tar-coat does not add a number; it rewrites wading so that you keep your hands above the water and can still use
 them. A tin whistle grants a verb that has no other source in the yard: to call a name across the channel and be
@@ -49,7 +56,10 @@ heard back. The fiction of an object is therefore never "this is a better X". It
 doing a thing that was already possible, or the first possible way of doing a new thing".
 
 There is no class and no stat sheet. There is an apron, a satchel, and four worn slots. Four is a hard cap and stays
-a hard cap for the whole shift. The four slots are worn: they are stitched into the apron at the front, they take
+a hard cap for the whole shift, and in a shift where four mendable objects are reachable the cap binds: the
+kit-runner who is carrying the fid, the coat, the whistle and the bench knife is carrying everything there is, and
+the next thing offered has to stay on the rack. The four slots are worn: they are stitched into the apron at the
+front, they take
 things sized for a hand, and the fourth has a split in the stitching that a good mend has to go around. The cap is
 deliberately visible. A player should be able to say what they could not carry and know why.
 
@@ -69,13 +79,16 @@ is no axis to grind, only objects, and objects run out.
 
 ## The tide and the hours
 
-One shift is four phases, from the tide at four in the morning to slack water. Each phase is a named hour of the
-tide rather than a named hour of the clock, because the yard's residents do not carry clocks and the pack's phase
-keys are the tide's names. What follows is the intended state of the yard in each phase: who is awake and speaking,
+One shift is four phases, from the tide at four in the morning to slack water in the late afternoon and the first
+of the evening. Each phase is a named hour of the tide rather than a named hour of the clock, because the yard's
+residents do not carry clocks. The pack's phase keys are lowercase slugs of these names - `the-turning`,
+`low-water`, `the-run`, `slack-water` - and the names as written are what the residents say and what the player
+reads. What follows is the intended state of the yard in each phase: who is awake and speaking,
 what is open, and what the water is doing. It is written as a floor, not a script - the seeds for forty speakers in
 four phases are the real work and this is the brief they are written against.
 
-**The Turning (roughly four in the morning).** The tide has just turned and the yard is at full water. The wall is a
+**The Turning (roughly four in the morning).** The tide has just turned at the top of its night water and is
+beginning to fall, so the yard opens at full water with the flood already on its way out. The wall is a
 cliff, the slipway is under, and the causeway is a walkway with water on both sides of it. What is open: the shed,
 the bench, the pitch pot, and the rack. Who is speaking: the earliest hands - whoever sleeps in the yard and the two
 or three who came across the causeway in the dark - and they speak like people who have been awake since three.
@@ -93,26 +106,43 @@ the bench is loudest. Low water is the phase where the fusion choice has to be m
 with enough light in the yard to see what you are about to give up.
 
 **The Run (the flood, late morning into the afternoon).** The water is coming back faster than a person walks. The
-slipway goes under within the first quarter of the phase and the causeway is the only ground. What is open: the shed,
-the bench, the rack, and nothing across the water. Who is speaking: fewer of them, and the ones who stayed. A
-resident who wanted an object you fused cannot offer you anything now and is polite about it, which is worse than
-an argument. This is the phase in which the player crosses out and is refused, and then crosses back with a
-passenger - and a build that kept one cheap verb manages the return slowly, out loud, twice, in front of the yard.
+slipway goes under within the first quarter of the phase and the causeway is the only ground, and by the middle of
+the phase the flood has topped the wall: for the length of the run's high water the sea is over the coping and the
+yard's inner stones are wet. That stretch of the shift is short and it is inside the shift, which is what makes a
+deadline like "the pot down and covered before the water is over the wall" a thing with a deadline to it. What is
+open: the shed, the bench, the rack, and the crossing for anyone with a reason to be on it. Who is speaking: fewer
+of them, and the ones who stayed. Nobody in the yard is unkind at this hour; they are simply too late in the shift
+for an ask to be a story any more, and an hour of flood is an hour in which nothing can be put right. This is the
+phase in which the player crosses out and is refused: the town is there, the crossing is there, the answer is no,
+and the refusal is given on the wall in front of the yard. The return is empty-handed and slow. At the end of this
+phase the night crew comes across the causeway in the dark, Margit Brack among them, with objects that have been
+carried in the cold for an hour before anybody sees them.
 
-**Slack Water (the end of the shift).** The channel stops moving. Water is high but lazy, the current is gone out
-of it, and the crossing is possible in the way it is only possible at this hour. What is open: the yard, the
-causeway, the crossing, and the town on the far side with its evening work lit. Who is speaking: the night crew and
-the people who came to collect. Their version of an ask is different from the version given at The Turning, because
-by now they know what is in the satchel. Slack water is where the shift is read out loud: the warden reads the
+**Slack Water (the late afternoon, going into the evening; the end of the shift).** The channel stops moving. Water
+is high but lazy, the current is gone out of it, and the crossing is possible in the way it is only possible at
+this hour. What is open: the yard, the causeway, the crossing, and the town on the far side with its evening work
+lit. Who is speaking: the night crew, who came across the causeway at the end of The Run - Margit Brack is among
+them, and this is her hour and not the one before - and the people who came to collect. Their version of an ask
+is different from the version given at The Turning, because by now they know what is in the satchel. Slack Water
+is also where the crossing back with a passenger is possible: somebody from the town bank comes over on the
+strength of what the shift mended, and a build that kept one cheap verb brings them across slowly, out loud,
+twice, in front of the yard. Slack water is where the shift
+is read out loud at the yard end of the causeway, at the bench, with the warden and the slate: the warden reads the
 satchel, names the build in the yard's own words, and signs the shingle or defers it on the strength of what is
 actually in it.
 
-Two engine facts constrain this table and the pack must live inside them rather than around them. A rule cannot
-condition on the standing hour, so "the resident who sleeps is simply not there" is not expressible; what is
-expressible is that entering a phase speaks a line in a resident's voice. And there is no verb that waits or rests,
-and moving between phases is free, so the table is not a schedule the player is punished for missing - it is a
-description of a yard that is different from one hour to the next, and the player's relationship to it is choosing
-which hour to be standing in.
+Three engine facts constrain this table and the pack must live inside them rather than around them. The first is
+that a rule can condition on the standing phase: the rule layer is getting a phase condition, so "while it is Low
+Water" is expressible and a beat may say it about the hour the yard is actually in. What is *not* expressible is
+the shape of a kit-runner's own pockets - no rule conditions on what the player happens to be carrying or on what
+the rack took, beyond what items, recipes and rules already say - so a line written "if the thing she wanted is what
+the rack took" can never be anything but its untoggled default and must not be written. The second is that the
+player does not stroll along the tide. There is a rest verb and it advances the shift by exactly one phase; the rail
+is locked, so the phases come in order along the tide, one at a time, only by resting, with no skipping ahead and no
+going back. The third is what a rest costs. It costs the hour - the phase you were standing in does not come back -
+and it costs your place at the bench, because whoever is at the bench in the new hour is the one mending in it.
+There is still no fast travel, no map screen and no way to skip an hour; but a phase move is not free either, and
+this table is a shift the player is inside rather than a schedule they may walk in and out of.
 
 ## Tone
 
@@ -130,7 +160,9 @@ What the prose refuses to do. It refuses the chosen-one frame entirely: no proph
 mysterious old stranger who explains the rules, no sense that the yard was waiting for this particular person. It
 refuses to explain the mechanic out loud. The game never says "this item grants a verb"; residents say what the
 thing is for and what it did for them, and the player works out the rest, because being slightly too late to that
-realisation is the intended feeling. It refuses villainy: there is nobody in this world whose plan the yard's work
+realisation is the intended feeling. That refusal is about prose - narration and residents' lines. The one place
+the game does name a verb and does name a loss is the rack's own preview before a fusion, which is rack UI and not
+a line anybody says, and it says so in the bench's plain words rather than in rules language. It refuses villainy: there is nobody in this world whose plan the yard's work
 would stop, and the three asks in one shift are asks, not a conspiracy. It refuses the player's exceptionalism -
 being the newest kit-runner on the bench is an embarrassment, not a destiny, and the goal is a signature on a
 shingle so you can be rostered on nights. It refuses joke-at-the-town's-expense humour and refuses to let the
@@ -150,8 +182,8 @@ should be pitched separately.
 - It is never true that power arrives as a grind. The first mended piece is deliberately crude - it works, and it
   rattles, and the yard can hear it - and there is no repeatable process that makes the next one better.
 - It is never true that there is fast travel, a map screen, or a way to skip an hour. You can only be somewhere at
-  the hour you are somewhere at, and moving between phases is a description of the yard, never a cost the player
-  pays for being elsewhere.
+  the hour you are somewhere at, and the tide goes one way: the only thing that moves you along it is resting, and
+  resting spends the hour you leave and your place at the bench.
 - It is never true that magic, prophecy, curses, artifacts of power, or any plot device does the work a mechanic
   should do. If a plot needs a hinge, the hinge is an object somebody owned and mended badly.
 - It is never true that damage is a currency or that combat is a solution to anything in the yard.
