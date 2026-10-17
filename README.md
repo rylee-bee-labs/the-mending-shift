@@ -10,3 +10,7 @@ This is a local working repo until Rylee creates `rylee-bee-labs/best-game-ever`
 - `research/A1-verified.md`: the 71 host-verified claims it draws on.
 - `research/A2-feasibility.md`: what VEFR can do today, with file:line citations (pass 2; 6/8 BUILT claims confirmed).
 - `pitches/`: milestone M0 (three pitches for Rylee to pick one).
+
+## Decisions
+
+- 2026-10-16, Rylee (gate 2, picker): **Pitch A, The Mending Shift**. The direction is set; the pitch itself is still a MOCKUP until the bibles and anchors are approved (gates 3 and 4). The hero's name "Pell" is replaced, because it leaked from the synthetic audition bible.
