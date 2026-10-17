@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
-"""M2a acceptance: the Mending Shift skeleton, residents, items and recipes.
+"""M2b acceptance: the Mending Shift pack, its rules, and the three outcomes.
 
 Checks the pack against the four canon bibles in `bible/` (world, cast, systems,
 slice), all of which Rylee approved on 2026-10-17 and which this script never
-edits. It is stdlib-only and holds the line the brief drew: the four phases and
-their slugs, the time block, every speaker seeded in every phase with a voice
-file on disk, full written names only, the eight item records, and the six
-recipes with the fid-and-coat fusion keeping Climb and Wade and carrying
-Shelter.
+edits. It is stdlib-only and holds two lines at once.
+
+M2a's line: the four phases and their slugs, the time block, every speaker
+seeded in every phase with a voice file on disk, full written names only, the
+eight item records, and the six recipes with the fid-and-coat fusion keeping
+Climb and Wade and carrying Shelter.
+
+M2b's line: the five beats of `bible/slice.md` as rules. Every beat has its
+rules, every phase is read by at least one rule, every `say.who` is a speaker
+id, every resident's line for every phase is in the rules, each of the three
+outcomes has a rule whose condition can actually be met, and no rule names an
+item outside the eight canon items and the six heirlooms. The three outcomes
+are also proved to partition the satchel: exactly one of their rules reads any
+one state out.
 
 With VEFR_DIR set it also runs `vefr check` against the pack and requires exit
 0. Without it, it says so and skips. Exit status is 0 only when every check
@@ -59,6 +68,55 @@ ITEMS = {
 
 REACHABLE = ["bone-fid", "tar-coat", "tin-whistle", "bench-knife"]
 BACKLOG = ["tarred-line", "bend-hook", "shuttered-lamp", "winch-bar"]
+
+# M2b. The five beats of bible/slice.md, each with the rules that carry it, and
+# the three outcomes of the shingle, keyed on what the satchel holds at the end.
+# A rule may be named by more than one beat where the bible puts it in two.
+BEATS = {
+    "1 The Turning": [
+        "the-turning-opens",
+        "the-slow-climb-fails-at-the-wall",
+        "the-hands-under-wade-fails-at-the-causeway-foot",
+        "tam-verrow-offers-the-bent-hook",
+        "grissel-toft-hands-over-the-heat-glove",
+        "roald-fisk-hands-over-the-coat",
+    ],
+    "2 Low Water": [
+        "low-water-comes-in",
+        "the-warden-hands-over-the-fid",
+        "the-knife-comes-off-the-rack",
+        "the-repairs-are-laid-at-the-bench",
+        "the-rack-offers-the-preview",
+        "the-rack-fuses-the-fid-and-the-coat",
+    ],
+    "3 The Run": [
+        "the-run-floods",
+        "margit-brack-hands-over-the-whistle",
+        "the-crossing-is-refused-at-the-causeway-head",
+    ],
+    "4 Slack Water, the crossing": [
+        "slack-water-sets",
+        "the-note-carries-across-the-water",
+        "she-comes-across-under-the-quiet-coat",
+        "she-comes-across-one-crossing-at-a-time",
+    ],
+    "5 The shingle": [
+        "the-shingle-is-signed",
+        "the-shingle-is-deferred",
+        "the-shingle-is-refused-empty",
+        "the-shingle-is-refused-over-a-refused-object",
+    ],
+}
+
+OUTCOMES = {
+    "signed": ["the-shingle-is-signed"],
+    "deferred": ["the-shingle-is-deferred"],
+    "refused": ["the-shingle-is-refused-empty",
+                "the-shingle-is-refused-over-a-refused-object"],
+}
+
+# A pack may name at most this many rules (docs/adr/0004-scoped-rules.md).
+RULE_LIMIT = 40
 
 RECIPES = {
     "fuse-fid-coat": (["bone-fid", "tar-coat"], "Shelter", "quiet-coat",
@@ -295,6 +353,219 @@ def check_town(world):
                   "speaker '%s' stands on the solid tile %r" % (key, rows[y][x]))
 
 
+def conditions_of(rule):
+    """Every condition in a rule's `if`, flattened out of `not`/`all-of`."""
+    found = []
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        for key, value in node.items():
+            if key == "all-of":
+                for child in value:
+                    walk(child)
+            elif key == "not":
+                walk(value)
+            else:
+                found.append((key, value))
+
+    walk({"all-of": rule.get("if") or []})
+    return found
+
+
+def reads_phase(rule, slug):
+    """Whether a rule reads a phase: a `phase` condition, or a change into it."""
+    if (rule.get("when") or {}).get("phase-changes", {}).get("to") == slug:
+        return True
+    return any(key == "phase" and value == slug
+               for key, value in conditions_of(rule))
+
+
+def evaluate(condition, items, flags, phase):
+    """One condition against one possible state of the satchel and the shift."""
+    if "has" in condition:
+        return condition["has"] in items
+    if "flag" in condition:
+        return (condition["flag"] in flags) == bool(condition.get("is"))
+    if "phase" in condition:
+        return condition["phase"] == phase
+    if "not" in condition:
+        return not evaluate(condition["not"], items, flags, phase)
+    if "all-of" in condition:
+        return all(evaluate(child, items, flags, phase)
+                   for child in condition["all-of"])
+    raise ValueError("acceptance cannot evaluate the condition %r" % (condition,))
+
+
+def condition_is_reachable(rule):
+    """Whether some satchel, flag set and hour makes a rule's `if` true.
+
+    Only the items, flags and phase the rule itself names can matter, so the
+    search is small: every subset of the named items, every set of the named
+    flags, and each of the four hours.
+    """
+    items, flags = set(), set()
+    for key, value in conditions_of(rule):
+        if key == "has":
+            items.add(value)
+        elif key == "flag":
+            flags.add(value)
+        elif key == "not":
+            for inner_key, inner_value in conditions_of({"if": [value]}):
+                if inner_key == "has":
+                    items.add(inner_value)
+                elif inner_key == "flag":
+                    flags.add(inner_value)
+
+    for mask in range(1 << len(items)):
+        carried = {item for i, item in enumerate(sorted(items)) if mask >> i & 1}
+        for flag_mask in range(1 << len(flags)):
+            standing = {flag for i, flag in enumerate(sorted(flags))
+                        if flag_mask >> i & 1}
+            for slug in PHASE_SLUGS:
+                try:
+                    met = all(evaluate(condition, carried, standing, slug)
+                              for condition in rule.get("if") or [])
+                except ValueError as failure:
+                    FAILURES.append("rule '%s': %s" % (rule.get("id"), failure))
+                    return False
+                if met:
+                    return True
+    return False
+
+
+def check_outcome_partition(by_id):
+    """Exactly one of the shingle's rules reads the slate out of any satchel.
+
+    Only the items, flags and hours the outcome rules themselves name can
+    matter, so every state of those is walked at the hour the shingle is read
+    at: no satchel may read twice, and none may read nothing at all.
+    """
+    rules = [(r, by_id[r]) for ids in OUTCOMES.values() for r in ids if r in by_id]
+    items, flags, hours = set(), set(), set()
+    for _, rule in rules:
+        for key, value in conditions_of(rule):
+            if key == "has":
+                items.add(value)
+            elif key == "flag":
+                flags.add(value)
+            elif key == "phase":
+                hours.add(value)
+            elif key == "not":
+                for inner_key, inner_value in conditions_of({"if": [value]}):
+                    if inner_key == "has":
+                        items.add(inner_value)
+                    elif inner_key == "flag":
+                        flags.add(inner_value)
+    check(len(hours) == 1,
+          "the shingle is read at one hour, but its rules name %r" % sorted(hours))
+
+    for mask in range(1 << len(items)):
+        carried = {item for i, item in enumerate(sorted(items)) if mask >> i & 1}
+        for flag_mask in range(1 << len(flags)):
+            standing = {flag for i, flag in enumerate(sorted(flags))
+                        if flag_mask >> i & 1}
+            for slug in sorted(hours):
+                met = [rule.get("id") for _, rule in rules
+                       if all(evaluate(condition, carried, standing, slug)
+                              for condition in rule.get("if") or [])]
+                if len(met) != 1:
+                    check(False,
+                          "a satchel of %r with flags %r at '%s' is read out by "
+                          "%r; exactly one outcome must read it"
+                          % (sorted(carried), sorted(standing), slug, met))
+                    return
+
+
+def check_rules(world):
+    """The M2b line: the beats, the phases, the speakers, the outcomes."""
+    rules = world.get("rules") or []
+    by_id = {}
+    for rule in rules:
+        rule_id = rule.get("id")
+        check(rule_id and rule_id not in by_id,
+              "a rule has no id, or repeats one: %r" % (rule_id,))
+        if rule_id and rule_id not in by_id:
+            by_id[rule_id] = rule
+        # `once` defaults to true, so a rule that means the opposite must say so.
+        check("once" in rule,
+              "rule '%s' leaves `once` to the default; systems.md asks for it "
+              "to be written deliberately" % rule_id)
+    check(len(rules) <= RULE_LIMIT,
+          "a pack may name at most %d rules, this one names %d"
+          % (RULE_LIMIT, len(rules)))
+
+    for beat, needed in BEATS.items():
+        for rule_id in needed:
+            check(rule_id in by_id, "beat '%s' has no rule: %s" % (beat, rule_id))
+
+    for slug in PHASE_SLUGS:
+        check(any(reads_phase(rule, slug) for rule in rules),
+              "no rule reads the phase '%s'" % slug)
+
+    # Every `say.who` is a speaker id, and every resident's line for every phase
+    # is in the rules, not only in the seeds the weave reads.
+    speakers = world.get("speakers") or {}
+    said = []
+    for rule in rules:
+        for action in rule.get("then") or []:
+            if isinstance(action, dict) and isinstance(action.get("say"), dict):
+                who = action["say"].get("who")
+                said.append((who, action["say"].get("line")))
+                check(who in speakers,
+                      "rule '%s' says a line as %r, which is not a speaker id"
+                      % (rule.get("id"), who))
+    for key, speaker in speakers.items():
+        for slug in PHASE_SLUGS:
+            line = (speaker.get("seeds") or {}).get(slug)
+            check((key, line) in said,
+                  "no rule says %s's line for phase '%s'" % (speaker.get("name"), slug))
+
+    # The three outcomes are keyed on the satchel, each one is reachable, and
+    # they partition it: exactly one reads the slate out of any satchel.
+    for outcome, rule_ids in OUTCOMES.items():
+        reachable = [r for r in rule_ids
+                     if r in by_id and condition_is_reachable(by_id[r])]
+        check(reachable,
+              "outcome '%s' has no rule whose condition can be met" % outcome)
+    check_outcome_partition(by_id)
+
+    # Every flag a rule sets is declared where the engine reads it.
+    declared = set(world.get("flags") or {})
+    for rule in rules:
+        for action in rule.get("then") or []:
+            if isinstance(action, dict) and "set" in action:
+                check(action["set"] in declared,
+                      "rule '%s' sets the undeclared flag '%s'"
+                      % (rule.get("id"), action["set"]))
+    for flag in declared:
+        check(any(isinstance(action, dict) and action.get("set") == flag
+                  for rule in rules for action in rule.get("then") or []),
+              "flag '%s' is declared and never set" % flag)
+
+
+def check_named_items(world):
+    """No rule names an item outside the eight canon items and six heirlooms."""
+    allowed = set(ITEMS) | {output for _, (_, _, output, _, _) in RECIPES.items()}
+    for rule in world.get("rules") or []:
+        named = []
+        for key, value in conditions_of(rule):
+            if key == "has":
+                named.append(value)
+            elif key == "not":
+                named.extend(v for k, v in conditions_of({"if": [value]})
+                             if k == "has")
+        for action in rule.get("then") or []:
+            if isinstance(action, dict):
+                for key in ("give", "takes"):
+                    if key in action:
+                        named.append(action[key])
+        for item_id in named:
+            check(item_id in allowed,
+                  "rule '%s' names '%s', which is not one of the eight canon "
+                  "items or the six heirlooms" % (rule.get("id"), item_id))
+
+
 def run_vefr_check():
     """`vefr check` when VEFR_DIR names an engine checkout; skipped without it."""
     engine = os.environ.get("VEFR_DIR")
@@ -317,6 +588,8 @@ def main():
     check_items(world)
     check_recipes(world)
     check_reachability(world)
+    check_rules(world)
+    check_named_items(world)
     check_town(world)
     run_vefr_check()
 
@@ -325,7 +598,8 @@ def main():
             print("FAIL: %s" % failure)
         print("%d check(s) failed." % len(FAILURES))
         return 1
-    print("M2a acceptance: PASS - 4 phases, 7 speakers, 8 items, 6 recipes.")
+    print("M2b acceptance: PASS - 4 phases, 7 speakers, 8 items, 6 recipes, "
+          "%d rules over 5 beats, 3 outcomes." % len(world.get("rules") or []))
     return 0
 
 
