@@ -10,10 +10,12 @@ are implied.
 ## The place
 
 Sallowquay Boat-yard is a low stone yard on the wrong side of the flood channel. Everything about its layout is an
-argument with the water. The yard sits a few feet above high water, so at the top of a tide the sea comes over the
-wall and you can hear it working against the stones; at low water the wall is a cliff and the slipway is a
-ramp of black rock and weed you can walk down and up without getting wet. There is one shed, one long bench under a
-lean-to, and one rack of hooks by the bench where finished work hangs. Forty-odd people use the yard across a day
+argument with the water. The yard sits between two waters: a few feet above the high water of the night, and a
+few feet below the top of the flood. So the wall is a cliff for most of the shift and is a shoreline only at the
+top of the run, when the sea comes over it and you can hear it working against the stones; at low water the wall
+is a cliff and the slipway is a ramp of black rock and weed you can walk down and up without getting wet. There is
+one shed, one long bench under a lean-to, and one rack of hooks by the bench where finished work hangs.
+Forty-odd people use the yard across a day
 and the number never goes much above a dozen in one place at one hour.
 
 The smell is brine and hot pitch, in that order, and pitch is a working smell rather than an atmosphere: the pot is
@@ -51,15 +53,20 @@ object is described as costing a hand, a habit or an arm, that is the yard descr
 do with the thing, and not a third kind the record keeps track of. A bone fid
 does not make you stronger; it changes how you climb, from slow and announcing yourself to quiet and slow. A waxed
 tar-coat does not add a number; it rewrites wading so that you keep your hands above the water and can still use
-them. A tin whistle grants a verb that has no other source in the yard: to call a name across the channel and be
+them. What the coat's record is about is the hands of whoever is wearing it, and hands that stay above the water
+are hands that can hold somebody else across - one passenger, at a walk, in front of anybody on the bank. The
+one trip with the weather off both of you is the verb the two spent pieces pick up between them at the rack.
+A tin whistle grants a verb that has no other source in the yard: to call a name across the channel and be
 heard back. The fiction of an object is therefore never "this is a better X". It is "this is a different way of
 doing a thing that was already possible, or the first possible way of doing a new thing".
 
 There is no class and no stat sheet. There is an apron, a satchel, and four worn slots. Four is a hard cap and stays
-a hard cap for the whole shift, and in a shift where four mendable objects are reachable the cap binds: the
-kit-runner who is carrying the fid, the coat, the whistle and the bench knife is carrying everything there is, and
-the next thing offered has to stay on the rack. The four slots are worn: they are stitched into the apron at the
-front, they take
+a hard cap for the whole shift, and in a shift where four mendable objects are reachable and nothing has been fused
+the cap binds: the kit-runner who is carrying the fid, the coat, the whistle and the bench knife is carrying
+everything there is, and the next thing offered has to stay on the rack. A fusion spends two of those slots and
+gives one back, so a kit-runner who has fused ends the shift carrying one thing lighter than the same kit-runner
+who has not, and the fourth slot stands empty with the two spent pieces' names on it. The four slots are worn:
+they are stitched into the apron at the front, they take
 things sized for a hand, and the fourth has a split in the stitching that a good mend has to go around. The cap is
 deliberately visible. A player should be able to say what they could not carry and know why.
 
@@ -67,10 +74,12 @@ Mending is authoring, and authoring spends the thing you stitch in. Every object
 history: patches with the original cloth showing at the corners, replaced stitching in a slightly wrong colour, a
 name scratched off where the owner would not have their name on it any more. When you unpick an object to give it a
 capability it did not have, you unpick it into parts. Take two mended pieces to the rack and fuse them and you get
-one heirloom that keeps both of their verbs and loses the rest forever. The fid's climb and the coat's wading can
-coexist; the fid's silence cannot also come along, because it was in the piece you spent. The expressive act is
-subtraction, and it is irreversible inside the shift. What you leave on the rack stays in the yard as somebody's
-tool, and the resident who wanted it does not offer you anything else.
+one heirloom that keeps both of their verbs, picks up the one thing the two were mended with together, and loses
+the rest forever. The fid's quiet climb and the coat's wading can coexist, because they are two forms of two
+different verbs. The slow climb - the one that announced you to the wall - cannot also come along: it is the same
+verb in its other form, and that form is in the piece you spent. The expressive act is subtraction, and it is
+irreversible inside the shift. What you leave on the rack stays in the yard as somebody's tool, and the resident
+who wanted it does not offer you anything else.
 
 The consequence we want the yard to remember: the build is a shape made of other people's cast-offs, and the yard's
 opinion of you is not "you are strong" but "you are carrying somebody's coat and you did not give it back". Progression
@@ -88,18 +97,21 @@ what is open, and what the water is doing. It is written as a floor, not a scrip
 four phases are the real work and this is the brief they are written against.
 
 **The Turning (roughly four in the morning).** The tide has just turned at the top of its night water and is
-beginning to fall, so the yard opens at full water with the flood already on its way out. The wall is a
-cliff, the slipway is under, and the causeway is a walkway with water on both sides of it. What is open: the shed,
-the bench, the pitch pot, and the rack. Who is speaking: the earliest hands - whoever sleeps in the yard and the two
-or three who came across the causeway in the dark - and they speak like people who have been awake since three.
+beginning to fall, so the yard opens with the water high against the foot of the wall and the ebb already on its
+way out. That is the night's high water and not the shift's: the sea does not come over the coping until the flood
+later on. The wall is a cliff, the slipway is under, and the causeway is a walkway with water on both sides of
+it. What is open: the shed,
+the bench, the pitch pot, and the rack. Who is speaking: the earliest hands - whoever sleeps in the yard and the
+two or three who came across the causeway in the dark - and they speak like people who have been awake since three.
 Asks are made here in their blunter form, before anyone has an opinion about you. The night's people are not up;
 somebody is asleep in the shed and a resident who only ever speaks late in the shift has nothing to say to you at
 this hour.
 
 **Low Water (roughly the middle of the morning).** The water is out. The slipway is a walkable ramp, the wall is dry,
 and the stones at the yard's foot are visible for the only time in the shift. What is open: the whole yard floor,
-the underside of the hull on the hard, the boat on the blocks that cannot be worked at any other hour, and the far
-side of the channel, which you could cross right now if you chose to. Who is speaking: the most crowded hour. The
+the underside of the hull lying on the hard, which is the only hour anybody can get under it, the packet boat up
+on the blocks, which is the only hour the gear can go into her, and the far side of the channel, which you could
+cross right now if you chose to. Who is speaking: the most crowded hour. The
 day hands, the resident whose coat is on the rack, the warden with the shingle slate under one arm. This is the
 hour in which an ask arrives as a story about who owns the object and why it stopped working, and the hour in which
 the bench is loudest. Low water is the phase where the fusion choice has to be made, because it is the only phase
@@ -114,9 +126,12 @@ open: the shed, the bench, the rack, and the crossing for anyone with a reason t
 of them, and the ones who stayed. Nobody in the yard is unkind at this hour; they are simply too late in the shift
 for an ask to be a story any more, and an hour of flood is an hour in which nothing can be put right. This is the
 phase in which the player crosses out and is refused: the town is there, the crossing is there, the answer is no,
-and the refusal is given on the wall in front of the yard. The return is empty-handed and slow. At the end of this
-phase the night crew comes across the causeway in the dark, Margit Brack among them, with objects that have been
-carried in the cold for an hour before anybody sees them.
+and the refusal is given on the wall in front of the yard. What comes back is nothing - no passenger, no errand
+done across - and the crossing itself is slow to make, though how it is made is the shift's own work: quiet and
+short, with both hands free, where the fid and the coat are together; slow and in full view of anybody on the
+bank, one cheap verb at a time, where they are not. At the end of this phase the night crew comes across the
+causeway in the dark, Margit Brack among them, with objects that have been carried in the cold for an hour before
+anybody sees them.
 
 **Slack Water (the late afternoon, going into the evening; the end of the shift).** The channel stops moving. Water
 is high but lazy, the current is gone out of it, and the crossing is possible in the way it is only possible at
@@ -124,9 +139,10 @@ this hour. What is open: the yard, the causeway, the crossing, and the town on t
 lit. Who is speaking: the night crew, who came across the causeway at the end of The Run - Margit Brack is among
 them, and this is her hour and not the one before - and the people who came to collect. Their version of an ask
 is different from the version given at The Turning, because by now they know what is in the satchel. Slack Water
-is also where the crossing back with a passenger is possible: somebody from the town bank comes over on the
-strength of what the shift mended, and a build that kept one cheap verb brings them across slowly, out loud,
-twice, in front of the yard. Slack water is where the shift
+is also where the crossing with a passenger is possible: the kit-runner goes out to the town bank, brings
+somebody across on the strength of what the shift mended, and puts her down on the yard side of the causeway,
+where the warden is standing. A build that kept one cheap verb brings her over slowly, out loud, twice, in
+front of the yard. Slack water is where the shift
 is read out loud at the yard end of the causeway, at the bench, with the warden and the slate: the warden reads the
 satchel, names the build in the yard's own words, and signs the shingle or defers it on the strength of what is
 actually in it.
@@ -162,7 +178,8 @@ refuses to explain the mechanic out loud. The game never says "this item grants 
 thing is for and what it did for them, and the player works out the rest, because being slightly too late to that
 realisation is the intended feeling. That refusal is about prose - narration and residents' lines. The one place
 the game does name a verb and does name a loss is the rack's own preview before a fusion, which is rack UI and not
-a line anybody says, and it says so in the bench's plain words rather than in rules language. It refuses villainy: there is nobody in this world whose plan the yard's work
+a line anybody says, and it says so in the bench's plain words rather than in rules language. It is one look at one
+loss, given once, before the piece is spent, which is what the absolute below is about rather than against. It refuses villainy: there is nobody in this world whose plan the yard's work
 would stop, and the three asks in one shift are asks, not a conspiracy. It refuses the player's exceptionalism -
 being the newest kit-runner on the bench is an embarrassment, not a destiny, and the goal is a signature on a
 shingle so you can be rostered on nights. It refuses joke-at-the-town's-expense humour and refuses to let the
@@ -187,10 +204,12 @@ should be pitched separately.
 - It is never true that magic, prophecy, curses, artifacts of power, or any plot device does the work a mechanic
   should do. If a plot needs a hinge, the hinge is an object somebody owned and mended badly.
 - It is never true that damage is a currency or that combat is a solution to anything in the yard.
-- It is never true that a fusion is reversible, previewed for free, or undoable. The yard remembers what you spent.
+- It is never true that a fusion is reversible, previewed twice, or undoable. The yard remembers what you spent.
+  The rack's preview before you commit is the only look you get, and there is no later look at the same loss.
 - It is never true that the world is larger than one yard, one bench, one shed, one channel and one town bank, in
   this slice. Nothing off the far shore is a place the player goes to in a slice about one shift.
 - It is never true that a resident's schedule is a rule the game can enforce by hiding them. Who is awake is
-  carried by what they say, not by whether they can be found.
+  carried by what they say, not by whether they can be found. A resident who is asleep in the shed or gone off the
+  causeway is off the stage, not switched off: nobody is written out of a beat by the engine refusing to find them.
 - It is never true that anything written in this draft is canon. It is a draft until Rylee approves it at gate 4,
   and until then it can be deleted without leaving a hole.

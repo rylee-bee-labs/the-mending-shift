@@ -69,7 +69,12 @@ It rewrites `Wade` so your hands stay above the water and stay usable. What chan
 thing - a line, a knot, a latch, a person - in the water instead of committing both hands to not
 drowning. What you can no longer do afterwards is go under. The coat is waxed and thick and it is not
 made for submersion, so the dive that used to be available at the yard's foot during Low Water is
-gone for the rest of the shift. It is also the coat of the yard's diver, handed over at Low Water with the wax
+gone for the rest of the shift. The record is about the hands of whoever is wearing it, and hands that
+stay above the water are hands that can hold somebody else: that is what answers its owner's want - one
+passenger, held against you, at a walk, in front of anybody on the bank - and the coat as it stands,
+with the wax gone hard and the seam open, will not do it. The single trip with the weather off both of
+you is the inherited verb on the quiet coat.
+The coat is also the coat of the yard's diver, handed over at the end of The Turning with the wax
 gone hard at both elbows, and carrying it is the yard knowing where it went.
 
 ### The tin whistle
@@ -112,13 +117,13 @@ in front of you twice. None of that is in the record; it is what the yard sees y
 
 ### The bend hook
 
-The rack's bend hook - a coat hook with the shank drawn and a bend set in it hard enough that it will not
-open back without a vice.
+Tam Verrow's bent coat hook - he has already taken it off the rack, with the shank drawn about a third
+of the way along and the bend set hard enough that it will not open back without a vice.
 
 ```json
 {
   "id": "bend-hook",
-  "name": "the rack's bend hook",
+  "name": "the bent coat hook",
   "grants": [{"verb": "Hook", "label": "hook, and hold on from where you are standing"}]
 }
 ```
@@ -127,6 +132,8 @@ It grants `Hook`: catch and hold a line, a gunwale or a stanchion from a distanc
 cross. Nothing is rewritten and nothing is taken away, because the kit-runner had no `Hook` to lose. What
 the entry describes is the handling: a hook is a thing you use one handed, and the free hand is the one the
 whistle wants when you are calling for somebody. The record does not take a hand; the arranging is yours.
+The hook's reach is the hook doing `Hook`, and it is not a second verb: `Reach`, capitalised, is the
+inherited verb on the thrown whistle and belongs to that heirloom alone.
 
 ### The shuttered lamp
 
@@ -190,17 +197,23 @@ Eight items are specified because eight items with fuse pairs is the scope `pitc
 Four of them are reachable in the 30-60 minute slice: the bone fid, the waxed tar-coat, the tin whistle
 and the bench knife. The knife is in the slice because fusing is the centrepiece of the pitch and
 `Unpick` has exactly one source, so without the knife in a worn slot there is no fusing at all. That makes
-four carried objects against four worn slots, so the cap
-binds rather than sits idle: a kit-runner at the rack holding the fid, the coat, the whistle and the knife
-is full, and the fifth thing somebody offers is a thing that has to stay on the rack. The other four - the tarred line, the bend hook, the shuttered lamp and the winch
-bar - are the backlog the recipe table below is written against, and they are not in the slice until gate
-4 says so.
+four carried objects against four worn slots, so the cap binds rather than sits idle - on the path where
+nothing is fused. The whistle is handed over at the end of The Run, so the bind is a thing that happens at
+the rack by the end of that phase rather than at Low Water: a kit-runner at the rack holding the fid, the
+coat, the whistle and the knife is full, and the fifth thing somebody offers is a thing that has to stay on
+the rack. A kit-runner who has fused ends the shift carrying one thing lighter, because the fusion spends two
+slots and gives one back, and the slot it gives back has two spent names on it. The other four - the tarred
+line, the bend hook, the shuttered lamp and the winch bar - are the backlog the recipe table below is written
+against, and they are not reachable in this slice until gate 4 says so, which is a different claim from where
+they are kept: the hook is off the rack and in a child's hands at The Turning, and the line is on the end of
+somebody's own bench.
 
 ## Mending recipes
 
-The rack fuses two mended pieces into one heirloom. The heirloom keeps the verbs of both pieces and
-loses, forever, everything else about them. The recipe list is the whole vocabulary of fusing in the
-slice; a pair not in this table cannot be fused, and there is no second table.
+The rack fuses two mended pieces into one heirloom. The heirloom keeps the verbs of both pieces, picks up
+the one verb the two were mended with together, and loses, forever, everything else about them. The recipe
+list is the whole vocabulary of fusing in the slice; a pair not in this table cannot be fused, and there is no
+second table.
 
 The rule for what survives, stated once and applied to every pair below:
 
@@ -317,7 +330,10 @@ One scoping sentence so this is not read as a breach of the world bible's absolu
 UI: it is not narration and it is not a resident's line, and it is the one place in the game where the game
 itself names a verb and names a loss. `bible/world.md`'s refusal to explain the mechanic out loud is a rule
 about prose, and this is prose's exception rather than a contradiction of it; the words on the preview are
-still the bench's words and not a rulebook's.
+still the bench's words and not a rulebook's. The second absolute it has to answer is the one about fusing
+itself - that a fusion is never reversible, previewed twice, or undoable - and it answers it by count: one
+look, once, before the piece is spent, and no second look afterwards. A preview the player may open again
+afterwards would be the breach; this is not that.
 
 The preview is load-bearing and the reasons are stated here so no later draft quietly drops it. Fusing
 is irreversible: there is no undo verb, no bench action that unpicks a fused piece, and no way to
@@ -395,9 +411,13 @@ a line in a resident's mouth.
   "id": "the-watch-comes-round",
   "when": {"phase-changes": {"to": "the-turning"}},
   "once": false,
-  "then": [{"say": "Ottmar", "line": "There you are. Bench is warm enough."}]
+  "then": [{"say": "Warden Ottmar Vell", "line": "There you are. Bench is warm enough."}]
 }
 ```
+
+`say` is the resident's name as `bible/cast.md` writes it, and it is the whole of the lookup: `Roald Fisk`,
+`Warden Ottmar Vell`, and every other resident under their written name, never a short form. A pack that writes
+`"say": "Ottmar"` is asking the engine for a resident the cast bible has not met.
 
 Three limits of that lever belong in this bible because a pack author will hit all three. It fires on
 the *transition*, not on the standing state: enter Slack Water by any route and the line speaks once,
@@ -422,8 +442,11 @@ has to be balanced around.
 3. **No rule conditions on what the player carries or what is on the rack.** The phase condition above is
    the whole of what the rule layer gains for this milestone. Satchel and rack state beyond what items,
    recipes and rules already express stays out of the slice, and a beat that reads the player's satchel to
-   decide how a resident talks is a beat that can never fire. The residents' lines in `bible/slice.md`
-   that lean on it are written as their default version instead.
+   decide how a resident talks is a beat that can never fire. What the limit does *not* touch is what the
+   items and recipes already say: how hard the Slack Water crossing is, and whether the satchel holds an
+   heirloom when the warden reads it, are read out of the heirloom's verb list and not out of a rule's
+   conditions, so a build can decide those without the rule layer ever knowing what is in the satchel. The
+   residents' lines in `bible/slice.md` that lean on it are written as their default version instead.
 
 **The rest verb and the rail lock are landing for this milestone.** `research/A2-feasibility.md` records
 the action list as closed with no wait, rest or sleep verb in it, and the rail as writing the clicked phase
@@ -461,8 +484,9 @@ the yard knows what was spent and does not hide it. Where an ask was never broug
 absence is audible: the name simply is not read, and the warden does not fill the gap with a
 compliment.
 
-**What the shingle signs or defers.** Three outcomes, decided by the state of the satchel rather than
-by anything the player said:
+**What the shingle signs or defers.** Three outcomes, decided by what the satchel holds rather than
+by anything the player said, and read out of the item and recipe records rather than out of a rule's
+conditions on the satchel:
 
 - **Signed.** The satchel holds a build, and a build means at least one heirloom - at least one piece
   that was made by fusion rather than merely carried. A kit-runner who has mended and carried and never
