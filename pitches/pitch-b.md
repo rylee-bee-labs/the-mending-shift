@@ -34,7 +34,7 @@ always on the ledger:
 What is new: the clock is the schedule, not a battle timer. It never runs while you pick a command, so the pressure is
 administrative rather than twitchy, and every decision is a budgeting question about a future you can read in advance.
 
-## 30-60 minute slice
+## The 30-60 minute slice
 
 One night, four yards, one manifest. Vell accepts the ledger at Hask Siding and the window prints; two harmless
 contacts teach the three levers. Then the route starts producing contacts on its own and Vell begins spending —
@@ -97,7 +97,7 @@ author-tracked counter. Availability is MISSING too: a yardmaster who "isn't the
 
 ## Scope and risks
 
-What the `## The 30-60 minute slice` above costs: one world, four phases, one region, six speaking residents at four
+What the slice above costs: one world, four phases, one region, six speaking residents at four
 seeds each, five authored contact archetypes, four yard maps and a ledger panel — pack data plus the existing player
 shell. **No engine change is required as scoped.**
 
