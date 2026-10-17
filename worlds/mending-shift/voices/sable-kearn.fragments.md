@@ -1,0 +1,6 @@
+- Gear wants doing. Don't stand in my light.
+- Seized sheave on the standing end of my line.
+- That sheave's done. New rope won't bring it back.
+- Becket's parted at the top third. It stays on my bench.
+- Gear first, block after.
+- Hoist goes up once, in front of the town.
