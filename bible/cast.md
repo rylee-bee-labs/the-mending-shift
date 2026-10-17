@@ -42,9 +42,13 @@ water is out, the hour the yard empties, and the hour the night crew comes in. E
 looking at the object named under it and asking whether that object, mended, would actually do what the person wants
 before Slack Water.
 
-Five of the seven hand over something at every phase in a different version of the same request. The yard's opinion of
-the kit-runner is carried entirely by what is on the rack at the end, not by anything anybody says to them on the way
-there.
+Four of the seven put an object into a kit-runner's hands in this shift, and none of them does it at every phase:
+Roald's coat at the end of The Turning, the warden's fid at Low Water, the night crew's whistle at the end of The Run,
+and the bench's own blunt mending knife off the rack at Low Water along with the rack. Grissel Toft's heat-glove is
+handed over at The Turning and mended back onto her own hand before that hour passes, so it never takes a worn slot.
+Sable Kearn hands over nothing: the seized block stays on her bench. Maud Bray hands over nothing either, and her
+mark is on the coat Roald brings, which he brings without being asked to. The yard's opinion of the kit-runner is
+carried entirely by what is on the rack at the end, not by anything anybody says to them on the way there.
 
 ### Warden Ottmar Vell
 
@@ -70,11 +74,15 @@ he says the hour, and you work out what he meant.
 
 **Role** -- The diver, and the yard's tide-watcher in the ordinary sense: he stands on the wall at the flood and says what
 the channel is doing before it has finished doing it. He goes under the hull on the hard at Low Water, which is the
-only hour it can be done, and everyone at the bench stops what they are saying when he comes up.
+only hour it can be done, and everyone at the bench stops what they are saying when he comes up. He crossed to the
+town side earlier in the shift, before the flood had the channel running, to see his sister; the run then closed the
+water between them and that is where he is when the shift is read out.
 
 **Want** -- To bring his sister across from the town at Slack Water without her feet going in the water. She is on the
-far bank with a doctor and the crossing at slack is the only one there will be this week. The want is checkable: it is
-the coat's job, and the coat as it stands will not do it.
+far bank with a doctor who will not send her out with anybody but the yard, and the crossing at slack is the only
+one there will be this week. The want is checkable: it is the coat's job, and the coat as it stands will not do it.
+He is on the wrong bank of the water to do it himself, which is why at slack the crossing that matters is somebody
+else's and has to be made on what the shift mended.
 
 **What they hand you to mend** -- His waxed tar-coat. The wax has gone hard in the cloth along both elbows, so it holds
 water there instead of turning it, and the left shoulder seam is open to the lining from the armhole down.
@@ -89,14 +97,19 @@ notice. Talks about the water as though it had told him something and he was onl
 
 **Role** -- Sailmaker and rigger, at the bench through every phase including the ones when she ought not to be. She is
 the yard's busiest speaker and she will let two conversations run at once and keep them apart. She is the person most
-likely to hand you something before you have asked.
+likely to tell you what is wrong with something before you have asked, and the least likely to hand it over: what is
+wrong with a thing is hers to talk about and the thing itself is hers to keep.
 
 **Want** -- To get the packet's hoist up once, in front of the town, at Slack Water. One hoist, seen from the far bank.
-She is not going to say that. What she will say is that the gear wants doing, and then she will hand you the piece that
-does not want doing at all.
+She is not going to say that. What she will say is that the gear wants doing, and then she will put the piece that
+does not want doing at all down on her own bench instead of into your hands, because the gear wants doing before that
+becket parts and the block does not want doing before anything.
 
-**What they hand you to mend** -- A length of tarred line with a block at the standing end. The sheave in the block has
-seized solid and will not run, and the becket below it is split open at the top third so it will part under load.
+**What they hand you to mend** -- Nothing. A length of tarred line with a block at the standing end stays where it is,
+on the end of her own bench, and she describes it to you instead of giving it up. The sheave in the block has seized
+solid and will not run, and the becket below it is split open at the top third so it will part under load; a piece of
+line is not one of the four things this shift can hand to a kit-runner, so what she is handing over is the account
+of it rather than the thing.
 
 **How they speak** -- Describes every object by where it sits rather than what it is called, because she is looking at it
 while she talks to you. Starts cheerful, drops to plain mid-sentence, and does not explain the drop. Repeats the end of
@@ -106,9 +119,10 @@ her own sentence when she means it twice.
 
 ### Margit Brack
 
-**Role** -- Night crew. Comes across the causeway at the end of The Run, and is there for Slack Water and not before, and
-the yard is used to that. She works the blocks and the moorings in the dark, where nobody can watch, and the objects she
-brings to the bench have been carried in the cold for an hour before you see them.
+**Role** -- Night crew. Comes across the causeway at the end of The Run and not before it, and is there for Slack Water,
+and the yard is used to that: she has nothing to say at The Turning or at Low Water and does not pretend otherwise.
+She works the blocks and the moorings in the dark, where nobody can watch, and the objects she brings to the bench
+have been carried in the cold for an hour before you see them.
 
 **Want** -- To call the night crew in off the boat at Slack Water with one note that carries across the water. She is not
 calling them early; she is calling them off the channel where the sound dies, and she has done it by hand and by shout
@@ -148,14 +162,17 @@ has already mended whatever you are holding and will tell you so. She is openly 
 so in a way you could answer, and she is not a villain about it: she has watched four kit-runners be made and two of
 them leave.
 
-**Want** -- For her scratch to still be on the thing she owns after the shift. Her scratch is on the whipping of her own
-line and it is the only mark in the yard with her name on it that anybody can read from the bench. She wants the
-whipping re-laid and her scratch kept, and she wants it known in advance that fusion will take it, because whoever ends
-up holding an heirloom of hers will be holding it with no name on it at all.
+**Want** -- For her scratch to still be on the thing she mended after the shift. Her scratch is her own old mending mark,
+cut across the left shoulder seam of Roald's waxed tar-coat: she re-laid that seam years ago, it is still her work, and
+it is the only mark in the yard with her name on it that anybody can read from the bench. She wants the seam opened and
+re-laid again with her scratch kept on the new stitching, and she wants it said in advance, at the bench, that fusion
+will take it off, because whoever ends up holding an heirloom of hers will be holding it with no name on it at all.
+The want is checkable against the coat and against nothing else, and it is checkable even though the coat is Roald's
+and not hers, which is the whole of why she says it out loud in front of people instead of to him.
 
-**What they hand you to mend** -- Her own tarred line, brought in by her own hand. The whipping at the standing end has
-gone soft and unlaid so it will draw straight out of the eye, and the splice below it is sound and will stay that way
-until somebody borrows the strength out of the whipping.
+**What they hand you to mend** -- Nothing of her own, and she makes no attempt to pretend otherwise. The mark is on the
+coat, which is Roald's and which comes to the bench in his own hand with the seam already open to the lining from the
+armhole down; she is at the bench for the re-lay, and she reads the seam before and after and does not read it kindly.
 
 **How they speak** -- Gives the shortest true answer and does not improve it afterwards. Repeats your words when she is
 disagreeing, so you hear how they sounded in someone else's mouth. Uses the apprentice's name less than she should,
@@ -167,16 +184,27 @@ which she has decided is on purpose and will not discuss.
 
 **Role** -- Keeps the pitch pot: lights it, banks it, and puts it down and covers it. She is in the yard at The Turning
 when the pot is lit and gone before The Run, which is why people call her the smell of the first hour and nothing else.
-She is the only person at the yard who sets the pace by the hour and knows that the rest of the shift is following her.
+She is at the pot for The Turning and she is at the pot again for Low Water, and she is not in the shed, at the rack or
+on the wall when the run comes; everything she wants done is wanted before she goes, not after. She is the only person
+at the yard who sets the pace by the hour and knows that the rest of the shift is following her.
 
 **Want** -- To have the pot down and covered before the water is over the wall, with the collar bone whole, because the
 last time it was lifted hot and short-handed it cracked in the fire and she had to take the whole shift on the bench.
-She is checking the glove all shift and asking about it without asking about it.
+The water is over the wall by the middle of The Run, which is inside the shift and is the deadline she names, and she
+is gone before The Run, so the mending has to be done while she is still standing in the yard. The collar bone is what
+the pot's collar comes out on and it does not come out on a bare hand: it comes out on the heat-glove, and the left
+cuff of that glove is burnt out at the wrist, so she cannot get a whole hand under the bone herself and there is no
+other way to lift it. The want is checkable against the glove and against nothing else in this shift. She checks the
+glove for as long as she is in the yard - The Turning and Low Water - and asks about it without asking about it.
 
 **What they hand you to mend** -- Her heat-glove for the pot. The left cuff is burnt through at the wrist and the cloth
-inside it has gone to powder, so the glove has about a minute in it and then it is a glove full of pitch ash.
+inside it has gone to powder, so the glove has about a minute in it and then it is a glove full of pitch ash. It is
+handed over at the pot at The Turning and it is mended back onto her own hand before that hour passes, so it is never
+in a worn slot and never in a satchel.
 
 **How they speak** -- Gives instructions she has given a hundred times, at the volume of somebody who has never been in a
 room this quiet. Counts the fire in handfuls. Everything she says has an order in it, even the parts about herself.
 
 > "Two more handfuls. Then it's down and it's covered."
+
+> "Cuff's gone. I can't get a whole hand under that bone."
