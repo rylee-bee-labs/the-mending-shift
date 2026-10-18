@@ -1631,7 +1631,17 @@ def derive_world(html_path, pack=None):
     return None
 
 
-def open_page(html_path, headed=False):
+def parse_viewport(text):
+    try:
+        width, height = (int(n) for n in text.lower().split("x"))
+        if width > 0 and height > 0:
+            return {"width": width, "height": height}
+    except ValueError:
+        pass
+    raise SystemExit("--viewport must look like 1440x900, not %r" % text)
+
+
+def open_page(html_path, headed=False, record=None, size=None):
     """The browser: headless Chromium at the phone viewport, on a clean profile.
 
     The context is new every run, so the pack's `time.persist` standing phase
@@ -1649,12 +1659,15 @@ def open_page(html_path, headed=False):
         )
     playwright = sync_playwright().start()
     browser = playwright.chromium.launch(headless=not headed)
-    context = browser.new_context(
+    options = dict(
         viewport=VIEWPORT,
         device_scale_factor=2,
         is_mobile=True,
         has_touch=True,
     )
+    if record:
+        options.update(record_video_dir=str(record), record_video_size=dict(size), viewport=dict(size))
+    context = browser.new_context(**options)
     page = context.new_page()
     page.set_default_timeout(5000)
     return playwright, browser, context, page
@@ -1672,7 +1685,11 @@ def play(args):
     outdir = Path(args.out)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    playwright, browser, context, page = open_page(html_path, args.headed)
+    record = Path(args.record) if args.record else None
+    size = parse_viewport(args.viewport)
+    if record:
+        record.mkdir(parents=True, exist_ok=True)
+    playwright, browser, context, page = open_page(html_path, args.headed, record, size)
     try:
         page.goto(html_path.as_uri())
         game = Game(page, world, outdir, html_path=html_path, world_path=world_path,
@@ -1687,7 +1704,27 @@ def play(args):
         playwright.stop()
 
     print_report(report, path)
-    return report.exit
+    exit_code = report.exit
+    if record:
+        missing = finish_video(record, args.label)
+        exit_code = exit_code or missing
+    return exit_code
+
+
+def finish_video(record, label):
+    """Rename the one .webm Playwright wrote to DIR/<label>.webm. Returns 1 if none."""
+    target = record / (label + ".webm")
+    found = [f for f in sorted(record.glob("*.webm")) if f != target]
+    if not found:
+        if target.is_file():
+            found = [target]
+        else:
+            print("video: none produced")
+            return 1
+    if found[0] != target:
+        found[0].replace(target)
+    print("video: %s (%d bytes)" % (target, target.stat().st_size))
+    return 0
 
 
 def plan(world, try_verbs=False):
@@ -1776,6 +1813,12 @@ def main(argv=None):
     parser.add_argument("--no-talk", action="store_true", help="do not press Interact on residents")
     parser.add_argument("--plan", action="store_true",
                         help="print the walk this run would take and exit, no browser")
+    parser.add_argument("--record", metavar="DIR",
+                        help="record the run as a video into DIR (the walk is unchanged)")
+    parser.add_argument("--viewport", default="1440x900", metavar="WxH",
+                        help="recording size and viewport (default: %(default)s; phone: 390x844)")
+    parser.add_argument("--label", default="run",
+                        help="the recording is renamed DIR/<label>.webm (default: %(default)s)")
     parser.add_argument("--self-test", action="store_true",
                         help="run the driver against a fake page and exit, no browser")
     args = parser.parse_args(argv)
