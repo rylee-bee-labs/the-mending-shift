@@ -296,7 +296,7 @@ def rule_lines(rule):
 # The events a driver that walks, talks and rests can actually produce. The
 # rest of the pack (`mends`, and `uses-verb` unless asked for) is reported as
 # not attempted rather than counted against the run.
-DRIVEN_EVENTS = {"comes-near", "phase-changes"}
+DRIVEN_EVENTS = {"comes-near", "phase-changes", "starts"}
 
 
 def rule_status_kind(rule, try_verbs=False):
@@ -484,15 +484,25 @@ def comes_near_targets(world, phase, held=None, only=None):
     return ordered
 
 
-def stand_tile(world, target, start, tiles, blocked=frozenset()):
-    """Where to stand for `target`. A place is stood on or beside; a speaker
-    is stood beside, with that speaker strictly the nearest (Talk takes the
-    nearest), inside the rule's distance and Talk's reach of two."""
-    if target.kind != "speaker" or target.tile is None:
-        return nearest_reachable(tiles, target.tile, start, blocked)
+def stand_tiles(world, target, start, tiles, blocked=frozenset()):
+    """Every tile worth standing on for `target`, best first, as (tile, path). A place is
+    stood on or beside; a speaker is stood beside, with that speaker strictly the nearest
+    (Talk takes the nearest), inside the rule's distance and Talk's reach of two."""
+    if target.tile is None:
+        return []
+    if target.kind != "speaker":
+        found = []
+        for tile in sorted(tiles, key=lambda t: (manhattan(t, target.tile), t)):
+            if manhattan(tile, target.tile) > 2:
+                break
+            path = bfs(tiles, start, tile, blocked)
+            if path:
+                found.append(((manhattan(tile, target.tile), len(path)), tile, path))
+        found.sort(key=lambda f: f[0])
+        return [(tile, path) for _score, tile, path in found]
     others = [at for sid, at in speaker_coords(world).items() if at != target.tile]
     reach = max(1, min(target.distance, TALK_REACH))
-    best = None
+    found = []
     for tile in sorted(tiles):
         d = manhattan(tile, target.tile)
         if d > reach:
@@ -501,10 +511,17 @@ def stand_tile(world, target, start, tiles, blocked=frozenset()):
         if not path:
             continue
         crowded = any(manhattan(tile, o) <= d for o in others)
-        score = (crowded, d == 0, d, len(path))
-        if best is None or score < best[0]:
-            best = (score, tile, path)
-    return (best[1], best[2]) if best else (None, None)
+        found.append(((crowded, d == 0, d, len(path)), tile, path))
+    found.sort(key=lambda f: f[0])
+    return [(tile, path) for _score, tile, path in found]
+
+
+def stand_tile(world, target, start, tiles, blocked=frozenset()):
+    """Where to stand for `target`: the best of `stand_tiles`, with its path."""
+    if target.kind != "speaker" and target.tile is not None:
+        return nearest_reachable(tiles, target.tile, start, blocked)
+    found = stand_tiles(world, target, start, tiles, blocked)
+    return found[0] if found else (None, None)
 
 
 def plan_phase(world, phase, start, tiles, blocked=frozenset(), only=None):
@@ -619,6 +636,7 @@ def simulate(world, try_verbs=True):
                     flags[action["set"]] = True
 
     phases = [slug for slug, _ in phase_order(world)]
+    fire(lambda w: isinstance(w, dict) and "starts" in w, phases[0] if phases else None)
     for index, phase in enumerate(phases):
         fire(lambda w, p=phase: isinstance(w, dict) and w.get("phase-changes", {}).get("to") == p, phase)
         for op, arg in phase_script(world, phase):
@@ -724,6 +742,7 @@ class Report:
         self.shots = []
         self.missing = []
         self.not_attempted = []
+        self.unreachable = []
         self.exit = 1
 
     def note(self, text):
@@ -740,6 +759,7 @@ class Report:
             "screenshots": self.shots,
             "missing": self.missing,
             "not_attempted": self.not_attempted,
+            "unreachable": self.unreachable,
             "notes": self.notes,
             "exit": self.exit,
         }
@@ -1215,17 +1235,61 @@ class Game:
         self.say("talk to %s: nothing" % who)
         return False
 
+    def verb_places(self, verb):
+        """Where the pack could offer a verb, best guess first: the places the rule's own id
+        names (`...-at-the-wall`), then the residents its lines come from, then the rest."""
+        rules = [r for r in self.world.get("rules", []) if when_kind(r) == "uses-verb"
+                 and (r["when"]["uses-verb"] or {}).get("verb") == verb]
+        words = {w for r in rules for w in re.split(r"[^a-z]+", str(r.get("id", "")).lower()) if len(w) >= 4}
+        places = []
+        for label, tile in poi_coords(self.world).items():
+            if words & {w for w in re.split(r"[^a-z]+", label.lower()) if len(w) >= 4}:
+                places.append((label, tile))
+        speakers = speaker_coords(self.world)
+        for r in rules:
+            for who, _line in rule_lines(r):
+                if who in speakers and (who, speakers[who]) not in places:
+                    places.append((who, speakers[who]))
+        here = self.hero_pos() or self.pos
+        rest = sorted(poi_coords(self.world).items(), key=lambda kv: (manhattan(kv[1], here) if here else 0, kv[0]))
+        places += [kv for kv in rest if kv not in places]
+        return places[:4]
+
+    def has_control(self, verb):
+        word = norm(verb)
+        return any(word in norm(label) for _el, labels in self.controls() for label in labels)
+
     def try_verb(self, verb):
-        """Press a verb's control and VERIFY it: True only when a new line shows."""
+        """Press a verb's control and VERIFY it: True only when a new line shows.
+
+        The action row only offers a verb where the pack offers it, so when no control is
+        showing the hero walks the places the rule names, then the residents it speaks
+        through, and looks again at each. A control that never appears is a content
+        finding: the tiles tried, the controls offered there and the rule's `when` are said."""
         self.tag = "verb %s" % verb
-        before = self.shown()
-        pressed = self.press_labelled([verb]) or self.press_control(
-            ["[data-verb='%s']" % verb, "button:has-text('%s')" % verb])
-        if pressed and self.new_lines(before):
-            return True
-        self.say("verb %s %s; controls offered: %s"
-                 % (verb, "produced nothing" if pressed else "has no control",
-                    ", ".join(self.offered()) or "none readable"))
+        tried = []
+        for place, tile in [("here", None)] + self.verb_places(verb):
+            if tile is not None:
+                stand, _path = nearest_reachable(self.tiles - self.blocked, tile, self.hero_pos() or self.pos)
+                if stand is None:
+                    continue
+                self.walk_to(stand)
+            at = self.hero_pos() or self.pos
+            if self.has_control(verb):
+                before = self.shown()
+                pressed = self.press_labelled([verb]) or self.press_control(
+                    ["[data-verb='%s']" % verb, "button:has-text('%s')" % verb])
+                if pressed and self.new_lines(before):
+                    return True
+                self.say("verb %s produced nothing at %s (%s); controls offered: %s"
+                         % (verb, list(at) if at else "?", place, ", ".join(self.offered()) or "none readable"))
+                return False
+            tried.append((place, list(at) if at else None, self.offered()))
+        rule = next((r for r in self.world.get("rules", []) if when_kind(r) == "uses-verb"
+                     and (r["when"]["uses-verb"] or {}).get("verb") == verb), {})
+        self.say("verb %s has no control at any tile tried: %s; rule %s when %s if %s"
+                 % (verb, "; ".join("%s %s offered %s" % (p, t, ", ".join(o) or "none") for p, t, o in tried),
+                    rule.get("id", "?"), json.dumps(rule.get("when")), json.dumps(rule.get("if"))))
         return False
 
     def held_items(self):
@@ -1294,36 +1358,77 @@ class Game:
             self.say("screenshot %s failed: %s" % (name, exc))
             return None
 
+    def fired_ids(self):
+        """The rule ids the player itself marked fired (empty when it exposes none)."""
+        try:
+            return set(self.page.evaluate("Object.keys(((window.VEFR_RULES_STATE || {}).fired) || {})") or [])
+        except Exception:
+            return set()
+
+    def rule_done(self, rule):
+        """A rule has fired when the player says so, or every line it speaks has been seen."""
+        if rule.get("id") in self.fired_ids():
+            return True
+        return bool(rule_lines(rule)) and not match_rule(rule, self.seen_norm, self.world)[1]
+
+    def step_out(self, target):
+        """Walk to the nearest tile outside the rule's distance, so the walk back in is a
+        new arrival: a place or a resident fires when stepped near, not when stood near."""
+        here = self.hero_pos() or self.pos
+        if here is None or manhattan(here, target.tile) > target.distance:
+            return
+        tiles = self.tiles - self.blocked
+        for tile in sorted(tiles, key=lambda t: (manhattan(t, here), t)):
+            if manhattan(tile, target.tile) > target.distance and bfs(tiles, here, tile):
+                self.walk_to(tile)
+                return
+
     def visit(self, target, again=False):
-        """Walk to a target and, for a resident, Talk and verify it."""
+        """Walk to a target as a fresh arrival and, for a resident, Talk and verify it.
+
+        The hero steps out of range first whenever it is standing in range (not only on a
+        repeat visit), so the walk in is always a new `comes-near` event. When the player
+        marks none of the target's reachable rules fired, it is tried again from another
+        tile, up to three arrivals in all.
+        """
         line = {"who": target.who, "kind": target.kind, "tile": target.tile,
-                "rules": target.rules, "walked": False, "steps": 0, "again": again}
+                "rules": target.rules, "walked": False, "steps": 0, "again": again, "arrivals": 0}
         if target.tile is None:
             line["note"] = "world.json names no coordinates for %r" % target.who
             self.say("%s has no coordinates" % target.who)
             return line
         here = self.hero_pos() or self.pos
         tiles = self.tiles - self.blocked
-        stand, path = stand_tile(self.world, target, here, tiles)
-        if path is None:
+        stands = stand_tiles(self.world, target, here, tiles) if target.kind == "speaker" else None
+        if stands is None:
+            tile, path = nearest_reachable(tiles, target.tile, here)
+            stands = [(tile, path)] if path else []
+        if not stands:
             line["note"] = "no walkable route to %s" % (target.tile,)
             self.say("no route to %r at %s" % (target.who, target.tile))
             return line
-        if again and manhattan(here, target.tile) <= target.distance:
-            # step away first: a place fires when stepped onto, not when stood on
-            far = hero_start(self.world)
-            if far and manhattan(far, target.tile) > target.distance:
-                self.walk_to(far)
-        self.tag = "walk to %s" % target.who
-        before = self.text()
-        at, steps = self.walk_to(stand)
-        line["walked"] = at == stand
-        line["tile_reached"] = list(at) if at else None
-        line["steps"] = steps
-        # a comes-near rule fires on arrival, so give the line its moment
-        self.wait_for_change(before, min(self.step_timeout, 1.5))
-        if target.kind == "speaker":
-            line["talked"] = self.talk_to(target.label(self.world), target.who, target.distance)
+        rules = [r for r in self.world.get("rules", []) if r.get("id") in target.rules]
+        for attempt in range(3):
+            stand = stands[attempt % len(stands)][0]
+            self.step_out(target)
+            self.tag = "walk to %s" % target.who
+            before = self.text()
+            at, steps = self.walk_to(stand)
+            line["walked"] = at == stand
+            line["tile_reached"] = list(at) if at else None
+            line["steps"] += steps
+            line["arrivals"] += 1
+            # a comes-near rule fires on arrival, so give the line its moment
+            self.wait_for_change(before, min(self.step_timeout, 1.5))
+            if target.kind == "speaker":
+                line["talked"] = self.talk_to(target.label(self.world), target.who, target.distance) \
+                    or line.get("talked", False)
+            held = self.held_items()
+            live = [r for r in rules if rule_needs(r) - mend_outputs(self.world) <= held]
+            if not live or any(self.rule_done(r) for r in rules):
+                break
+            self.say("%s: no rule of %s marked fired after arrival %d at %s; arriving again"
+                     % (target.who, ", ".join(target.rules), attempt + 1, list(at) if at else "?"))
         return line
 
     # ---- the run ---------------------------------------------------------
@@ -1386,6 +1491,7 @@ class Game:
         """Match every rule's own lines against everything the game showed."""
         report = self.report
         haystack = self.seen_norm
+        expected = simulate(self.world, self.try_verbs)
         # The player's own record of what ran: the rules engine marks every rule id that fired
         # in window.VEFR_RULES_STATE.fired. It is the authority; matching said lines against the
         # page text is the fallback (a line can be drawn somewhere this script does not read).
@@ -1408,9 +1514,13 @@ class Game:
                 "status": "fired" if (rule.get("id") in engine_fired or matched or total == 0) else "missing",
                 "missing_lines": [line for _who, line in missing][:3],
             }
+            if entry["status"] == "fired" and total and not matched:
+                self.say("the player marked %s fired but none of its lines was seen" % entry["id"])
+                entry["status"] = "missing"
             report.rules.append(entry)
             if kind == "required" and entry["status"] != "fired":
-                report.missing.append(entry["id"])
+                # a rule the pack's own conditions keep out of any one walk is a finding, not a miss
+                (report.missing if entry["id"] in expected else report.unreachable).append(entry["id"])
             if kind == "not-attempted" and entry["status"] != "fired":
                 report.not_attempted.append(entry["id"])
 
@@ -1421,7 +1531,6 @@ class Game:
             "read from %s" % self.hero_probe if self.hero_probe != "unverified"
             else "NOT VERIFIED (no VEFR_HERO_AT and none in the player state), so the walk "
                  "takes every keypress at its word"))
-        expected = simulate(self.world, self.try_verbs)
         for rule in self.world.get("rules", []):
             if rule.get("id") not in expected:
                 self.say("unfireable by this walk: %s: %s" % (rule.get("id"), why_unfireable(self.world, rule)))
@@ -1486,6 +1595,10 @@ def write_report(report, outdir):
     if report.not_attempted:
         add("Not attempted (no walking, resting or talking produces them): "
             + ", ".join("`%s`" % rid for rid in report.not_attempted))
+        add("")
+    if report.unreachable:
+        add("Cannot fire together with a rule that did (the pack's own conditions exclude them): "
+            + ", ".join("`%s`" % rid for rid in report.unreachable))
         add("")
     add("## Notes")
     add("")
@@ -1719,12 +1832,15 @@ class FakePage:
     without a browser. It is a test double, not a game.
     """
 
-    def __init__(self, world, outdir, silent=False, refuses=(), mute=(), deaf=False, mend=False,
-                 verb_at=None, stuck_label=None):
+    def __init__(self, world, outdir, silent=False, refuses=(), mute=(), deaf=False, mend=True,
+                 verb_at=None, stuck_label=None, arrival_only=False):
         self.world = world
         self.items = set()  # what the hero holds, from the rules that gave
+        self.flags = {}  # flags the rules set
+        self.fired = set()  # rule ids that have fired
         self.verb_at = verb_at or {}  # verb -> the tile it is offered beside; absent = everywhere
         self.stuck_label = stuck_label  # a Talk label that names this person whatever the tile
+        self.arrival_only = arrival_only  # residents' comes-near fires on a step into range, never on Talk
         self.deaf = deaf  # Talk answers with nothing at all, even in reach
         self.mend = mend  # the page offers a Mend control
         self.verbs = {}
@@ -1776,7 +1892,15 @@ class FakePage:
         return self.mend and any(set(rc.get("inputs", [])) <= self.items
                                  for rc in mend_recipes(self.world).values())
 
+    def can_fire(self, rule):
+        return all(holds(c, self.phase, self.items, self.flags) for c in rule.get("if", []) or []) \
+            and not (rule.get("once") and rule.get("id") in self.fired)
+
     def fire(self, rule):
+        self.fired.add(rule.get("id"))
+        for action in rule.get("then", []) or []:
+            if isinstance(action, dict) and isinstance(action.get("set"), str):
+                self.flags[action["set"]] = True
         for who, line in rule_lines(rule):
             self.emit(who, line)
         self.items |= rule_gives(rule)
@@ -1842,8 +1966,8 @@ class FakePage:
             return None
         nxt = (self.pos[0] + delta[0], self.pos[1] + delta[1])
         if nxt in self.tiles and nxt not in self.refuses:
-            self.pos = nxt
-            self.arrive()
+            old, self.pos = self.pos, nxt
+            self.arrive(old)
         return None
 
     # -- what the double does when a control is pressed --
@@ -1851,7 +1975,8 @@ class FakePage:
         if not self.silent and line and line not in self.mute:
             self.lines.append((self.phase, "say", line if not who else "%s: %s" % (who, line)))
 
-    def arrive(self):
+    def arrive(self, old=None):
+        old = old or self.pos
         for rule in self.world.get("rules", []):
             when = rule.get("when", {})
             near = when.get("comes-near") if isinstance(when, dict) else None
@@ -1859,13 +1984,21 @@ class FakePage:
                 continue
             tile, kind = resolve_who(self.world, near.get("who", ""))
             # a resident's comes-near only fires from Talk, as in the player
-            if kind == "poi" and manhattan(tile, self.pos) <= int(near.get("distance", 1)):
+            if kind == "poi" and manhattan(tile, self.pos) <= int(near.get("distance", 1)) and self.can_fire(rule):
                 self.fire(rule)
+            elif kind == "speaker" and self.arrival_only and self.can_fire(rule):
+                dist = int(near.get("distance", 1))
+                if manhattan(tile, self.pos) <= dist < manhattan(tile, old):
+                    self.fire(rule)
 
     def activate(self, label):
         if self.silent:
             return None
         if label == "play":
+            for rule in self.world.get("rules", []):
+                when = rule.get("when", {})
+                if isinstance(when, dict) and "starts" in when and self.phase in rule_phases(rule):
+                    self.fire(rule)
             return None
         if label == "rest":
             index = self.phases.index(self.phase)
@@ -1887,6 +2020,11 @@ class FakePage:
                     self.items -= set(recipe["inputs"])
                     self.items.add(recipe.get("output"))
                     self.emit(None, recipe.get("say"))
+                    for rule in self.world.get("rules", []):
+                        when = rule.get("when", {})
+                        if isinstance(when, dict) and (when.get("mends") or {}).get("recipe") == recipe["id"] \
+                                and self.can_fire(rule):
+                            self.fire(rule)
             return None
         if label.startswith("verb:"):
             verb = label.split(":", 1)[1]
@@ -1910,7 +2048,8 @@ class FakePage:
             for rule in self.world.get("rules", []):
                 when = rule.get("when", {})
                 n = when.get("comes-near") if isinstance(when, dict) else None
-                if isinstance(n, dict) and n.get("who") == sid and d <= int(n.get("distance", 1)) \
+                if isinstance(n, dict) and not self.arrival_only and n.get("who") == sid \
+                        and d <= int(n.get("distance", 1)) \
                         and self.phase in rule_phases(rule):
                     self.fire(rule)
             seed = speaker.get("seeds", {}).get(self.phase)
@@ -1985,6 +2124,23 @@ def self_test():
         check("the-turning-opens" in report.missing,
               "the-turning-opens is named as never fired", failures)
 
+    # 3a. residents whose comes-near fires only on a step into range, never on Talk: the
+    # driver has to arrive as a new event, and arrive again for the repeat visit
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, tmp, arrival_only=True, mend=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True, try_verbs=True)
+        report = game.run()
+        write_report(report, tmp)
+        resident_rules = [r["id"] for r in world["rules"] if when_kind(r) == "comes-near"
+                          and resolve_who(world, r["when"]["comes-near"]["who"])[1] == "speaker"]
+        statuses = {r["id"]: r["status"] for r in report.rules}
+        check(statuses.get("roald-fisk-hands-over-the-coat") == "fired", "an arrival-only resident hands over the coat", failures)
+        check(statuses.get("the-warden-hands-over-the-fid") == "fired", "an arrival-only warden hands over the fid", failures)
+        check(statuses.get("margit-brack-hands-over-the-whistle") == "fired", "an arrival-only Margit hands over the whistle", failures)
+        check(statuses.get("the-shingle-is-signed") == "fired",
+              "a repeat visit after the mend is a new arrival and the shingle is signed", failures)
+        check(any(r["status"] == "fired" for r in report.rules if r["id"] in resident_rules), "resident rules fire", failures)
+
     # 3b. a tile the legend calls walkable but the game refuses: the walk must
     # bar that tile (not the hero's own), route around it, and still finish
     first = next((path for slug, _t in phase_order(world)[:1]
@@ -2010,8 +2166,10 @@ def self_test():
     # 3c. a required rule outside The Turning that never fires is named, and
     # the exit code and report.missing agree
     with tempfile.TemporaryDirectory() as tmp:
+        reachable = simulate(world, False)
         later = next((r for r in world["rules"] if rule_status_kind(r) == "required"
-                      and turning not in rule_phases(r)
+                      and turning not in rule_phases(r) and r["id"] in reachable
+                      and not rule_gives(r) and not any(isinstance(a, dict) and "set" in a for a in r.get("then", []))
                       and when_kind(r) == "comes-near"), None)
         if later is None:
             check(False, "a required comes-near rule outside The Turning exists", failures)
@@ -2094,8 +2252,9 @@ def self_test():
         game.enter_play()
         check(game.try_verb("Climb") is True, "a verb that is offered is pressed and shows a line", failures)
         check(game.try_verb("Wade") is False, "a verb that is not offered is not forced", failures)
-        check(any(n.startswith("verb Wade has no control; controls offered: ") and "Talk to" in n
-                  for n in game.report.notes), "an absent verb names the controls offered", failures)
+        check(any(n.startswith("verb Wade has no control at any tile tried: ") and "Talk to" in n
+                  and "the-hands-under-wade-fails-at-the-causeway-foot" in n for n in game.report.notes),
+              "an absent verb names the tiles, the controls offered and the rule", failures)
     with tempfile.TemporaryDirectory() as tmp:  # no fid or coat held: the Mend is not reached
         page = FakePage(world, tmp, mend=True, deaf=True)
         game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True, try_verbs=True)
