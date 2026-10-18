@@ -31,8 +31,10 @@ else in the repo is touched. Everything it writes goes under `--out`
 - `report.md` and `report.json`, the run's report.
 
 **Exit status is 0 only when every phase in `phases` order was reached and every
-beat of The Turning fired.** Anything else exits 1 and prints the expected rules
-that never fired, by rule id.
+required rule, in any phase, fired.** Anything else exits 1, and the report
+lists each required rule that never fired by id (the same list decides the exit).
+A rule counts as fired when each of its lines appears as a whole line of what the
+game showed, with or without its speaker in front.
 
 ### Flags
 
