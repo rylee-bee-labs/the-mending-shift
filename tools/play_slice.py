@@ -1295,7 +1295,11 @@ class Game:
         if debugging:
             hero, fired, probe = self.raw_hero_at(), self.fired_list(), self.page_speaker_probe()
         before = self.shown()
-        pressed = self.press_control(TALK_SELECTORS, TALK_KEYS)
+        # the player's own labelled Talk control first -- the `Talk to <name>` button, the
+        # same one the report names -- and the F key only when the page offers no such
+        # control. A bare key press is not the player's Talk: it does not fire what the
+        # button fires from the same tile.
+        pressed = self.press_labelled(["Talk to %s" % name]) or self.press_control(TALK_SELECTORS, TALK_KEYS)
         if debugging:
             self.page.wait_for_timeout(300)
             self.debug_block(len(self.report.debug) + 1, who, name, label, hero, fired, probe, pressed)
@@ -1937,6 +1941,7 @@ class FakeElement:
         self.text = text  # a control's own words (str or callable); None for the log
 
     def click(self, timeout=None):
+        self.page.presses.append((self.label, "control"))
         self.page.activate(self.label)
 
     def inner_text(self):
@@ -1947,9 +1952,14 @@ class FakeElement:
     def get_attribute(self, name):
         if name == "class":
             return self.attrs.get("class", "")
+        value = self.attrs.get(name)
+        if callable(value):
+            value = value()
+        if value:
+            return value
         if name == "aria-label" and self.text is not None:
             return self.inner_text()
-        return self.attrs.get(name) or None
+        return None
 
 
 class FakePage:
@@ -1963,7 +1973,7 @@ class FakePage:
     """
 
     def __init__(self, world, outdir, silent=False, refuses=(), mute=(), deaf=False, mend=True,
-                 verb_at=None, stuck_label=None, arrival_only=False):
+                 verb_at=None, stuck_label=None, arrival_only=False, talk_aria=False):
         self.world = world
         self.items = set()  # what the hero holds, from the rules that gave
         self.flags = {}  # flags the rules set
@@ -1971,6 +1981,7 @@ class FakePage:
         self.verb_at = verb_at or {}  # verb -> the tile it is offered beside; absent = everywhere
         self.stuck_label = stuck_label  # a Talk label that names this person whatever the tile
         self.arrival_only = arrival_only  # residents' comes-near fires on a step into range, never on Talk
+        self.talk_aria = talk_aria  # a Talk control that names its resident on the aria-label alone
         self.deaf = deaf  # Talk answers with nothing at all, even in reach
         self.mend = mend  # the page offers a Mend control
         self.verbs = {}
@@ -1978,6 +1989,7 @@ class FakePage:
         self.refuses = set(refuses)  # legend-walkable tiles the game will not enter
         self.outdir = Path(outdir)
         self.lines = []
+        self.presses = []  # (what was pressed, "control" for a click, "key" for a key)
         self.silent = silent  # a page that never says anything
         self.tiles = walkable(world)
         self.phases = [slug for slug, _ in phase_order(world)]
@@ -1985,7 +1997,8 @@ class FakePage:
         self.pos = hero_start(world) or (0, 0)
         self.log = FakeElement(self, "log")
         self.rest_el = FakeElement(self, "rest", text="Rest")
-        self.talk_el = FakeElement(self, "talk", text=self.talk_label)
+        self.talk_el = FakeElement(self, "talk", text="" if talk_aria else self.talk_label,
+                                   attrs={"aria-label": self.talk_label})
         self.play_el = FakeElement(self, "play", text="Begin")
         self.mend_el = FakeElement(self, "mend", text="Mend")
         self.rail = {slug: FakeElement(self, "rail:%s" % slug, {"class": "phase-btn"})
@@ -2042,7 +2055,7 @@ class FakePage:
         if selector == "[data-rest]":
             return self.rest_el
         if selector in TALK_SELECTORS:
-            return self.talk_el
+            return None if self.talk_aria else self.talk_el
         if selector in MEND_SELECTORS:
             return self.mend_el if self.mend_offered() else None
         for verb in self.world.get("verbs", []) + ["Call"]:
@@ -2087,8 +2100,10 @@ class FakePage:
 
     def press(self, key):
         if key in ("r", "R"):
+            self.presses.append(("rest", "key"))
             return self.activate("rest")
         if key in ("f", "F"):
+            self.presses.append(("talk", "key"))
             return self.activate("talk")
         deltas = {"ArrowUp": (0, -1), "ArrowDown": (0, 1), "ArrowLeft": (-1, 0), "ArrowRight": (1, 0)}
         delta = deltas.get(key)
@@ -2353,6 +2368,15 @@ def self_test():
               "a talk that first names the wrong speaker steps until it names the right one", failures)
         check(page.pos != start and "Roald Fisk" in page.talk_label(), "the hero stepped to a tile that names Roald", failures)
         check("talk to roald-fisk: line captured" in game.report.notes, "a captured talk is recorded", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # the label is on the aria-label alone: the
+        # control the player reads is pressed, not the F key a selector cannot see
+        page = FakePage(world, tmp, talk_aria=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        check(game.talk_to("Roald Fisk", "roald-fisk") is True,
+              "an aria-labelled Talk is still aimed at by its own label and answers", failures)
+        check(page.presses and page.presses[-1] == ("talk", "control"),
+              "an aria-labelled Talk is pressed by clicking it, not by the F key", failures)
     with tempfile.TemporaryDirectory() as tmp:  # no tile names the target
         page = FakePage(world, tmp, stuck_label="Maud Bray")
         game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
@@ -2397,7 +2421,7 @@ def self_test():
         for line in failures:
             print("  FAIL %s" % line)
         return 1
-    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page, a refused step, a talk by the player's label, a silent talk, verbs offered and absent, the Mend)")
+    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page, a refused step, a talk by the player's label, a silent talk, a talk by the labelled control, verbs offered and absent, the Mend)")
     return 0
 
 
