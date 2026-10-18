@@ -1,10 +1,12 @@
-# The Mending Shift — world pack (M2b)
+# The Mending Shift — world pack (M2c)
 
 A VEFR world pack for one shift at Sallowquay Boat-yard, built from the four
 canon bibles in `bible/` (approved by Rylee 2026-10-17). M2a built the skeleton,
 the residents, the items and the recipes; **M2b builds the five beats of
 `bible/slice.md` as rules**, the fusion at the rack, and the three outcomes of
-the shingle. The bibles are canon and are never edited from here.
+the shingle; **M2c wires the approved anchor art** so the game opens on this
+yard and not on the engine's default cover. The bibles are canon and are never
+edited from here.
 
 ## What is built
 
@@ -25,10 +27,11 @@ the shingle. The bibles are canon and are never edited from here.
   - `town`: Sallowquay Boat-yard, 12 wide by 10 tall. `#` is the yard's wall
     (the boundary and the cliff the kit-runner climbs), `.` yard stone, `s` the
     shed, `b` the long bench under the lean-to, `k` the rack of hooks, `p` the
-    pitch pot, `w` the slipway, `~` the water at the yard's foot. Plain colours
-    only. `pois` names the shed, the rack, the bench, the pitch pot, the
-    slipway, the wall and the causeway head; a POI's label is its id, so a rule
-    can come near it.
+    pitch pot, `w` the slipway, `~` the water at the yard's foot. Each glyph's
+    `base` colour is kept as the fallback, and seven of the eight also name an
+    approved `tile` (see **Art**). `pois` names the shed, the rack, the bench,
+    the pitch pot, the slipway, the wall and the causeway head; a POI's label is
+    its id, so a rule can come near it.
   - `speakers`: the seven residents `bible/cast.md` writes, each under the full
     written name (`Warden Ottmar Vell`, never `Ottmar`), each with a position, a
     `voice_file` and a seed line for **every** phase. A resident who is not in
@@ -142,6 +145,48 @@ way to happen here. The rule is written anyway because it is canon, and its
 condition is satisfiable as data; a later slice that puts the hook in a
 player's bag switches it on without touching the shingle.
 
+## Art
+
+M2c wires the approved anchor art into the pack. **Provenance:
+[`art/anchor-r3/README.md`](../../art/anchor-r3/README.md)** — round 3 (scene +
+the 18-tile set) and round 4 (Bryn), approved by Claude 2026-10-17. Nothing was
+regenerated or repainted for this step; every file below is a byte-for-byte copy
+out of that folder, checked with `cmp`, and `generate_pixel_art_v3.py` /
+`generate_pixel_art_v4.py` reproduce all 25 of them. The pack holds no path out
+to `art/`: a player runs the pack alone.
+
+| Where | What | From |
+|---|---|---|
+| `assets/title.png` | the 12x10-tile anchor scene, wired as `player.title_art` — the file the shared game opens on, in place of the engine's default cover | `option-anchor-scene.png` |
+| `sprites/bryn-{front,back,side}.png` | Bryn Aukett as the hero, three idle views, wired as `player.sprites` | `bryn-{front,back,side}.png` |
+| `tiles/*.png` | the 18-tile set, named for the kinds `generate_pixel_art_v3.py`'s `TILES` list gives them | `tile-00..17.png` |
+
+Seven of the eight town glyphs name a tile; the `tile` value is the stem of a
+file in the pack's `tiles/`, which the engine looks for before its own art:
+
+| Glyph | Tile | What it paints |
+|---|---|---|
+| `#` | `wall` | the yard's wall, the cliff the kit-runner climbs |
+| `.` | `paving` | worn flags, the walkable yard |
+| `s` | `door` | shed planks |
+| `b` | `boards` | bench grain under the lean-to |
+| `k` | `rack` | hooks and rope |
+| `w` | `rock` | black basalt, the slipway |
+| `~` | `water` | the open channel |
+
+**`p`, the pitch pot, has no approved tile**, so it keeps the engine default and
+its own `base` colour, as it did in M2b. The other eleven tiles — the tide foam,
+the four copings and their corners, the cliff return and the five slip edges —
+are copied in and carry names the legend can use when a later slice draws the
+shoreline out of whole cells.
+
+**The walk frames are copied but not declared.** `sprites/bryn-*-walk.png` (the
+three contact poses) sit in the pack, and the doc excerpt this work followed
+names `sprites/` and `player.sprites` for the front, back and side views only —
+it does not spell out a key for a walk frame, so nothing is declared under a key
+that may not be read. They are one `player.sprites` entry away once the format
+is known.
+
 ## How to check it
 
 From the repo root:
@@ -164,6 +209,9 @@ It exits 0 only when every assertion holds, and without `VEFR_DIR` it prints
   of the three outcomes has a rule whose condition can be met; the outcome rules
   agree on one hour and partition the satchel between them; and the pack stays
   under the engine's 40-rule ceiling.
+- **M2c**: `player.title_art` is set and the file is inside the pack, and every
+  sprite and every `tile` the legend names resolves to a file inside the pack —
+  a path that climbs out of the pack, or names a file that is not there, fails.
 
 To run the engine's own gate as well:
 
@@ -198,15 +246,31 @@ label, phase, item, flag and recipe is one the pack declares.
 acceptance with `VEFR_DIR`) is the first place these rules are seen by the
 engine.
 
+M2c's art keys are in the same position, and one is worth a decision on the
+host run. `title_art` and the legend's `tile` come out of
+`docs/guides/world-creation.md` as this brief quoted them. `player.sprites` is
+named by the same brief but its own shape is **not** in the excerpt — the keys
+used here (`front`, `back`, `side`, each a path to a file in `sprites/`) follow
+the guide's `tile` convention, and the host's `vefr check` is what confirms or
+corrects them. Separately: `world.json` still carries M2a's `"surface": "plain"`,
+which this step did not touch because it is not a key the brief names. If that
+key means the engine draws its plain dark look rather than the pack's art, the
+tiles and the hero will not be seen until it is changed or dropped — that is an
+art-direction call, and it is left as it stands.
+
 ## Not built
 
 - **`saves.rules: persist`.** Without it a `once` rule's fired marker is
   forgotten on reload, so a handoff may repeat once after a reload and the
   standing hour is the `time` block's own persistence rather than the rules'.
 - **The rack preview is a `say`, not rack UI** (see above).
-- **Art.** Every tile is a plain colour, the anchors in `art/` are unpainted, and
-  no sprite, voice recording or picture is in this pack. The woven title screen
-  still shows the engine's default cover art.
+- **Art.** The cover, the hero and seven of the eight glyphs are wired (see
+  **Art** above); what is left is the pitch pot `p`, which has no approved tile
+  and still draws as its `base` colour, and the eleven shoreline and slip tiles,
+  which are copied in but not yet named by any glyph. No voice recording is in
+  this pack.
+- **`player.sprites` is declared for the three idle views only**, because the doc
+  excerpt names no key for a walk frame.
 - **The four worn slots and the bag cap** are in the bibles and in the prose;
   the engine has no cap on carried items, so the bind at the rack is said
   rather than enforced.

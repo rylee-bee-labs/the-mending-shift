@@ -3,6 +3,14 @@
  "title": "The Mending Shift",
  "description": "One shift at Sallowquay Boat-yard, along four hours of the tide.",
  "surface": "plain",
+ "player": {
+  "title_art": "assets/title.png",
+  "sprites": {
+   "front": "sprites/bryn-front.png",
+   "back": "sprites/bryn-back.png",
+   "side": "sprites/bryn-side.png"
+  }
+ },
  "phases": {
   "the-turning": "the top of the night's water, the ebb just set off, and the pot being lit.",
   "low-water": "the water out, the whole yard floor walkable, and the loudest hour of the shift.",
@@ -1285,27 +1293,32 @@
     "base": [
      "#2b2f33"
     ],
-    "solid": true
+    "solid": true,
+    "tile": "wall"
    },
    ".": {
     "base": [
      "#3a3a34"
-    ]
+    ],
+    "tile": "paving"
    },
    "s": {
     "base": [
      "#4a3f2f"
-    ]
+    ],
+    "tile": "door"
    },
    "b": {
     "base": [
      "#5a4632"
-    ]
+    ],
+    "tile": "boards"
    },
    "k": {
     "base": [
      "#46403a"
-    ]
+    ],
+    "tile": "rack"
    },
    "p": {
     "base": [
@@ -1315,13 +1328,15 @@
    "w": {
     "base": [
      "#33403a"
-    ]
+    ],
+    "tile": "rock"
    },
    "~": {
     "base": [
      "#23333f"
     ],
-    "solid": true
+    "solid": true,
+    "tile": "water"
    }
   },
   "map": [
