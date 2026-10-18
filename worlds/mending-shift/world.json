@@ -395,9 +395,7 @@
   {
    "id": "the-turning-opens",
    "when": {
-    "phase-changes": {
-     "to": "the-turning"
-    }
+    "starts": {}
    },
    "if": [
     {
