@@ -641,43 +641,28 @@ def resolve_sprite(value, folder="sprites"):
 
 
 def check_hero(world):
-    """M2e: Bryn is the hero, and the engine can find her pixels for it."""
+    """M2e: Bryn is the hero, the way vefr reads it (cli.resolve_sprites): `player.sprites.hero`
+    is a pack-relative picture path, and `sprites/hero.sheet.json` + `hero-sheet.png` give her
+    a walk sheet (down/up/right; the player mirrors right for left)."""
     player = world.get("player") or {}
     sprites = player.get("sprites") or {}
-    check(isinstance(sprites, dict) and sprites,
-          "player.sprites must name the hero's front, back and side")
-
-    for view in HERO_VIEWS:
-        check(view in sprites,
-              "player.sprites has no '%s' view; the hero would never turn" % view)
-
-    for name, value in sorted((sprites or {}).items()):
-        path = resolve_sprite(value)
-        check(path is not None,
-              "sprite '%s' (%r) must be a name or a path inside the pack" % (name, value))
-        if path is not None:
-            check(path.is_file(),
-                  "sprite '%s' resolves to %s, which is not in the pack"
-                  % (name, path.relative_to(PACK)))
-
-    # Every approved walk contact is wired to a frame of its own, so a host run
-    # is what decides whether the engine reads them, never a missing file.
-    for view in HERO_VIEWS:
-        walk = "%s-walk" % view
-        if walk in sprites:
-            path = resolve_sprite(sprites[walk])
-            check(path is not None and path.is_file(),
-                  "walk frame '%s' resolves to %r, which is not in the pack" % (walk, sprites[walk]))
-
-    # A resident may be given art later; when one is, it must be the pack's own.
-    for key, speaker in (world.get("speakers") or {}).items():
-        sprite = (speaker or {}).get("sprite")
-        if sprite is None:
-            continue  # the engine's own figure stands in until that art is approved
-        path = resolve_sprite(sprite)
-        check(path is not None and path.is_file(),
-              "speaker '%s' names the sprite %r, which is not a file in the pack" % (key, sprite))
-
+    hero = sprites.get("hero") if isinstance(sprites, dict) else None
+    check(isinstance(hero, str) and hero.startswith("sprites/"),
+          "player.sprites.hero must be a pack-relative path like 'sprites/hero.png' (got %r)" % (hero,))
+    if isinstance(hero, str):
+        path = (PACK / hero).resolve()
+        check(PACK.resolve() in path.parents and path.is_file(),
+              "player.sprites.hero points at %r, which is not a file inside the pack" % hero)
+    sheet = PACK / "sprites" / "hero.sheet.json"
+    check(sheet.is_file(), "sprites/hero.sheet.json is missing: Bryn would not walk or turn")
+    if sheet.is_file():
+        meta = json.loads(sheet.read_text(encoding="utf-8"))
+        check((PACK / "sprites" / meta.get("image", "")).is_file(),
+              "hero.sheet.json names image %r, which is not in sprites/" % meta.get("image"))
+        dirs = meta.get("directions") or {}
+        for d in ("down", "up", "right"):
+            check(d in dirs and dirs[d].get("idle") and len(dirs[d].get("walk") or []) >= 2,
+                  "hero.sheet.json needs %s idle and at least two walk frames" % d)
 
 def check_art(world):
     """M2c: the pack's own picture, all of it on disk and none of it borrowed.
@@ -746,7 +731,7 @@ def main():
         return 1
     print("M2b acceptance: PASS - 4 phases, 7 speakers, 8 items, 6 recipes, "
           "%d rules over 5 beats, 3 outcomes, art wired from inside the pack, "
-          "hero's front/back/side resolve to files."
+          "Bryn's sprite and walk sheet resolve inside the pack."
           % len(world.get("rules") or []))
     return 0
 

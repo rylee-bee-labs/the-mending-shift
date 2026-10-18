@@ -6,16 +6,7 @@
  "player": {
   "title_art": "assets/title.png",
   "sprites": {
-   "front": "bryn-front",
-   "back": "bryn-back",
-   "side": "bryn-side",
-   "front-walk": "bryn-front-walk",
-   "back-walk": "bryn-back-walk",
-   "side-walk": "bryn-side-walk",
-   "down": "bryn-front",
-   "up": "bryn-back",
-   "left": "bryn-side",
-   "right": "bryn-side"
+   "hero": "sprites/hero.png"
   }
  },
  "phases": {
