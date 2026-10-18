@@ -1170,12 +1170,23 @@ class Game:
                     add(label)
         return " | ".join(texts)
 
-    def aim_talk(self, who, name, distance=1):
-        """Stand where the player's own Talk label names `who`. Returns (ok, label).
+    def offers_talk_to(self, name):
+        """Whether the page is offering the `Talk to <name>` control right now - the control
+        the player reads, which the F key is not. On some tiles the label names a resident
+        while the row offers no such control: pressing F from there reaches a different
+        interact target and the rule stays unfired, so that tile is not a stand."""
+        wanted = "talk to %s" % norm(name)
+        return any(wanted in norm(label) for _el, labels in self.controls() for label in labels)
 
-        The label is the truth: it is read at the current tile first, and when it names
-        someone else (or the speaker is further than the rule's distance) the tiles around
-        the speaker are tried nearest-first, from the real hero tile.
+    def aim_talk(self, who, name, distance=1):
+        """Stand where the player's own `Talk to <name>` control is offered. Returns
+        (ok, label).
+
+        The control is the truth: the tile the hero is on is read first, and when the
+        control is not offered there - or the label names someone else, or the speaker is
+        further than the rule's distance - the other tiles around the speaker are tried
+        nearest-first, from the real hero tile, rather than pressing F where it is not the
+        player's Talk.
         """
         speaker = speaker_coords(self.world).get(who)
         reach = max(1, min(distance, TALK_REACH))
@@ -1184,7 +1195,12 @@ class Game:
         here = self.hero_pos() or self.pos
         if speaker is None or here is None:
             return target in norm(label), label
-        if target in norm(label) and manhattan(here, speaker) <= reach:
+
+        def stands_for_it(at):
+            return target in norm(label) and manhattan(at, speaker) <= reach \
+                and self.offers_talk_to(name)
+
+        if stands_for_it(here):
             return True, label
         others = {at for sid, at in speaker_coords(self.world).items() if sid != who}
         tiles = self.tiles - self.blocked
@@ -1198,7 +1214,7 @@ class Game:
             at, _steps = self.walk_to(tile)
             here = self.hero_pos() or at
             label = self.talk_label()
-            if target in norm(label) and manhattan(here, speaker) <= TALK_REACH:
+            if stands_for_it(here):
                 return True, label
         return False, label
 
@@ -1270,25 +1286,27 @@ class Game:
         self.report.debug.append("\n".join(lines))
 
     def talk_to(self, name, who=None, distance=1):
-        """Talk to a resident and VERIFY it: aim by the player's own Talk label, press,
-        and count it only when a new line naming them (or in their words) turns up."""
+        """Talk to a resident and VERIFY it: aim at the tile offering the player's own
+        `Talk to <name>` control, press, and count it only when a new line naming them (or in
+        their words) turns up."""
         if not self.talk:
             return False
         who = who or name
         self.tag = "talk %s" % name
         ok, label = self.aim_talk(who, name, distance)
         if not ok:
-            self.say("no tile within %d of %s offers a Talk to it (label: %s)"
-                     % (TALK_REACH, who, label or "none"))
+            self.say("no tile within %d of %s offers a Talk to it (label: %s; controls offered: %s)"
+                     % (TALK_REACH, who, label or "none", ", ".join(self.offered()) or "none readable"))
             self.say("talk to %s: nothing" % who)
             return False
         # the label can change between aiming and pressing (the hero moved): read it again at
         # the press, and never press a Talk that names someone else
         label = self.talk_label()
-        if norm(name) not in norm(label):
+        if norm(name) not in norm(label) or not self.offers_talk_to(name):
             ok, label = self.aim_talk(who, name, distance)
             if not ok:
-                self.say("the Talk label named someone else at the press (label: %s)" % (label or "none"))
+                self.say("the Talk label named someone else at the press, or offered no Talk to %s"
+                         " (label: %s)" % (name, label or "none"))
                 self.say("talk to %s: nothing" % who)
                 return False
         debugging = self.debug_talk and len(self.report.debug) < 3
@@ -1297,8 +1315,8 @@ class Game:
         before = self.shown()
         # the player's own labelled Talk control first -- the `Talk to <name>` button, the
         # same one the report names -- and the F key only when the page offers no such
-        # control. A bare key press is not the player's Talk: it does not fire what the
-        # button fires from the same tile.
+        # control. A bare key press is not the player's Talk: from a tile that offers no
+        # labelled control it does not fire what the button fires.
         pressed = self.press_labelled(["Talk to %s" % name]) or self.press_control(TALK_SELECTORS, TALK_KEYS)
         if debugging:
             self.page.wait_for_timeout(300)
@@ -1973,7 +1991,8 @@ class FakePage:
     """
 
     def __init__(self, world, outdir, silent=False, refuses=(), mute=(), deaf=False, mend=True,
-                 verb_at=None, stuck_label=None, arrival_only=False, talk_aria=False):
+                 verb_at=None, stuck_label=None, arrival_only=False, talk_aria=False,
+                 blunt_talk_at=()):
         self.world = world
         self.items = set()  # what the hero holds, from the rules that gave
         self.flags = {}  # flags the rules set
@@ -1982,6 +2001,8 @@ class FakePage:
         self.stuck_label = stuck_label  # a Talk label that names this person whatever the tile
         self.arrival_only = arrival_only  # residents' comes-near fires on a step into range, never on Talk
         self.talk_aria = talk_aria  # a Talk control that names its resident on the aria-label alone
+        self.blunt_talk_at = set(blunt_talk_at)  # tiles where the label names the resident but
+        # the row offers no `Talk to <name>` control, so F reaches some other interact target
         self.deaf = deaf  # Talk answers with nothing at all, even in reach
         self.mend = mend  # the page offers a Mend control
         self.verbs = {}
@@ -1999,6 +2020,8 @@ class FakePage:
         self.rest_el = FakeElement(self, "rest", text="Rest")
         self.talk_el = FakeElement(self, "talk", text="" if talk_aria else self.talk_label,
                                    attrs={"aria-label": self.talk_label})
+        self.talk_btn = FakeElement(self, "talk", text=self.button_talk_text,
+                                    attrs={"aria-label": self.button_talk_text})
         self.play_el = FakeElement(self, "play", text="Begin")
         self.mend_el = FakeElement(self, "mend", text="Mend")
         self.rail = {slug: FakeElement(self, "rail:%s" % slug, {"class": "phase-btn"})
@@ -2026,6 +2049,14 @@ class FakePage:
         if not near or near[0] > TALK_REACH:
             return "Talk F"
         return "Talk to %s F" % self.world["speakers"][near[1]].get("name", near[1])
+
+    def button_talk_text(self):
+        """What the row's Talk control says on these tiles: on a blunt tile it names nobody,
+        even though the label the player reads still does - the measured shape, where the F
+        key reaches some other interact target and the rule stays unfired."""
+        if self.pos in self.blunt_talk_at:
+            return "Talk F"
+        return self.talk_label()
 
     def verb_offered(self, verb):
         at = self.verb_at.get(verb)
@@ -2055,7 +2086,9 @@ class FakePage:
         if selector == "[data-rest]":
             return self.rest_el
         if selector in TALK_SELECTORS:
-            return None if self.talk_aria else self.talk_el
+            if self.talk_aria or self.pos in self.blunt_talk_at:
+                return None  # a tile with no labelled Talk offers no Talk control to press
+            return self.talk_btn
         if selector in MEND_SELECTORS:
             return self.mend_el if self.mend_offered() else None
         for verb in self.world.get("verbs", []) + ["Call"]:
@@ -2076,7 +2109,7 @@ class FakePage:
 
     def query_selector_all(self, selector):
         if selector == "button":
-            row = [self.talk_el, self.rest_el]
+            row = [self.talk_btn, self.rest_el]
             row += [self.verb_el(v) for v in self.world.get("verbs", []) + ["Call"] if self.verb_offered(v)]
             return row + ([self.mend_el] if self.mend_offered() else [])
         if selector == "#talk":
@@ -2104,6 +2137,8 @@ class FakePage:
             return self.activate("rest")
         if key in ("f", "F"):
             self.presses.append(("talk", "key"))
+            if self.pos in self.blunt_talk_at:
+                return None  # the F key is not the player's Talk here: it reaches something else
             return self.activate("talk")
         deltas = {"ArrowUp": (0, -1), "ArrowDown": (0, 1), "ArrowLeft": (-1, 0), "ArrowRight": (1, 0)}
         delta = deltas.get(key)
@@ -2384,6 +2419,32 @@ def self_test():
         check(game.talk_to("Roald Fisk", "roald-fisk") is False, "a Talk that never names the target returns False", failures)
         check(any(n.startswith("no tile within 2 of roald-fisk offers a Talk to it (label: Talk to Maud Bray")
                   for n in game.report.notes), "the missing tile is named with the label it gave", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # a stand whose label names the resident but
+        # offers no Talk control: step off it rather than press F, which fires nothing there
+        page = FakePage(world, tmp, blunt_talk_at=[(5, 5)])
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        page.pos = (5, 5)
+        check("Roald Fisk" in page.talk_label() and page.button_talk_text() == "Talk F",
+              "the blunt tile labels Roald but offers no Talk to him", failures)
+        check(game.talk_to("Roald Fisk", "roald-fisk") is True,
+              "a stand with no labelled Talk is stepped off to a stand that has one", failures)
+        check(page.pos != (5, 5) and "Roald Fisk" in page.talk_label(),
+              "the hero left the tile that offers no Talk control", failures)
+        check(not any(p == ("talk", "key") for p in page.presses),
+              "the F key is never pressed where the page offers no Talk control", failures)
+        check(any(p == ("talk", "control") for p in page.presses),
+              "the talk that answers is the player's own labelled control", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # every stand is blunt: nothing is pressed at all
+        stands = {t for t in walkable(world) - {at for sid, at in speaker_coords(world).items() if sid != "roald-fisk"}
+                  if 0 < manhattan(t, speaker_coords(world)["roald-fisk"]) <= TALK_REACH}
+        page = FakePage(world, tmp, blunt_talk_at=stands)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        check(game.talk_to("Roald Fisk", "roald-fisk") is False,
+              "no stand offering the control means no talk, not an F key press", failures)
+        check(not any(p == ("talk", "key") for p in page.presses),
+              "the F key is not pressed once every stand is tried", failures)
 
     # 7. verbs and the Mend are verified by their effect
     for offered in (True, False):
@@ -2421,7 +2482,7 @@ def self_test():
         for line in failures:
             print("  FAIL %s" % line)
         return 1
-    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page, a refused step, a talk by the player's label, a silent talk, a talk by the labelled control, verbs offered and absent, the Mend)")
+    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page, a refused step, a talk by the player's label, a silent talk, a talk by the labelled control, a stand that offers no Talk control, verbs offered and absent, the Mend)")
     return 0
 
 
