@@ -1,0 +1,1409 @@
+#!/usr/bin/env python3
+"""M2d: play the Mending Shift slice, all four phases, with a real browser.
+
+`vefr probe` fires events but cannot advance the watch, so nothing after the
+first hour has ever been seen playing. This driver opens a woven pack HTML in
+headless Chromium at a 390x844 phone viewport and plays it the way a person
+would: walk to every place and every resident that the rules for the standing
+phase name in `comes-near`, talk where there is something to talk to, and press
+Rest to turn the hour. It writes a screenshot per phase and every line the game
+showed into `out/play/`, and it finishes with a report naming the phases
+reached, the rule ids whose lines appeared, and the expected rules that never
+fired.
+
+Exit status is 0 only when every phase in `world.json`'s `phases` order was
+reached and every beat of The Turning fired.
+
+Read-only toward the game: it plays and it reports, and it never writes to
+`world.json` or to anything else in the pack. Everything it writes goes under
+`--out` (default `out/play/`).
+
+Nothing about the DOM is assumed. The woven player is a build artefact, so the
+driver probes for the log region, the phase rail, the Rest control and the
+hero's position, and the report says which probe answered. `--plan` prints the
+walk without a browser, and `--self-test` runs the whole driver against a fake
+page, so the logic is tested on a machine that has no Playwright at all.
+
+Usage:
+
+    uv run vefr weave --pool 2 --pack mending-shift        # -> dist/mending-shift-<date>.html
+    python3 tools/play_slice.py dist/mending-shift-2026-10-17.html
+    python3 tools/play_slice.py --plan dist/mending-shift-2026-10-17.html
+    python3 tools/play_slice.py --self-test                # no browser needed
+"""
+
+import argparse
+import json
+import re
+import sys
+import tempfile
+import time
+import unicodedata
+from dataclasses import dataclass, field
+from pathlib import Path
+
+# ---- what the driver assumes, and probes for when it cannot confirm it ----
+
+VIEWPORT = {"width": 390, "height": 844}  # the phone the slice is built for
+POLL_MS = 40  # how often a bounded wait re-reads the page; not a random sleep
+STEP_TIMEOUT = 4.0  # seconds a single step may take before it is called done
+SETTLE_TIMEOUT = 0.6  # seconds a move with no expected text change may settle
+ENTER_TIMEOUT = 25.0  # seconds to get from the woven title screen into play
+TALK_TIMEOUT = 2.5  # a resident's own line is best effort, never a gate
+
+# The dialogue/log region. The first selector that exists in the page wins; if
+# none do, the driver falls back to the page text diff after each step, which
+# is what the brief asks for.
+LOG_SELECTORS = [
+    "#log",
+    "[data-log]",
+    "#say",
+    "#say-line",
+    "#message",
+    "#messages",
+    "#talk",
+    "#dialogue",
+    "#narration",
+    "#transcript",
+    ".log",
+    "[data-region='log']",
+    "[data-region='dialogue']",
+]
+
+# Out of the title screen and into play. Tried in order; first click wins.
+ENTER_SELECTORS = [
+    "button:has-text('Enter the yard')",
+    "button:has-text('Play offline')",
+    "button:has-text('Play')",
+    "button:has-text('Begin')",
+    "button:has-text('Start')",
+    "button:has-text('Continue')",
+    "button:has-text('Enter')",
+    "[data-action='play']",
+    "[data-enter='play']",
+    "#play",
+    "#start",
+]
+
+# Rest. The pack declares `time.rest: true`, so the woven player puts a Rest
+# verb in the action row with `data-rest` on it, and the R key does the same.
+REST_SELECTORS = ["[data-rest]", "button[data-rest]", "#rest"]
+
+# Talking. The nearest resident gets an entry in the action row; the speaker's
+# own name is the fallback handle.
+TALK_SELECTORS = [
+    "button:has-text('Talk')",
+    "button:has-text('Speak')",
+    "button:has-text('Interact')",
+    "button:has-text('Say')",
+    "[data-talk]",
+    "[data-interact]",
+]
+
+# Movement. The first candidate per direction is the player's own arrow key;
+# the rest are tried only when the driver can watch the hero and see it move.
+DIRECTIONS = [
+    ((0, -1), "up", ["ArrowUp", "w", "Up"]),
+    ((0, 1), "down", ["ArrowDown", "s", "Down"]),
+    ((-1, 0), "left", ["ArrowLeft", "a", "Left"]),
+    ((1, 0), "right", ["ArrowRight", "d", "Right"]),
+]
+
+REST_KEYS = ["r", "R"]
+
+# State probes. The woven player keeps its state in a top-level `STATE`
+# (web/player/parts/090-first-run-setup-vs-play.js:54), which a classic <script>
+# puts in scope for every other script in the page, so `evaluate` can read it by
+# name. The later probes are for a build that hangs the same state off window.
+STATE_EXPRS = [
+    "JSON.stringify((typeof STATE !== 'undefined' && STATE && STATE.get) ? STATE.get() : null)",
+    "JSON.stringify(typeof VEFR_STATE !== 'undefined' ? VEFR_STATE : null)",
+    "JSON.stringify(window.VEFR_STATE || null)",
+    "JSON.stringify(window.VEFR_PLAYER_STATE || null)",
+]
+
+# Keys that hold a tile pair. A hero position is only believed when one of
+# these names is found, never when a bare number turns up.
+POSITION_KEYS = ["hero", "player", "avatar", "position", "pos", "at", "tile", "xy"]
+
+ACTIVE_CLASSES = {
+    "active", "is-active", "current", "is-current", "selected", "is-selected",
+    "on", "now", "standing", "phase-active",
+}
+
+
+# ---------------------------------------------------------------- pure logic
+
+
+def norm(text):
+    """Fold a line to a comparable form: case, quotes, dashes, whitespace."""
+    if text is None:
+        return ""
+    text = unicodedata.normalize("NFKC", str(text))
+    text = (
+        text.replace("‘", "'")
+        .replace("’", "'")
+        .replace("“", '"')
+        .replace("”", '"')
+        .replace("—", "-")
+        .replace("–", "-")
+    )
+    text = re.sub(r"\s+", " ", text)
+    return text.strip().lower()
+
+
+def load_world(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def phase_order(world):
+    """The pack's phases, in the order `world.json` writes them."""
+    return [(slug, tone) for slug, tone in world.get("phases", {}).items()]
+
+
+def walkable(world):
+    """The tiles a person can stand on, from the town's legend and map.
+
+    Phase-dependent water is not modelled: `town.water_by_phase` gives the
+    standing water level per hour, and `~` is solid water, so a yard that
+    actually flooded would need its own pass per phase. The Mending Shift
+    writes "low" for all four of its hours, which is why one static pass is
+    enough here - and why the driver says so rather than pretending.
+    """
+    town = world.get("town", {})
+    legend = town.get("legend", {})
+    tiles = set()
+    for y, row in enumerate(town.get("map", [])):
+        for x, ch in enumerate(row):
+            if ch == "#" or legend.get(ch, {}).get("solid"):
+                continue
+            tiles.add((x, y))
+    return tiles
+
+
+def hero_start(world):
+    start = world.get("town", {}).get("hero_start")
+    return (int(start[0]), int(start[1])) if start else None
+
+
+def poi_coords(world):
+    """`town.pois` is {"x,y": "label"}, and a POI's label is its id."""
+    out = {}
+    for key, label in world.get("town", {}).get("pois", {}).items():
+        try:
+            x, y = (int(part) for part in str(key).split(","))
+        except (TypeError, ValueError):
+            continue
+        out[label] = (x, y)
+    return out
+
+
+def speaker_coords(world):
+    out = {}
+    for sid, spec in world.get("speakers", {}).items():
+        at = spec.get("at")
+        if at and len(at) == 2:
+            out[sid] = (int(at[0]), int(at[1]))
+    return out
+
+
+def resolve_who(world, who):
+    """A `comes-near` `who` is a speaker id or a POI label. Anything else is
+    unresolvable, and the report names it rather than guessing."""
+    speakers = speaker_coords(world)
+    if who in speakers:
+        return speakers[who], "speaker"
+    pois = poi_coords(world)
+    if who in pois:
+        return pois[who], "poi"
+    return None, "unresolved"
+
+
+def phases_in(cond, acc=None):
+    """Every phase slug named anywhere in a rule's `if`, through `all-of`."""
+    acc = set() if acc is None else acc
+    if isinstance(cond, dict):
+        if isinstance(cond.get("phase"), str):
+            acc.add(cond["phase"])
+        for value in cond.values():
+            phases_in(value, acc)
+    elif isinstance(cond, list):
+        for value in cond:
+            phases_in(value, acc)
+    return acc
+
+
+def when_kind(rule):
+    when = rule.get("when", {})
+    if not isinstance(when, dict) or len(when) != 1:
+        return "mixed"
+    return next(iter(when))
+
+
+def rule_phases(rule):
+    """The hours a rule is about: the phases it tests, plus the phase it fires
+    on if it is keyed on the transition."""
+    found = set()
+    for cond in rule.get("if", []) or []:
+        phases_in(cond, found)
+    when = rule.get("when", {})
+    if isinstance(when, dict) and isinstance(when.get("phase-changes"), dict):
+        to = when["phase-changes"].get("to")
+        if isinstance(to, str):
+            found.add(to)
+    return found
+
+
+def rule_lines(rule):
+    """Every line a rule speaks, in order, as (who or None, line)."""
+    lines = []
+    for action in rule.get("then", []) or []:
+        say = action.get("say") if isinstance(action, dict) else None
+        if isinstance(say, str) and say.strip():
+            lines.append((None, say))
+        elif isinstance(say, dict):
+            line = say.get("line") or say.get("text") or ""
+            if line.strip():
+                lines.append((say.get("who"), line))
+    return lines
+
+
+# The events a driver that walks, talks and rests can actually produce. The
+# rest of the pack (`mends`, and `uses-verb` unless asked for) is reported as
+# not attempted rather than counted against the run.
+DRIVEN_EVENTS = {"comes-near", "phase-changes"}
+
+
+def rule_status_kind(rule, try_verbs=False):
+    kind = when_kind(rule)
+    if kind in DRIVEN_EVENTS:
+        return "required"
+    if kind == "uses-verb" and try_verbs:
+        return "optional"
+    return "not-attempted"
+
+
+def manhattan(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def bfs(tiles, start, goal, blocked=frozenset()):
+    """The shortest tile path start -> goal, stepping only on walkable tiles.
+
+    `blocked` holds tiles found to be unwalkable in play (a wall the legend
+    does not mark, a door that will not open) so a plan can be re-cut.
+    """
+    if start == goal:
+        return [start]
+    if goal not in tiles and goal not in blocked:
+        return None
+    seen = {start}
+    frontier = [start]
+    came = {}
+    while frontier:
+        nxt = []
+        for node in frontier:
+            x, y = node
+            for (dx, dy), _name, _keys in DIRECTIONS:
+                step = (x + dx, y + dy)
+                if step in seen or step in blocked:
+                    continue
+                if step != goal and step not in tiles:
+                    continue
+                seen.add(step)
+                came[step] = node
+                if step == goal:
+                    path = [goal]
+                    while path[-1] != start:
+                        path.append(came[path[-1]])
+                    path.reverse()
+                    return path
+                nxt.append(step)
+        frontier = nxt
+    return None
+
+
+def nearest_reachable(tiles, goal, start, blocked=frozenset()):
+    """The goal itself, or the closest tile to it a person can stand on.
+
+    A `comes-near` rule with a distance still fires from next door, so a tile
+    nobody can stand on (a cliff, a rack) is satisfied from beside it.
+    """
+    if goal in tiles:
+        path = bfs(tiles, start, goal, blocked)
+        if path:
+            return goal, path
+    best = None
+    for tile in sorted(tiles):
+        distance = manhattan(tile, goal)
+        if distance > 2:
+            continue
+        path = bfs(tiles, start, tile, blocked)
+        if not path:
+            continue
+        score = (distance, len(path))
+        if best is None or score < best[0]:
+            best = (score, tile, path)
+    return (best[1], best[2]) if best else (None, None)
+
+
+@dataclass
+class Target:
+    who: str
+    tile: object
+    kind: str  # "speaker", "poi" or "unresolved"
+    distance: int
+    rules: list = field(default_factory=list)
+
+    def label(self, world):
+        spec = world.get("speakers", {}).get(self.who)
+        return spec.get("name", self.who) if spec else self.who
+
+
+def comes_near_targets(world, phase):
+    """Every place and resident the rules for `phase` name in `comes-near`,
+    nearest-first, ties broken by name so two runs walk the same yard."""
+    found = {}
+    for rule in world.get("rules", []):
+        when = rule.get("when", {})
+        if not isinstance(when, dict):
+            continue
+        near = when.get("comes-near")
+        if not isinstance(near, dict) or phase not in rule_phases(rule):
+            continue
+        who = near.get("who")
+        if not isinstance(who, str):
+            continue
+        tile, kind = resolve_who(world, who)
+        try:
+            distance = int(near.get("distance", 1))
+        except (TypeError, ValueError):
+            distance = 1
+        entry = found.setdefault(who, {
+            "tile": tile, "kind": kind, "distance": distance, "rules": [],
+        })
+        entry["distance"] = max(entry["distance"], distance)
+        entry["rules"].append(rule.get("id", "?"))
+    targets = [Target(who=who, tile=v["tile"], kind=v["kind"], distance=v["distance"], rules=v["rules"])
+               for who, v in found.items()]
+    targets.sort(key=lambda t: (t.tile is None, manhattan(hero_start(world) or (0, 0), t.tile)
+                                if t.tile else 999, t.who))
+    return targets
+
+
+def plan_phase(world, phase, start, tiles, blocked=frozenset()):
+    """The walk for one hour: every comes-near target, nearest-first, each with
+    the tile path to it. A target with no coordinates or no route comes back
+    flagged, so the report can name it instead of quietly dropping it."""
+    plan = []
+    at = start
+    for target in comes_near_targets(world, phase):
+        if target.tile is None:
+            plan.append((target, None))
+            continue
+        tile, path = nearest_reachable(tiles, target.tile, at, blocked)
+        if path:
+            at = path[-1]
+        plan.append((target, path))
+    return plan
+
+
+def match_rule(rule, haystack):
+    """(matched, missing, total) lines of a rule, against everything said."""
+    matched, missing = [], []
+    for who, line in rule_lines(rule):
+        (matched if norm(line) in haystack else missing).append((who, line))
+    return matched, missing, len(matched) + len(missing)
+
+
+def find_position(state, world):
+    """The hero's tile in a state blob, if this build names one."""
+    grid = world.get("town", {}).get("map", [])
+    width = max((len(row) for row in grid), default=0)
+
+    def valid(pair):
+        return (isinstance(pair, (list, tuple)) and len(pair) == 2
+                and all(isinstance(v, int) for v in pair)
+                and 0 <= pair[1] < len(grid) and 0 <= pair[0] < width)
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key in POSITION_KEYS:
+                if valid(node.get(key)):
+                    return tuple(node[key])
+            if valid((node.get("x"), node.get("y"))):
+                return (node["x"], node["y"])
+            for key in POSITION_KEYS:
+                found = walk(node.get(key))
+                if found:
+                    return found
+            return None
+        return tuple(node) if valid(node) else None
+
+    return walk(state)
+
+
+def is_active(el):
+    """Whether a phase rail button is the standing one."""
+    def attr(name):
+        try:
+            return (el.get_attribute(name) or "").strip()
+        except Exception:
+            return ""
+
+    if {word.lower() for word in attr("class").split()} & ACTIVE_CLASSES:
+        return True
+    if attr("aria-current") or attr("data-active"):
+        return True
+    if attr("aria-pressed").lower() == "true":
+        return True
+    return attr("data-state").lower() == "active"
+
+
+# ---------------------------------------------------------------- the driver
+
+
+class Report:
+    """What one run leaves behind, in memory and on disk."""
+
+    def __init__(self, html, world_path, outdir):
+        self.html = html
+        self.world = str(world_path)
+        self.outdir = str(outdir)
+        self.phases = []
+        self.rules = []
+        self.notes = []
+        self.recorded = []
+        self.shots = []
+        self.missing = []
+        self.not_attempted = []
+        self.exit = 1
+
+    def note(self, text):
+        self.notes.append(text)
+
+    def to_json(self):
+        return {
+            "html": self.html,
+            "world": self.world,
+            "out": self.outdir,
+            "phases": self.phases,
+            "rules": self.rules,
+            "recorded": [{"phase": p, "source": s, "line": l} for p, s, l in self.recorded],
+            "screenshots": self.shots,
+            "missing": self.missing,
+            "not_attempted": self.not_attempted,
+            "notes": self.notes,
+            "exit": self.exit,
+        }
+
+
+class Game:
+    """Everything the driver does to one page."""
+
+    def __init__(self, page, world, outdir, html_path=None, world_path=None,
+                 step_timeout=STEP_TIMEOUT, settle=SETTLE_TIMEOUT,
+                 try_verbs=False, talk=True, quiet=False):
+        self.page = page
+        self.world = world
+        self.html_path = html_path or ""
+        self.world_path = world_path or ""
+        self.outdir = Path(outdir)
+        self.outdir.mkdir(parents=True, exist_ok=True)
+        self.step_timeout = step_timeout
+        self.settle = settle
+        self.try_verbs = try_verbs
+        self.talk = talk
+        self.quiet = quiet
+        self.report = Report(self.html_path, self.world_path, self.outdir)
+        self.tiles = walkable(world)
+        self.blocked = set()
+        self.keys = {}  # direction name -> the key that actually moved the hero
+        self.rest_control = None
+        self.state_expr = None
+        self.hero_probe = "unverified"
+        self.log_selector = None
+        self.pos = hero_start(world)
+        self.tag = "start"  # what the driver is doing, for the lines file
+        self.log_lines = []  # (phase, source, line), in the order shown
+        self.seen_norm = ""
+        self.phase = None
+
+    # ---- reading the page ------------------------------------------------
+
+    def say(self, text):
+        if not self.quiet:
+            print("  . " + text)
+        self.report.note(text)
+
+    def _query(self, selector):
+        try:
+            return self.page.query_selector(selector)
+        except Exception:
+            return None
+
+    def log_region(self):
+        """The log region, remembered once found. "" means the page-text
+        fallback, which is the brief's second choice."""
+        if self.log_selector is None:
+            for selector in LOG_SELECTORS:
+                if self._query(selector) is not None:
+                    self.log_selector = selector
+                    self.say("log region: %s" % selector)
+                    break
+            else:
+                self.log_selector = ""
+                self.say("no log selector matched (tried %s); falling back to the page text diff"
+                         % ", ".join(LOG_SELECTORS[:5]))
+        return self.log_selector
+
+    def text(self):
+        """Everything the game is showing right now, as one string."""
+        selector = self.log_region()
+        try:
+            if selector:
+                el = self.page.query_selector(selector)
+                if el is not None:
+                    return el.inner_text() or ""
+            return self.page.inner_text("body") or ""
+        except Exception:
+            try:
+                return self.page.inner_text("body") or ""
+            except Exception:
+                return ""
+
+    def state(self):
+        """The player's own state, if this build exposes one."""
+        exprs = [self.state_expr] if self.state_expr else STATE_EXPRS
+        for expr in exprs:
+            if not expr:
+                continue
+            try:
+                raw = self.page.evaluate(expr)
+            except Exception:
+                continue
+            if not raw:
+                continue
+            try:
+                value = json.loads(raw)
+            except (TypeError, ValueError):
+                continue
+            if isinstance(value, dict) and value:
+                if self.state_expr is None:
+                    self.state_expr = expr
+                    self.say("player state readable: %s" % expr[:58])
+                return value
+        return None
+
+    def hero_pos(self):
+        """(x, y) if the state names it, else None."""
+        state = self.state()
+        if state is None:
+            return None
+        found = find_position(state, self.world)
+        if found is not None:
+            self.hero_probe = "state"
+        return found
+
+    def current_phase(self):
+        """The standing phase, and how it was read."""
+        phases = [slug for slug, _tone in phase_order(self.world)]
+        state = self.state()
+        if isinstance(state, dict) and state.get("phase") in phases:
+            return state["phase"], "state"
+        for slug in phases:
+            el = self._query('#phase button[data-phase="%s"]' % slug)
+            if el is None:
+                el = self._query('[data-phase="%s"]' % slug)
+            if el is not None and is_active(el):
+                return slug, "rail"
+        blob = norm(self.text())
+        for slug, tone in phase_order(self.world):
+            if norm(tone) and norm(tone) in blob:
+                return slug, "tone"
+        return None, "unknown"
+
+    def wait_for(self, check, timeout):
+        """Poll `check` until it is truthy or the bounded timeout runs out."""
+        deadline = time.monotonic() + timeout
+        while True:
+            value = check()
+            if value:
+                return value
+            if time.monotonic() >= deadline:
+                return None
+            self.page.wait_for_timeout(POLL_MS)
+
+    def absorb(self):
+        """Move any new lines out of the page text and into the record.
+
+        A line is recorded once, the first time it is seen: a rule that fires on
+        two consecutive steps puts the same line in the scrollback twice, and
+        the record is a list of what was said, not of how many times the log
+        was redrawn.
+        """
+        text = self.text()
+        added = []
+        for line in text.splitlines():
+            key = norm(line)
+            if len(key) < 3 or key in self.seen_norm:
+                continue
+            self.seen_norm += "\n" + key
+            added.append(line.strip())
+        if added:
+            phase, _how = self.current_phase()
+            for line in added:
+                self.log_lines.append((phase or self.phase or "?", self.tag, line))
+        return added
+
+    def wait_for_change(self, before, timeout):
+        """Wait, bounded, until the page says something new."""
+        changed = self.wait_for(lambda: self.text() != before, timeout)
+        self.absorb()
+        return changed is not None
+
+    # ---- playing ---------------------------------------------------------
+
+    def enter_play(self):
+        """Out of the woven title screen and into the yard."""
+
+        def in_play():
+            phase, _how = self.current_phase()
+            return phase is not None or self._query("#phase") is not None
+
+        if not in_play():
+            for selector in ENTER_SELECTORS:
+                el = self._query(selector)
+                if el is None:
+                    continue
+                try:
+                    el.click(timeout=2000)
+                except Exception:
+                    continue
+                self.say("clicked %r to enter play" % selector)
+                if self.wait_for(in_play, ENTER_TIMEOUT / 4):
+                    break
+            else:
+                self.say("no play button answered (%s tried); playing whatever loaded"
+                         % ", ".join(ENTER_SELECTORS[:4]))
+        start = self.hero_pos()
+        here = hero_start(self.world)
+        if start and here and start != here:
+            self.say("player state puts the hero at %s but world.json says %s; trusting the state"
+                     % (list(start), list(here)))
+        elif start and here:
+            self.say("hero at %s, read from player state" % list(here))
+        # A setup input left focused would swallow every keypress below.
+        try:
+            self.page.evaluate(
+                "document.activeElement && document.activeElement.blur "
+                "? (document.activeElement.blur(), null) : null"
+            )
+        except Exception:
+            pass
+        self.absorb()
+
+    def press_dir(self, dx, dy):
+        """One step. True when the hero is believed to have moved."""
+        name = next(n for d, n, _ in DIRECTIONS if d == (dx, dy))
+        candidates = [self.keys[name]] if name in self.keys else \
+            next(c for d, n, c in DIRECTIONS if n == name)
+        before = self.hero_pos()
+        for key in candidates:
+            self.page.keyboard.press(key)
+            if before is None:
+                self.keys[name] = key
+                return True
+            if self.wait_for(lambda: self.hero_pos() != before, self.settle):
+                self.keys[name] = key
+                return True
+        return False
+
+    def walk_to(self, goal):
+        """Walk the hero to a tile. Returns (tile ended on, steps pressed)."""
+        at = self.hero_pos() or self.pos
+        steps = 0
+        for _attempt in range(3):
+            path = bfs(self.tiles - self.blocked, at, goal, frozenset())
+            if path is None:
+                stop, path = nearest_reachable(self.tiles - self.blocked, goal, at, frozenset())
+                if path is None:
+                    break
+                goal = stop
+            stalled = False
+            for nxt in path[1:]:
+                before = self.hero_pos()
+                moved = self.press_dir(nxt[0] - at[0], nxt[1] - at[1])
+                seen = self.hero_pos()
+                steps += 1
+                if seen is None:
+                    at = nxt  # no state to read: the keypress is taken at its word
+                    continue
+                if seen == before and not moved:
+                    self.blocked.add(at)  # the legend disagrees with the game
+                    self.say("the hero did not move off %s; re-cutting the walk around it" % (at,))
+                    stalled = True
+                    break
+                at = seen
+            if stalled:
+                at = self.hero_pos() or at
+                continue
+            self.pos = at
+            return at, steps
+        self.pos = at
+        return at, steps
+
+    def talk_to(self, name):
+        """Best effort: a resident's own line, where the page offers a control."""
+        if not self.talk:
+            return False
+        for selector in TALK_SELECTORS:
+            el = self._query(selector)
+            if el is None:
+                continue
+            self.tag = "talk %s" % name
+            before = self.text()
+            try:
+                el.click(timeout=1000)
+            except Exception:
+                continue
+            self.wait_for_change(before, TALK_TIMEOUT)
+            return True
+        return False
+
+    def try_verb(self, verb):
+        """Press a verb by its label, for the uses-verb beats."""
+        self.tag = "verb %s" % verb
+        for selector in ("[data-verb='%s']" % verb,
+                         "button:has-text('%s')" % verb,
+                         "button:has-text(\"%s\")" % verb):
+            el = self._query(selector)
+            if el is None:
+                continue
+            before = self.text()
+            try:
+                el.click(timeout=1000)
+            except Exception:
+                continue
+            self.wait_for_change(before, TALK_TIMEOUT)
+            return True
+        return False
+
+    def rest(self):
+        """Press Rest: the button with `data-rest` on it, else the R key."""
+        for selector in REST_SELECTORS:
+            el = self._query(selector)
+            if el is None:
+                continue
+            try:
+                el.click(timeout=2000)
+                self.rest_control = "button (%s)" % selector
+                return True
+            except Exception:
+                continue
+        for key in REST_KEYS:
+            try:
+                self.page.keyboard.press(key)
+                self.rest_control = "key (%s)" % key
+                return True
+            except Exception:
+                continue
+        return False
+
+    def screenshot(self, name):
+        path = self.outdir / name
+        try:
+            self.page.screenshot(path=str(path))
+            self.report.shots.append(str(path))
+            return path
+        except Exception as exc:
+            self.say("screenshot %s failed: %s" % (name, exc))
+            return None
+
+    # ---- the run ---------------------------------------------------------
+
+    def run(self):
+        world = self.world
+        phases = phase_order(world)
+        self.enter_play()
+
+        for index, (slug, tone) in enumerate(phases, start=1):
+            phase, how = self.current_phase()
+            entry = {
+                "index": index,
+                "phase": slug,
+                "reached": phase == slug,
+                "read_by": how,
+                "targets": [],
+                "screenshot": None,
+            }
+            self.phase = phase or slug
+            self.tag = "arrive %s" % slug
+            self.absorb()
+            start = self.hero_pos() or self.pos
+            for target, path in plan_phase(world, slug, start, self.tiles - self.blocked):
+                line = {"who": target.who, "kind": target.kind, "tile": target.tile,
+                        "rules": target.rules, "walked": False, "steps": 0}
+                if target.tile is None:
+                    line["note"] = "world.json names no coordinates for %r" % target.who
+                    entry["targets"].append(line)
+                    self.say("%s: %r has no coordinates" % (slug, target.who))
+                    continue
+                if path is None:
+                    line["note"] = "no walkable route to %s" % (target.tile,)
+                    entry["targets"].append(line)
+                    self.say("%s: no route to %r at %s" % (slug, target.who, target.tile))
+                    continue
+                self.tag = "walk to %s" % target.who
+                before = self.text()
+                at, steps = self.walk_to(target.tile)
+                line["walked"] = at == target.tile
+                line["tile_reached"] = list(at) if at else None
+                line["steps"] = steps
+                # a comes-near rule fires on arrival, so give the line its moment
+                self.wait_for_change(before, min(self.step_timeout, 1.5))
+                if target.kind == "speaker":
+                    line["talked"] = self.talk_to(target.label(world))
+                entry["targets"].append(line)
+
+            if slug == phases[0][0] and self.try_verbs:
+                entry["verbs"] = [{"verb": verb, "pressed": self.try_verb(verb)}
+                                  for verb in world.get("verbs", [])]
+
+            shot = "phase-%02d-%s.png" % (index, slug)
+            self.screenshot(shot)
+            entry["screenshot"] = shot
+            self.report.phases.append(entry)
+
+            if index < len(phases):
+                nxt = phases[index][0]
+                self.tag = "rest into %s" % nxt
+                before = self.text()
+                if not self.rest():
+                    self.say("no Rest control and no Rest key answered")
+                    break
+                arrived = self.wait_for(lambda: self.current_phase()[0] == nxt, self.step_timeout)
+                self.wait_for_change(before, min(self.step_timeout, 1.5))
+                self.absorb()
+                if not arrived:
+                    self.say("Rest did not turn the watch to %s (control: %s)"
+                             % (nxt, self.rest_control))
+                    break
+                self.say("rested into %s (%s)" % (nxt, self.rest_control))
+
+        self.report.recorded = list(self.log_lines)
+        self.score()
+        return self.report
+
+    def score(self):
+        """Match every rule's own lines against everything the game showed."""
+        report = self.report
+        haystack = self.seen_norm
+        turning = phase_order(self.world)[0][0] if phase_order(self.world) else None
+        failing = []
+        for rule in self.world.get("rules", []):
+            matched, missing, total = match_rule(rule, haystack)
+            kind = rule_status_kind(rule, self.try_verbs)
+            entry = {
+                "id": rule.get("id", "?"),
+                "when": when_kind(rule),
+                "phases": sorted(rule_phases(rule)),
+                "kind": kind,
+                "lines": "%d/%d" % (len(matched), total),
+                "status": "fired" if matched or total == 0 else "missing",
+                "missing_lines": [line for _who, line in missing][:3],
+            }
+            report.rules.append(entry)
+            if kind == "required" and entry["status"] != "fired":
+                failing.append(entry["id"])
+                if turning in rule_phases(rule):
+                    report.missing.append(entry["id"])
+            if kind == "not-attempted":
+                report.not_attempted.append(entry["id"])
+
+        reached = [p for p in report.phases if p["reached"]]
+        expected_phases = len(phase_order(self.world))
+        self.say("phases reached: %d/%d" % (len(reached), expected_phases))
+        self.say("hero position: %s" % (
+            "read from player state" if self.hero_probe == "state"
+            else "NOT VERIFIED (no hero position in the player state), so the walk "
+                 "takes every keypress at its word"))
+        self.say("Rest control: %s" % (self.rest_control or "none found"))
+        self.say("uses-verb beats: %s" % ("attempted" if self.try_verbs
+                                          else "not attempted (--try-verbs presses them)"))
+        report.exit = 0 if (len(reached) == expected_phases and not failing) else 1
+
+    def write_lines(self):
+        path = self.outdir / "lines.txt"
+        with open(path, "w", encoding="utf-8") as fh:
+            for phase, source, line in self.log_lines:
+                fh.write("[%s] %s: %s\n" % (phase, source, line))
+        return path
+
+
+# --------------------------------------------------------------- the report
+
+
+def write_report(report, outdir):
+    """The report.md and report.json one run leaves behind."""
+    outdir = Path(outdir)
+    out = []
+    add = out.append
+    add("# Play slice report")
+    add("")
+    add("- html: `%s`" % report.html)
+    add("- world: `%s`" % report.world)
+    add("- viewport: %dx%d" % (VIEWPORT["width"], VIEWPORT["height"]))
+    add("- lines recorded: %d" % len(report.recorded))
+    add("- screenshots: %d" % len(report.shots))
+    add("- exit: %d" % report.exit)
+    add("")
+    add("## Phases")
+    add("")
+    add("| # | phase | reached | read by | walked to | screenshot |")
+    add("|---|---|---|---|---|---|")
+    for phase in report.phases:
+        walked = ", ".join(
+            "%s%s" % (t["who"], "" if t.get("walked") else " (NOT REACHED)")
+            for t in phase["targets"]) or "-"
+        add("| %d | `%s` | %s | %s | %s | %s |" % (
+            phase["index"], phase["phase"], "yes" if phase["reached"] else "**no**",
+            phase["read_by"], walked, phase["screenshot"] or "-"))
+    add("")
+    add("## Rules")
+    add("")
+    add("| rule | when | phases | lines | kind | status |")
+    add("|---|---|---|---|---|---|")
+    for rule in report.rules:
+        add("| `%s` | %s | %s | %s | %s | %s |" % (
+            rule["id"], rule["when"], ", ".join(rule["phases"]) or "-",
+            rule["lines"], rule["kind"], rule["status"]))
+    add("")
+    add("## Expected rules that never fired")
+    add("")
+    add("\n".join("- `%s`" % rid for rid in report.missing) if report.missing
+        else "None: every rule the walk and Rest can fire fired.")
+    add("")
+    if report.not_attempted:
+        add("Not attempted (no walking, resting or talking produces them): "
+            + ", ".join("`%s`" % rid for rid in report.not_attempted))
+        add("")
+    add("## Notes")
+    add("")
+    for note in report.notes:
+        add("- %s" % note)
+    add("")
+    (outdir / "report.md").write_text("\n".join(out), encoding="utf-8")
+    (outdir / "report.json").write_text(json.dumps(report.to_json(), indent=2), encoding="utf-8")
+    return outdir / "report.md"
+
+
+# ------------------------------------------------------------------- the CLI
+
+
+def derive_world(html_path, pack=None):
+    """Find world.json for a woven file. `vefr weave` names its output
+    `<pack>-<date>.html`, so the pack slug is the stem with the date off it."""
+    html_path = Path(html_path)
+    if pack:
+        return Path(pack) / "world.json"
+    stem = html_path.stem
+    slug = re.sub(r"-\d{4}-\d{2}-\d{2}$", "", stem)
+    for candidate in (Path("worlds") / slug / "world.json",
+                      Path("worlds") / stem / "world.json",
+                      html_path.parent / "worlds" / slug / "world.json",
+                      html_path.parent.parent / "worlds" / slug / "world.json",
+                      html_path.parent / "world.json"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def open_page(html_path, headed=False):
+    """The browser: headless Chromium at the phone viewport, on a clean profile.
+
+    The context is new every run, so the pack's `time.persist` standing phase
+    (`vefr-time-<world>` in localStorage) cannot start this run an hour in.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise SystemExit(
+            "playwright is not installed here.\n"
+            "  python3 -m pip install playwright && python3 -m playwright install chromium\n"
+            "or: uv run --with playwright python tools/play_slice.py ...\n"
+            "(--plan and --self-test need no browser.)\n"
+            "original error: %s" % exc
+        )
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=not headed)
+    context = browser.new_context(
+        viewport=VIEWPORT,
+        device_scale_factor=2,
+        is_mobile=True,
+        has_touch=True,
+    )
+    page = context.new_page()
+    page.set_default_timeout(5000)
+    return playwright, browser, context, page
+
+
+def play(args):
+    html_path = Path(args.html).resolve()
+    if not html_path.is_file():
+        raise SystemExit("no such woven file: %s" % html_path)
+    world_path = Path(args.world) if args.world else derive_world(html_path, args.pack)
+    if world_path is None or not Path(world_path).is_file():
+        raise SystemExit("no world.json for %s; pass --world worlds/mending-shift/world.json"
+                         % html_path)
+    world = load_world(world_path)
+    outdir = Path(args.out)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    playwright, browser, context, page = open_page(html_path, args.headed)
+    try:
+        page.goto(html_path.as_uri())
+        game = Game(page, world, outdir, html_path=html_path, world_path=world_path,
+                    step_timeout=args.step_timeout, try_verbs=args.try_verbs,
+                    talk=not args.no_talk)
+        report = game.run()
+        game.write_lines()
+        path = write_report(report, outdir)
+    finally:
+        context.close()
+        browser.close()
+        playwright.stop()
+
+    print_report(report, path)
+    return report.exit
+
+
+def plan(world, outdir):
+    """The walk this run would take, printed, with no browser at all."""
+    tiles = walkable(world)
+    start = hero_start(world)
+    phases = phase_order(world)
+    print("phases: %s" % ", ".join(slug for slug, _ in phases))
+    print("hero start: %s, walkable tiles: %d" % (list(start) if start else None, len(tiles)))
+    problems = 0
+    for slug, _tone in phases:
+        print("\n%s" % slug)
+        for target, path in plan_phase(world, slug, start, tiles):
+            rules = ", ".join(target.rules)
+            if target.tile is None:
+                print("  %-30s %-11s NO COORDINATES (%s)" % (target.who, target.kind, rules))
+                problems += 1
+                continue
+            if path is None:
+                print("  %-30s %-11s at %-8s UNREACHABLE (%s)"
+                      % (target.who, target.kind, target.tile, rules))
+                problems += 1
+                continue
+            print("  %-30s %-11s at %-8s %2d steps, ends %s (%s)"
+                  % (target.who, target.kind, target.tile, len(path) - 1, path[-1], rules))
+    turning = phases[0][0] if phases else None
+    required = [r.get("id") for r in world.get("rules", [])
+                if rule_status_kind(r) == "required" and turning in rule_phases(r)]
+    print("\nrequired beats of %s: %d" % (turning, len(required)))
+    for rid in required:
+        print("  %s" % rid)
+    return 0 if problems == 0 else 1
+
+
+def print_report(report, path):
+    print("")
+    print("phases reached: %d/%d" % (sum(1 for p in report.phases if p["reached"]),
+                                     len(report.phases)))
+    for phase in report.phases:
+        print("  %d %-14s %-6s %s" % (phase["index"], phase["phase"],
+                                       "ok" if phase["reached"] else "MISSED", phase["read_by"]))
+    fired = [r for r in report.rules if r["status"] == "fired"]
+    print("rules whose lines appeared: %d/%d" % (len(fired), len(report.rules)))
+    if report.missing:
+        print("expected rules that never fired:")
+        for rid in report.missing:
+            print("  %s" % rid)
+    else:
+        print("every expected rule fired")
+    print("lines:  %s/lines.txt" % report.outdir)
+    for shot in report.shots:
+        print("shot:   %s" % shot)
+    print("report: %s" % path)
+    print("exit %d" % report.exit)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Play a woven VEFR pack slice through all its phases and report on it.")
+    parser.add_argument("html", nargs="?", help="the woven pack HTML to open")
+    parser.add_argument("--world", help="the pack's world.json (default: derived from the file name)")
+    parser.add_argument("--pack", help="pack directory holding world.json")
+    parser.add_argument("--out", default="out/play", help="where lines, shots and the report go")
+    parser.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT,
+                        help="seconds one step may take (default: %(default)s)")
+    parser.add_argument("--headed", action="store_true", help="watch it play")
+    parser.add_argument("--try-verbs", action="store_true",
+                        help="also press the verb buttons, for the uses-verb beats")
+    parser.add_argument("--no-talk", action="store_true", help="do not press Interact on residents")
+    parser.add_argument("--plan", action="store_true",
+                        help="print the walk this run would take and exit, no browser")
+    parser.add_argument("--self-test", action="store_true",
+                        help="run the driver against a fake page and exit, no browser")
+    args = parser.parse_args(argv)
+
+    if args.self_test:
+        return self_test()
+    if not args.html and not args.world:
+        parser.error("a woven pack HTML path is required (or --world with --plan)")
+    world_path = Path(args.world) if args.world else derive_world(args.html, args.pack)
+    if world_path is None or not Path(world_path).is_file():
+        raise SystemExit("could not find world.json; pass --world worlds/mending-shift/world.json")
+    if args.plan:
+        return plan(load_world(world_path), Path(args.out))
+    return play(args)
+
+
+# ------------------------------------------------------- the browserless test
+
+
+class FakeElement:
+    """The slice of Playwright's ElementHandle the driver uses."""
+
+    def __init__(self, page, label, attrs=None):
+        self.page = page
+        self.label = label
+        self.attrs = attrs or {}
+
+    def click(self, timeout=None):
+        self.page.activate(self.label)
+
+    def inner_text(self):
+        return "\n".join(line for _p, _s, line in self.page.lines)
+
+    def get_attribute(self, name):
+        if name == "class":
+            return self.attrs.get("class", "")
+        return self.attrs.get(name) or None
+
+
+class FakePage:
+    """A stand-in for a woven page: a yard, a log, a phase rail and a Rest.
+
+    It answers the same calls the driver makes, moves the hero with the arrow
+    keys, refuses to walk into a wall, fires `comes-near` rules on arrival and
+    `phase-changes` rules on Rest, exactly as the woven player does. That makes
+    the whole run - walking, waiting, matching, scoring, reporting - testable
+    without a browser. It is a test double, not a game.
+    """
+
+    def __init__(self, world, outdir, silent=False):
+        self.world = world
+        self.outdir = Path(outdir)
+        self.lines = []
+        self.silent = silent  # a page that never says anything
+        self.tiles = walkable(world)
+        self.phases = [slug for slug, _ in phase_order(world)]
+        self.phase = self.phases[0]
+        self.pos = hero_start(world) or (0, 0)
+        self.log = FakeElement(self, "log")
+        self.rest_el = FakeElement(self, "rest")
+        self.talk_el = FakeElement(self, "talk")
+        self.play_el = FakeElement(self, "play")
+        self.rail = {slug: FakeElement(self, "rail:%s" % slug, {"class": "phase-btn"})
+                     for slug in self.phases}
+        self.keyboard = self
+        self.sync_rail()
+
+    def sync_rail(self):
+        """The rail marks the standing phase, the way the woven player does."""
+        for slug, el in self.rail.items():
+            el.attrs["class"] = "phase-btn active" if slug == self.phase else "phase-btn"
+
+    # -- the Playwright calls the driver makes --
+    def query_selector(self, selector):
+        if selector == "#log":
+            return self.log
+        if selector == "[data-rest]":
+            return self.rest_el
+        if selector in TALK_SELECTORS:
+            return self.talk_el
+        if selector in ENTER_SELECTORS:
+            return self.play_el
+        for slug, el in self.rail.items():
+            if selector == '#phase button[data-phase="%s"]' % slug or selector == '[data-phase="%s"]' % slug:
+                return el
+        return None
+
+    def inner_text(self, selector):
+        return "\n".join(line for _p, _s, line in self.lines)
+
+    def evaluate(self, expr):
+        if "STATE" in expr and "get" in expr:
+            return json.dumps({"phase": self.phase, "hero": {"x": self.pos[0], "y": self.pos[1]}})
+        return None
+
+    def wait_for_timeout(self, ms):
+        pass
+
+    def screenshot(self, path=None, **kwargs):
+        (self.outdir / Path(path).name).write_bytes(b"\x89PNG\r\n\x1a\n fake")
+
+    def press(self, key):
+        if key in ("r", "R"):
+            return self.activate("rest")
+        deltas = {"ArrowUp": (0, -1), "ArrowDown": (0, 1), "ArrowLeft": (-1, 0), "ArrowRight": (1, 0)}
+        delta = deltas.get(key)
+        if not delta:
+            return None
+        nxt = (self.pos[0] + delta[0], self.pos[1] + delta[1])
+        if nxt in self.tiles:
+            self.pos = nxt
+            self.arrive()
+        return None
+
+    # -- what the double does when a control is pressed --
+    def emit(self, who, line):
+        if not self.silent and line:
+            self.lines.append((self.phase, "say", line if not who else "%s: %s" % (who, line)))
+
+    def arrive(self):
+        for rule in self.world.get("rules", []):
+            when = rule.get("when", {})
+            near = when.get("comes-near") if isinstance(when, dict) else None
+            if not isinstance(near, dict) or self.phase not in rule_phases(rule):
+                continue
+            tile, _kind = resolve_who(self.world, near.get("who", ""))
+            if tile and manhattan(tile, self.pos) <= int(near.get("distance", 1)):
+                for who, line in rule_lines(rule):
+                    self.emit(who, line)
+
+    def activate(self, label):
+        if self.silent:
+            return None
+        if label == "play":
+            return None
+        if label == "rest":
+            index = self.phases.index(self.phase)
+            if index + 1 < len(self.phases):
+                self.phase = self.phases[index + 1]
+            self.sync_rail()
+            for rule in self.world.get("rules", []):
+                when = rule.get("when", {})
+                if not isinstance(when, dict) or "phase-changes" not in when:
+                    continue
+                if when["phase-changes"].get("to") != self.phase:
+                    continue
+                for who, line in rule_lines(rule):
+                    self.emit(who, line)
+            self.arrive()
+            return None
+        if label == "talk":
+            near = [(manhattan(self.pos, at), sid)
+                    for sid, at in speaker_coords(self.world).items()]
+            if not near:
+                return None
+            _d, sid = min(near)
+            seed = self.world["speakers"][sid].get("seeds", {}).get(self.phase)
+            if isinstance(seed, str):
+                self.emit(self.world["speakers"][sid].get("name", sid), seed)
+            return None
+        return None
+
+
+def self_test():
+    """Run the driver twice against the fake page: a page that speaks and a
+    page that does not. Exit 0 only if the first run passes and the second
+    fails, which is what proves the scoring is doing something."""
+    world_path = Path(__file__).resolve().parent.parent / "worlds" / "mending-shift" / "world.json"
+    if not world_path.is_file():
+        print("no world.json at %s" % world_path, file=sys.stderr)
+        return 2
+    world = load_world(world_path)
+    failures = []
+
+    # 1. the plan, from the real pack
+    tiles = walkable(world)
+    start = hero_start(world)
+    check(world.get("phases") and len(world["phases"]) == 4, "four phases", failures)
+    for slug, _tone in phase_order(world):
+        for target, path in plan_phase(world, slug, start, tiles):
+            check(target.tile is not None, "%s: %r resolves to a tile" % (slug, target.who), failures)
+            check(path is not None, "%s: %r is walkable from %s" % (slug, target.who, start), failures)
+            if path:
+                for a, b in zip(path, path[1:]):
+                    check(manhattan(a, b) == 1, "%s: %r path step %s->%s is one tile"
+                          % (slug, target.who, a, b), failures)
+    turning = phase_order(world)[0][0]
+    required = [r.get("id") for r in world["rules"]
+                if rule_status_kind(r) == "required" and turning in rule_phases(r)]
+    check("the-turning-opens" in required, "the-turning-opens is a required beat", failures)
+    check(len(required) == 4, "four required beats at The Turning (got %d)" % len(required), failures)
+
+    # 2. a full run against a page that speaks
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        page = FakePage(world, tmp)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        report = game.run()
+        path = write_report(report, tmp)
+        game.write_lines()
+        check(report.exit == 0, "a speaking page exits 0", failures)
+        check(len(report.phases) == 4, "four phases visited", failures)
+        check(all(p["reached"] for p in report.phases), "every phase reached", failures)
+        check(report.missing == [], "no expected rule missing", failures)
+        check(len(report.shots) == 4, "one screenshot per phase", failures)
+        check(game.rest_control and game.rest_control.startswith("button"),
+              "Rest used the [data-rest] button", failures)
+        check(game.hero_probe == "state", "hero position read from player state", failures)
+        walked = [t for p in report.phases for t in p["targets"]]
+        check(all(t["walked"] for t in walked), "every target walked to", failures)
+        check(any(t.get("talked") for t in walked if t["kind"] == "speaker"),
+              "a resident was talked to", failures)
+        check(path.is_file() and (tmp / "report.json").is_file() and (tmp / "lines.txt").is_file(),
+              "report.md, report.json and lines.txt written", failures)
+        said = [norm(line) for _p, _s, line in game.log_lines]
+        check(len(said) == len(set(said)), "no line recorded twice", failures)
+        check(len(said) > 20, "the run recorded the game's lines (%d)" % len(said), failures)
+
+    # 3. a page that says nothing must fail the run
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, tmp, silent=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        report = game.run()
+        write_report(report, tmp)
+        check(report.exit == 1, "a silent page exits 1", failures)
+        check("the-turning-opens" in report.missing,
+              "the-turning-opens is named as never fired", failures)
+
+    # 4. a page with no hero state in it must still finish, and say so
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, tmp)
+        page.evaluate = lambda expr: None
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        report = game.run()
+        check(game.hero_probe == "unverified", "no state means unverified movement", failures)
+        check(any("NOT VERIFIED" in note for note in report.notes),
+              "the report says the walk was unverified", failures)
+        check(len(report.phases) == 4, "a stateless page still visits four phases", failures)
+        check(all(p["read_by"] == "rail" for p in report.phases),
+              "with no player state the rail is what reads the phase", failures)
+        check(all(p["reached"] for p in report.phases),
+              "a stateless page reaches every phase", failures)
+
+    if failures:
+        print("self-test: %d FAILED" % len(failures))
+        for line in failures:
+            print("  FAIL %s" % line)
+        return 1
+    print("self-test: all checks passed (plan, a speaking page, a silent page, a stateless page)")
+    return 0
+
+
+def check(condition, description, failures):
+    if not condition:
+        failures.append(description)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
