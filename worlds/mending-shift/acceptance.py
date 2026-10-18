@@ -708,7 +708,12 @@ def frames_of(states, name, key, direction):
 
 
 def check_resident(key):
-    """M3b: one resident's still, sheet and sidecar, and every frame index fitting the sheet."""
+    """M3b: one resident's still, sheet and sidecar, and every frame index fitting the sheet.
+
+    A frame that is not `[w, h]` of positive whole numbers is a failed check and
+    this function stands down before the grid modulo or division can read it, so a
+    `[0, 33]` sidecar is a message naming the value, never a ZeroDivisionError.
+    """
     sprites = PACK / "sprites"
     still = sprites / ("%s.png" % key)
     sheet_png = sprites / ("%s-sheet.png" % key)
@@ -728,9 +733,11 @@ def check_resident(key):
         check(False, "sprites/%s.sheet.json is not a JSON object" % key)
         return
     frame = meta.get("frame")
-    check(isinstance(frame, list) and len(frame) == 2
-          and all(isinstance(v, int) and v > 0 for v in frame),
-          "sprites/%s.sheet.json needs a frame [w, h] of positive whole numbers" % key)
+    sized = (isinstance(frame, list) and len(frame) == 2
+             and all(isinstance(v, int) and v > 0 for v in frame))
+    check(sized,
+          "sprites/%s.sheet.json needs a frame [w, h] of positive whole numbers, got %r"
+          % (key, frame))
     check(meta.get("image") == sheet_png.name,
           "sprites/%s.sheet.json names image %r, not %s" % (key, meta.get("image"), sheet_png.name))
     fps = meta.get("fps")
@@ -739,7 +746,7 @@ def check_resident(key):
 
     sheet = png_size(sheet_png)
     check(sheet is not None, "sprites/%s-sheet.png is not a PNG" % key)
-    if not (sheet and isinstance(frame, list) and len(frame) == 2):
+    if not (sheet and sized):
         return
     fw, fh = frame
     check(sheet[0] % fw == 0 and sheet[1] % fh == 0,

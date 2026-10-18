@@ -28,7 +28,8 @@ RESIDENTS = sorted(path.name[: -len(".sheet.json")]
                    if path.name != "hero.sheet.json")
 
 # What each broken sidecar looks like: (label, mutation, what must be said).
-# `mutate` takes the parsed sidecar and breaks it in place.
+# `mutate` takes the parsed sidecar and breaks it in place; the third item is the
+# line that must be said, either a fixed string or one built from the mutation.
 CASES = [
     ("missing up and right",
      lambda meta, key: [meta["directions"].pop(facing) for facing in ("up", "right")],
@@ -48,6 +49,14 @@ CASES = [
     ("directions is not a map",
      lambda meta, key: meta.__setitem__("directions", ["down"]),
      "has no 'directions' map"),
+    # A frame of no size in one axis: the grid modulo and division below used to
+    # read it anyway and raise ZeroDivisionError out of the checker.
+    ("frame width is zero",
+     lambda meta, key: meta.__setitem__("frame", [0, meta["frame"][1]]),
+     lambda meta: "frame [w, h] of positive whole numbers, got [0, %d]" % meta["frame"][1]),
+    ("frame height is zero",
+     lambda meta, key: meta.__setitem__("frame", [meta["frame"][0], 0]),
+     lambda meta: "frame [w, h] of positive whole numbers, got [%d, 0]" % meta["frame"][0]),
 ]
 
 
@@ -59,7 +68,11 @@ def run_checker(root):
 
 
 def scratch(root, key, mutate):
-    """A temp copy of the pack whose <key>.sheet.json is mutated; committed files untouched."""
+    """A temp copy of the pack whose <key>.sheet.json is mutated; committed files untouched.
+
+    Also hands back the mutated sidecar, so a case can say what it expects to be
+    told from a value it does not want to hard-code.
+    """
     tmp = tempfile.mkdtemp(prefix="m3b-negative-")
     pack = Path(tmp) / "mending-shift"
     shutil.copytree(PACK, pack)
@@ -67,7 +80,40 @@ def scratch(root, key, mutate):
     meta = json.loads(sidecar.read_text(encoding="utf-8"))
     mutate(meta, key)
     sidecar.write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    return tmp, pack
+    return tmp, pack, meta
+
+
+# One resident is enough to prove the frame-size contract; the main() sweep below
+# then runs every case against every resident.
+FRAME_SIZE_KEY = RESIDENTS[0]
+
+
+def bad_frame_says(frame):
+    """(exit status, what the checker said) for <FRAME_SIZE_KEY> with `frame` as its size."""
+    tmp, pack, _ = scratch(PACK, FRAME_SIZE_KEY,
+                           lambda meta, key: meta.__setitem__("frame", frame))
+    try:
+        return run_checker(pack)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def assert_fails_cleanly(label, frame, expected):
+    status, said = bad_frame_says(frame)
+    assert status != 0, "%s: frame %r passed, should have failed:\n%s" % (label, frame, said)
+    assert "Traceback" not in said, "%s: frame %r crashed the checker:\n%s" % (label, frame, said)
+    assert expected in said, "%s: frame %r gave no %r:\n%s" % (label, frame, expected, said)
+    assert FRAME_SIZE_KEY in said, "%s: frame %r never named the resident:\n%s" % (label, frame, said)
+
+
+def test_frame_width_zero_fails_cleanly():
+    assert_fails_cleanly("frame width is zero", [0, 33],
+                          "frame [w, h] of positive whole numbers, got [0, 33]")
+
+
+def test_frame_height_zero_fails_cleanly():
+    assert_fails_cleanly("frame height is zero", [26, 0],
+                          "frame [w, h] of positive whole numbers, got [26, 0]")
 
 
 def main():
@@ -81,7 +127,8 @@ def main():
 
     for key in RESIDENTS:
         for label, mutate, expected in CASES:
-            tmp, pack = scratch(PACK, key, mutate)
+            tmp, pack, meta = scratch(PACK, key, mutate)
+            want = expected(meta) if callable(expected) else expected
             try:
                 status, said = run_checker(pack)
             finally:
@@ -93,9 +140,9 @@ def main():
             if "Traceback" in said:
                 failures.append("%s / %s: crashed the checker\n%s" % (key, label, said))
                 continue
-            if expected not in said:
+            if want not in said:
                 failures.append("%s / %s: exit %d but no %r in:\n%s"
-                                % (key, label, status, expected, said))
+                                % (key, label, status, want, said))
                 continue
             if key not in said:
                 failures.append("%s / %s: exit %d but never named the resident:\n%s"
