@@ -743,6 +743,7 @@ class Report:
         self.missing = []
         self.not_attempted = []
         self.unreachable = []
+        self.debug = None  # None: --debug-talk is off; else one block of text per Talk
         self.exit = 1
 
     def note(self, text):
@@ -761,6 +762,7 @@ class Report:
             "not_attempted": self.not_attempted,
             "unreachable": self.unreachable,
             "notes": self.notes,
+            **({"debug": self.debug} if self.debug is not None else {}),
             "exit": self.exit,
         }
 
@@ -770,7 +772,7 @@ class Game:
 
     def __init__(self, page, world, outdir, html_path=None, world_path=None,
                  step_timeout=STEP_TIMEOUT, settle=SETTLE_TIMEOUT,
-                 try_verbs=False, talk=True, quiet=False):
+                 try_verbs=False, talk=True, quiet=False, debug_talk=False):
         self.page = page
         self.world = world
         self.html_path = html_path or ""
@@ -783,6 +785,9 @@ class Game:
         self.talk = talk
         self.quiet = quiet
         self.report = Report(self.html_path, self.world_path, self.outdir)
+        self.debug_talk = debug_talk
+        if debug_talk:
+            self.report.debug = []
         self.tiles = walkable(world)
         self.blocked = set()
         self.keys = {}  # direction name -> the key that actually moved the hero
@@ -1208,6 +1213,62 @@ class Game:
                                                         for sd in seeds)
         return said
 
+    def raw_hero_at(self):
+        """`window.VEFR_HERO_AT` exactly as the page holds it (None when unset)."""
+        try:
+            return self.page.evaluate("window.VEFR_HERO_AT ? JSON.stringify(window.VEFR_HERO_AT) : null")
+        except Exception as exc:
+            return "unreadable: %s" % exc
+
+    def fired_list(self):
+        """The ids in `VEFR_RULES_STATE.fired`, sorted (object or array form)."""
+        try:
+            return sorted(self.page.evaluate(
+                "(function () { var f = (window.VEFR_RULES_STATE || {}).fired;"
+                " if (!f) return []; return Array.isArray(f) ? f.slice() : Object.keys(f); })()") or [])
+        except Exception:
+            return []
+
+    def page_speaker_probe(self):
+        """The nearest speaker as the page itself exposes it, or a statement that it exposes
+        none. Only `window.VEFR_*` globals whose name mentions near, speaker or talk are read."""
+        try:
+            found = self.page.evaluate(
+                "(function () { var out = {}; Object.keys(window).forEach(function (k) {"
+                " if (/^VEFR_/.test(k) && /NEAR|SPEAKER|TALK/i.test(k)) {"
+                " try { out[k] = JSON.stringify(window[k]); } catch (e) { out[k] = String(e); } } });"
+                " return JSON.stringify(out); })()")
+            found = json.loads(found) if found else {}
+        except Exception as exc:
+            return "unreadable: %s" % exc
+        if not found:
+            return "the page exposes no nearest-speaker global (no window.VEFR_* named near/speaker/talk)"
+        return "; ".join("%s = %s" % kv for kv in sorted(found.items()))
+
+    def debug_block(self, n, who, name, label, hero, fired, probe, pressed):
+        """One `--debug-talk` block, written after the press from what was read before it."""
+        after_hero = self.raw_hero_at()
+        after = self.fired_list()
+        new = [r for r in after if r not in fired]
+        speaker = speaker_coords(self.world).get(who)
+        lines = [
+            "talk %d to %s (rule who: %s)" % (n, name, who),
+            "  VEFR_HERO_AT before press: %s" % hero,
+            "  VEFR_HERO_AT after press: %s" % after_hero,
+            "  speaker at (world.json): %s" % (list(speaker) if speaker else "none"),
+            "  Talk label at press: %s" % (label or "none"),
+            "  control pressed: %s" % (pressed or "none"),
+            "  page nearest speaker: %s" % probe,
+            "  fired before: %s" % fired,
+            "  fired after: %s" % after,
+            "  newly fired: %s" % (new or "none"),
+        ]
+        wrong = norm(name) not in norm(label)
+        moved = hero != after_hero
+        lines.append("  label names a different resident than the rule's who: %s" % ("YES" if wrong else "no"))
+        lines.append("  hero moved across the press: %s" % ("YES" if moved else "no"))
+        self.report.debug.append("\n".join(lines))
+
     def talk_to(self, name, who=None, distance=1):
         """Talk to a resident and VERIFY it: aim by the player's own Talk label, press,
         and count it only when a new line naming them (or in their words) turns up."""
@@ -1221,8 +1282,23 @@ class Game:
                      % (TALK_REACH, who, label or "none"))
             self.say("talk to %s: nothing" % who)
             return False
+        # the label can change between aiming and pressing (the hero moved): read it again at
+        # the press, and never press a Talk that names someone else
+        label = self.talk_label()
+        if norm(name) not in norm(label):
+            ok, label = self.aim_talk(who, name, distance)
+            if not ok:
+                self.say("the Talk label named someone else at the press (label: %s)" % (label or "none"))
+                self.say("talk to %s: nothing" % who)
+                return False
+        debugging = self.debug_talk and len(self.report.debug) < 3
+        if debugging:
+            hero, fired, probe = self.raw_hero_at(), self.fired_list(), self.page_speaker_probe()
         before = self.shown()
         pressed = self.press_control(TALK_SELECTORS, TALK_KEYS)
+        if debugging:
+            self.page.wait_for_timeout(300)
+            self.debug_block(len(self.report.debug) + 1, who, name, label, hero, fired, probe, pressed)
         got = self.new_lines(before, wanted=self.speaker_words(who, name)) if pressed else []
         if got:
             self.say("talk to %s: line captured" % who)
@@ -1605,6 +1681,14 @@ def write_report(report, outdir):
     for note in report.notes:
         add("- %s" % note)
     add("")
+    if report.debug is not None:
+        add("## Debug")
+        add("")
+        for block in report.debug or ["no Talk was pressed"]:
+            add("```")
+            add(block)
+            add("```")
+            add("")
     (outdir / "report.md").write_text("\n".join(out), encoding="utf-8")
     (outdir / "report.json").write_text(json.dumps(report.to_json(), indent=2, default=str), encoding="utf-8")
     return outdir / "report.md"
@@ -1694,7 +1778,7 @@ def play(args):
         page.goto(html_path.as_uri())
         game = Game(page, world, outdir, html_path=html_path, world_path=world_path,
                     step_timeout=args.step_timeout, try_verbs=args.try_verbs,
-                    talk=not args.no_talk)
+                    talk=not args.no_talk, debug_talk=args.debug_talk)
         report = game.run()
         game.write_lines()
         path = write_report(report, outdir)
@@ -1811,6 +1895,9 @@ def main(argv=None):
     parser.add_argument("--try-verbs", action="store_true",
                         help="also press the verb buttons, for the uses-verb beats")
     parser.add_argument("--no-talk", action="store_true", help="do not press Interact on residents")
+    parser.add_argument("--debug-talk", action="store_true",
+                        help="report hero tile, Talk label, control and fired rules around the "
+                             "first three Talks, under ## Debug")
     parser.add_argument("--plan", action="store_true",
                         help="print the walk this run would take and exit, no browser")
     parser.add_argument("--record", metavar="DIR",
