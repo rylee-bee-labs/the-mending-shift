@@ -443,6 +443,13 @@ def check_outcome_partition(by_id):
     at: no satchel may read twice, and none may read nothing at all.
     """
     rules = [(r, by_id[r]) for ids in OUTCOMES.values() for r in ids if r in by_id]
+    # The partition below reads only `if`; every outcome must also be reachable the same way, by
+    # walking up to the warden, or a state could "match" a rule the player can never trigger.
+    for rule_id, rule in rules:
+        near = (rule.get("when") or {}).get("comes-near") or {}
+        check(near.get("who") == "warden-ottmar-vell",
+              "outcome rule '%s' is not triggered by coming near the warden (when: %r)"
+              % (rule_id, rule.get("when")))
     items, flags, hours = set(), set(), set()
     for _, rule in rules:
         for key, value in conditions_of(rule):
@@ -484,8 +491,12 @@ SPEECH_BOX = 280   # the engine's speech box: `vefr check` refuses a longer say 
 def check_say_lengths(world):
     for rule in world.get("rules") or []:
         for action in rule.get("then") or []:
-            say = action.get("say") if isinstance(action, dict) else None
+            if not isinstance(action, dict) or "say" not in action:
+                continue
+            say = action["say"]
             line = say.get("line") if isinstance(say, dict) else say
+            check(isinstance(line, str) and line.strip() != "",
+                  "rule '%s' has a say action with no plain line in it (%r)" % (rule.get("id"), say))
             if isinstance(line, str):
                 check(len(line) <= SPEECH_BOX,
                       "rule '%s' says a %d-character line; the speech box holds %d (split it into two say actions)"
