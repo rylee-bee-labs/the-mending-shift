@@ -18,6 +18,11 @@ item outside the eight canon items and the six heirlooms. The three outcomes
 are also proved to partition the satchel: exactly one of their rules reads any
 one state out.
 
+M2c's line: the approved anchor art is wired and is the pack's own. `title_art`
+is set so the engine's default cover is never what a player sees, and every
+sprite and `tile` the pack names resolves to a file inside the pack, never a
+path out to `art/`.
+
 With VEFR_DIR set it also runs `vefr check` against the pack and requires exit
 0. Without it, it says so and skips. Exit status is 0 only when every check
 holds.
@@ -592,6 +597,56 @@ def check_named_items(world):
                   "items or the six heirlooms" % (rule.get("id"), item_id))
 
 
+def inside_pack(relative):
+    """Resolve a pack path, refusing anything that leaves the pack folder."""
+    if not isinstance(relative, str) or not relative or os.path.isabs(relative):
+        return None
+    resolved = (PACK / relative).resolve()
+    if resolved != PACK and PACK not in resolved.parents:
+        return None
+    return resolved
+
+
+def check_art(world):
+    """M2c: the pack's own picture, all of it on disk and none of it borrowed.
+
+    `title_art` is set and names a file inside the pack; every sprite and every
+    `tile` the legend names resolves to a file inside the pack too, so the pack
+    never reaches out to `art/` for what a player sees.
+    """
+    player = world.get("player") or {}
+    title = player.get("title_art")
+    check(isinstance(title, str) and title.strip(),
+          "player.title_art must be set, so the engine's default cover is not what a player sees")
+    if isinstance(title, str) and title.strip():
+        path = inside_pack(title)
+        check(path is not None,
+              "player.title_art %r must be a relative path inside the pack" % title)
+        if path is not None:
+            check(path.is_file(), "title art missing from the pack: %s" % title)
+
+    sprites = player.get("sprites") or {}
+    check(isinstance(sprites, dict) and sprites,
+          "player.sprites must name the hero's front, back and side")
+    for facing, relative in sorted(sprites.items()):
+        path = inside_pack(relative)
+        check(path is not None,
+              "sprite %r must be a relative path inside the pack, got %r" % (facing, relative))
+        if path is not None:
+            check(path.is_file(), "sprite file missing from the pack: %s" % relative)
+
+    legend = ((world.get("town") or {}).get("legend")) or {}
+    for glyph, entry in sorted(legend.items()):
+        tile = entry.get("tile")
+        if tile is None:
+            continue  # no approved tile for this glyph; the engine default stands
+        path = inside_pack("tiles/%s.png" % tile)
+        check(path is not None, "legend '%s' names the tile %r outside the pack" % (glyph, tile))
+        if path is not None:
+            check(path.is_file(),
+                  "legend '%s' names the tile %r, which is not in the pack's tiles/" % (glyph, tile))
+
+
 def run_vefr_check():
     """`vefr check` when VEFR_DIR names an engine checkout; skipped without it."""
     engine = os.environ.get("VEFR_DIR")
@@ -618,6 +673,7 @@ def main():
     check_say_lengths(world)
     check_named_items(world)
     check_town(world)
+    check_art(world)
     run_vefr_check()
 
     if FAILURES:
@@ -626,7 +682,8 @@ def main():
         print("%d check(s) failed." % len(FAILURES))
         return 1
     print("M2b acceptance: PASS - 4 phases, 7 speakers, 8 items, 6 recipes, "
-          "%d rules over 5 beats, 3 outcomes." % len(world.get("rules") or []))
+          "%d rules over 5 beats, 3 outcomes, art wired from inside the pack."
+          % len(world.get("rules") or []))
     return 0
 
 
