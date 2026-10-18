@@ -694,6 +694,30 @@ def check_art(world):
                   "legend '%s' names the tile %r, which is not in the pack's tiles/" % (glyph, tile))
 
 
+def check_hero_sheet_with_vefr():
+    """With VEFR_DIR: vefr's own bake must pick up Bryn's walk sheet (cli._player_sprite_sheets),
+    so a sheet the engine would ignore fails here, not in a player's hands."""
+    engine = os.environ.get("VEFR_DIR")
+    if not engine:
+        print("hero sheet via vefr: SKIPPED (no VEFR_DIR)")
+        return
+    probe = ("import json,sys; from pathlib import Path; from vefr import cli; "
+             "p=Path(sys.argv[1]); w=json.loads((p/'world.json').read_text()); "
+             "s=cli._player_sprite_sheets(p, w); h=s.get('hero') or {}; "
+             "print(json.dumps({'has': 'hero' in s, 'dirs': sorted((h.get('directions') or {}).keys())}))")
+    done = subprocess.run(["uv", "run", "-q", "--project", engine, "python", "-c", probe, str(PACK)],
+                          capture_output=True, text=True)
+    if done.returncode != 0:
+        FAILURES.append("vefr sheet probe failed: %s" % done.stderr.strip()[-300:])
+        return
+    got = json.loads(done.stdout.strip().splitlines()[-1])
+    check(got.get("has"), "vefr bakes no 'hero' walk sheet from this pack: Bryn would not walk")
+    check(set(got.get("dirs") or []) >= {"down", "up", "right"},
+          "vefr's baked hero sheet lacks down/up/right: %r" % got.get("dirs"))
+    if got.get("has"):
+        print("hero sheet via vefr: baked, directions %s" % ", ".join(got.get("dirs") or []))
+
+
 def run_vefr_check():
     """`vefr check` when VEFR_DIR names an engine checkout; skipped without it."""
     engine = os.environ.get("VEFR_DIR")
@@ -718,6 +742,7 @@ def main():
     check_reachability(world)
     check_rules(world)
     check_say_lengths(world)
+    check_hero_sheet_with_vefr()
     check_named_items(world)
     check_town(world)
     check_art(world)

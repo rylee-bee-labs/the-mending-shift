@@ -163,8 +163,9 @@ to `art/`: a player runs the pack alone.
 | Where | What | From |
 |---|---|---|
 | `assets/title.png` | the 12x10-tile anchor scene, wired as `player.title_art` — the file the shared game opens on, in place of the engine's default cover | `option-anchor-scene.png` |
-| `sprites/bryn-{front,back,side}.png` | Bryn Aukett as the hero, three idle views, wired as `player.sprites` | `bryn-{front,back,side}.png` |
-| `sprites/bryn-{front,back,side}-walk.png` | the three approved walk contacts, wired under the same map | `bryn-{front,back,side}-walk.png` |
+| `sprites/hero.png` | Bryn Aukett's still, wired as `player.sprites.hero` | `bryn-front.png` (via `make_sheet.py`) |
+| `sprites/hero-sheet.png` + `hero.sheet.json` | Bryn's walk sheet: down, up and right (left mirrors right), idle plus a two-step walk | `bryn-{front,back,side}.png` + `-walk.png` |
+| `sprites/bryn-*.png` | the approved round-4 frames the sheet was built from | `bryn-*.png` |
 | `tiles/*.png` | the 18-tile set, named for the kinds `generate_pixel_art_v3.py`'s `TILES` list gives them | `tile-00..17.png` |
 
 Seven of the eight town glyphs name a tile; the `tile` value is the stem of a
@@ -186,68 +187,28 @@ the four copings and their corners, the cliff return and the five slip edges —
 are copied in and carry names the legend can use when a later slice draws the
 shoreline out of whole cells.
 
-**The hero is wired by name, the way the tiles are.** M2c wrote each
-`player.sprites` value as a pack path (`sprites/bryn-front.png`) and the host
-play-through of 2026-10-18 drew the hero as the engine's plain white circle,
-while the same pack's `tile` values — which are **stems** the engine resolves
-inside `tiles/` — painted every one of those glyphs correctly. A sprite entry is
-therefore a name too, and each value is now the stem of a file in the pack's own
-`sprites/`. `acceptance.py` accepts either shape (stem or path) and still
-requires the file to be inside the pack, so this is the convention the pack
-writes and the gate does not care which one the engine turns out to prefer.
+**How vefr finds the hero (M2e, read from the engine, not guessed).** `vefr`'s
+`cli.resolve_sprites` reads `player.sprites` as *key -> pack-relative path*, and
+the hero's key is `hero`. A walk sheet rides beside it as `sprites/hero.sheet.json`
+naming `hero-sheet.png` (`cli._player_sprite_sheets`). M2c wrote paths under view
+names (`front`/`back`/`side`) and M2e's first attempt wrote stems under both view
+and facing names; vefr reads neither, which is why the hero stayed a white circle.
+The sheet was built with vefr's own `tools/art/make_sheet.py` from the approved
+round-4 frames; each walk cycle pairs the standing pose with the walk pose, since
+the engine takes two or more walk frames. The seven residents have no approved
+sprite yet and keep the engine's default figure (see **Not built**).
 
-**Every key the hero might be looked up by is declared.** The doc excerpt names
-`player.sprites` and says an enemy's `sprite` names an entry in the same map the
-hero and speakers use, but it does not spell out the key the hero is read under.
-So the map carries both vocabularies, pointing at the same approved pixels and
-costing nothing if the engine ignores one:
+## Acceptance coverage (selected)
 
-| Key | Points at |
-|---|---|
-| `front` / `back` / `side` | the three idle views |
-| `front-walk` / `back-walk` / `side-walk` | the three approved walk contacts |
-| `down` / `up` / `left` / `right` | the four facings the town moves in (`down` is the front view, `up` the back, `left` and `right` the side profile) |
-
-The map is free-form by design — an enemy is free to be called `rat` — so an
-entry the engine never asks for costs it nothing, and whichever name it does ask
-for resolves to a file in this pack. If the host run shows one vocabulary
-winning, the other four lines come out in a later commit.
-
-**The residents have no art, and are not given any here.** The decisions in
-force for M2e allow only the approved anchor art, and round 3/4 approved Bryn
-and the yard, not the seven residents — so no speaker names a `sprite` and each
-keeps the engine's own body-and-head figure rather than a borrowed frame. The
-seven to commission are named in **Not built** below, one per line; the gate
-holds any sprite they are given later to a file inside this pack.
-
-## How to check it
-
-From the repo root:
-
-```sh
-python3 worlds/mending-shift/acceptance.py
-```
-
-It exits 0 only when every assertion holds, and without `VEFR_DIR` it prints
-`vefr check: SKIPPED (no VEFR_DIR)`. The gate holds two lines at once:
-
-- **M2a**: the four phases and their slugs, the time block, every speaker seeded
-  in every phase with a voice file on disk, full written names only, the eight
-  item records, the six recipes, and that only the four reachable items are ever
-  handed to the bag.
-- **M2b**: every beat has its rules; every phase is read by at least one rule;
-  every `say.who` is a speaker id; every resident's line for every phase is in
-  the rules; every rule writes `once`; every flag a rule sets is declared; no
-  rule names an item outside the eight canon items and the six heirlooms; each
-  of the three outcomes has a rule whose condition can be met; the outcome rules
-  agree on one hour and partition the satchel between them; and the pack stays
   under the engine's 40-rule ceiling.
 - **M2c**: `player.title_art` is set and the file is inside the pack, and every
   sprite and every `tile` the legend names resolves to a file inside the pack —
   a path that climbs out of the pack, or names a file that is not there, fails.
-- **M2e**: `player.sprites` names `front`, `back` and `side`, each walk contact
-  that is declared resolves to a file inside the pack, and a resident's `sprite`
-  — if one is ever added — resolves to a file inside the pack too.
+- **M2e**: `player.sprites.hero` is a pack-relative path to a file inside the
+  pack, `sprites/hero.sheet.json` names an image that exists and gives down, up
+  and right an idle frame and at least two walk frames; and with `VEFR_DIR` set,
+  vefr's own `_player_sprite_sheets` must bake a `hero` sheet from this pack (so a
+  sheet the engine would not pick up fails).
 
 To run the engine's own gate as well:
 
@@ -287,20 +248,11 @@ host run. `title_art` and the legend's `tile` come out of
 `docs/guides/world-creation.md` as this brief quoted them. `player.sprites` is
 named by the same brief but its own shape is **not** in the excerpt.
 
-**M2e** is the step that read that shape out of a host play-through rather than
-out of the guide. The 2026-10-18 run painted the title art and all seven
-declared tiles and drew the hero as the engine's plain white circle, so the
-difference between what worked and what did not is the one the tiles settle:
-a `tile` is a stem resolved inside `tiles/`, and a sprite entry is now a stem
-resolved inside `sprites/` too. The key the hero is *read under* is still not in
-any excerpt, so both vocabularies are declared (see **Art**); the host's
-`vefr check` and its screenshots are what confirm which one the engine takes, and
-which walk-frame key it reads, if any. Separately: `world.json` still carries
-M2a's `"surface": "plain"`, which neither M2c nor M2e touched because it is not a
-key either brief names. The tiles and the title prove it is not suppressing the
-pack's art in general, but if the hero alone is still a circle after this step,
-that key is the next thing to test — it is an art-direction call and is left as
-it stands.
+**M2e** read the hero's shape out of vefr's source (`resolve_sprites`,
+`_player_sprite_sheets`) after a host play-through showed the white circle, and a
+second host run shows Bryn drawn in play. `world.json` still carries M2a's
+`"surface": "plain"`, which only hides HUD rows (HP, level, the verb row) and
+does not affect sprites; it stays as M2a set it.
 
 ## Not built
 
