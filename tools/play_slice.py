@@ -686,6 +686,13 @@ class Game:
 
     # ---- playing ---------------------------------------------------------
 
+    def _visible(self, selector):
+        try:
+            el = self.page.query_selector(selector)
+            return bool(el and el.is_visible())
+        except Exception:
+            return False
+
     def enter_play(self):
         """Out of the woven title screen and into the yard."""
 
@@ -693,8 +700,13 @@ class Game:
             phase, _how = self.current_phase()
             return phase is not None or self._query("#phase") is not None
 
-        if not in_play():
+        # The woven player keeps its state (and so a phase) behind the title screen, so "a phase
+        # is readable" does not mean "in play": a visible start button is clicked first, always.
+        title_up = any(self._visible(sel) for sel in ENTER_SELECTORS)
+        if title_up or not in_play():
             for selector in ENTER_SELECTORS:
+                if not self._visible(selector):
+                    continue
                 el = self._query(selector)
                 if el is None:
                     continue
@@ -921,6 +933,16 @@ class Game:
         """Match every rule's own lines against everything the game showed."""
         report = self.report
         haystack = self.seen_norm
+        # The player's own record of what ran: the rules engine marks every rule id that fired
+        # in window.VEFR_RULES_STATE.fired. It is the authority; matching said lines against the
+        # page text is the fallback (a line can be drawn somewhere this script does not read).
+        try:
+            engine_fired = set(self.page.evaluate(
+                "Object.keys(((window.VEFR_RULES_STATE || {}).fired) || {})") or [])
+        except Exception:
+            engine_fired = set()
+        if engine_fired:
+            self.say("rules the player marked fired: %d" % len(engine_fired))
         for rule in self.world.get("rules", []):
             matched, missing, total = match_rule(rule, haystack, self.world)
             kind = rule_status_kind(rule, self.try_verbs)
@@ -930,7 +952,7 @@ class Game:
                 "phases": sorted(rule_phases(rule)),
                 "kind": kind,
                 "lines": "%d/%d" % (len(matched), total),
-                "status": "fired" if matched or total == 0 else "missing",
+                "status": "fired" if (rule.get("id") in engine_fired or matched or total == 0) else "missing",
                 "missing_lines": [line for _who, line in missing][:3],
             }
             report.rules.append(entry)
@@ -1012,7 +1034,7 @@ def write_report(report, outdir):
         add("- %s" % note)
     add("")
     (outdir / "report.md").write_text("\n".join(out), encoding="utf-8")
-    (outdir / "report.json").write_text(json.dumps(report.to_json(), indent=2), encoding="utf-8")
+    (outdir / "report.json").write_text(json.dumps(report.to_json(), indent=2, default=str), encoding="utf-8")
     return outdir / "report.md"
 
 
