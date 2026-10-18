@@ -6,9 +6,7 @@
  "player": {
   "title_art": "assets/title.png",
   "sprites": {
-   "front": "sprites/bryn-front.png",
-   "back": "sprites/bryn-back.png",
-   "side": "sprites/bryn-side.png"
+   "hero": "sprites/hero.png"
   }
  },
  "phases": {

@@ -23,6 +23,12 @@ is set so the engine's default cover is never what a player sees, and every
 sprite and `tile` the pack names resolves to a file inside the pack, never a
 path out to `art/`.
 
+M2e's line: Bryn is the hero, the way vefr reads it: `player.sprites.hero` is a
+pack-relative path to a file inside the pack, and `sprites/hero.sheet.json` with
+`hero-sheet.png` is her walk sheet (with VEFR_DIR, vefr's own bake must pick it up),
+so the hero is drawn from the approved anchor art and not the engine's plain circle. A resident who has no approved art keeps
+the engine's own figure; when one is commissioned, the gate holds it to the pack.
+
 With VEFR_DIR set it also runs `vefr check` against the pack and requires exit
 0. Without it, it says so and skips. Exit status is 0 only when every check
 holds.
@@ -607,12 +613,63 @@ def inside_pack(relative):
     return resolved
 
 
+# The three views Bryn is drawn from. A hero that only ever faces one way reads
+# as a pawn, so all three must be wired before the pack is finished art.
+HERO_VIEWS = ("front", "back", "side")
+
+# An enemy `sprite` and a `player.sprites` entry name the same thing: a picture
+# the pack owns. Only the pack's own files are ever named, so a player who runs
+# the pack alone sees the same yard the anchor art describes.
+IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
+
+
+def resolve_sprite(value, folder="sprites"):
+    """Where one `player.sprites` value points, or None if it points nowhere.
+
+    The legend's `tile` is a stem (`"wall"`), the engine's own rule docs call a
+    `sprite` an *entry* in this map, and M2c's wiring was drawn as a pack path
+    and drew a plain white circle in play - so a stem inside `sprites/` is read
+    first and a path is still accepted. Either way the answer is a file inside
+    the pack, never a path out to `art/`.
+    """
+    if not isinstance(value, str) or not value.strip():
+        return None
+    if value.lower().endswith(IMAGE_SUFFIXES):
+        return inside_pack(value)
+    stem = "%s/%s" % (folder, value)
+    return inside_pack(stem + ".png")
+
+
+def check_hero(world):
+    """M2e: Bryn is the hero, the way vefr reads it (cli.resolve_sprites): `player.sprites.hero`
+    is a pack-relative picture path, and `sprites/hero.sheet.json` + `hero-sheet.png` give her
+    a walk sheet (down/up/right; the player mirrors right for left)."""
+    player = world.get("player") or {}
+    sprites = player.get("sprites") or {}
+    hero = sprites.get("hero") if isinstance(sprites, dict) else None
+    check(isinstance(hero, str) and hero.startswith("sprites/"),
+          "player.sprites.hero must be a pack-relative path like 'sprites/hero.png' (got %r)" % (hero,))
+    if isinstance(hero, str):
+        path = (PACK / hero).resolve()
+        check(PACK.resolve() in path.parents and path.is_file(),
+              "player.sprites.hero points at %r, which is not a file inside the pack" % hero)
+    sheet = PACK / "sprites" / "hero.sheet.json"
+    check(sheet.is_file(), "sprites/hero.sheet.json is missing: Bryn would not walk or turn")
+    if sheet.is_file():
+        meta = json.loads(sheet.read_text(encoding="utf-8"))
+        check((PACK / "sprites" / meta.get("image", "")).is_file(),
+              "hero.sheet.json names image %r, which is not in sprites/" % meta.get("image"))
+        dirs = meta.get("directions") or {}
+        for d in ("down", "up", "right"):
+            check(d in dirs and dirs[d].get("idle") and len(dirs[d].get("walk") or []) >= 2,
+                  "hero.sheet.json needs %s idle and at least two walk frames" % d)
+
 def check_art(world):
     """M2c: the pack's own picture, all of it on disk and none of it borrowed.
 
-    `title_art` is set and names a file inside the pack; every sprite and every
-    `tile` the legend names resolves to a file inside the pack too, so the pack
-    never reaches out to `art/` for what a player sees.
+    `title_art` is set and names a file inside the pack; every `tile` the legend
+    names resolves to a file inside the pack too, so the pack never reaches out
+    to `art/` for what a player sees. The hero's own frames are `check_hero`.
     """
     player = world.get("player") or {}
     title = player.get("title_art")
@@ -625,16 +682,6 @@ def check_art(world):
         if path is not None:
             check(path.is_file(), "title art missing from the pack: %s" % title)
 
-    sprites = player.get("sprites") or {}
-    check(isinstance(sprites, dict) and sprites,
-          "player.sprites must name the hero's front, back and side")
-    for facing, relative in sorted(sprites.items()):
-        path = inside_pack(relative)
-        check(path is not None,
-              "sprite %r must be a relative path inside the pack, got %r" % (facing, relative))
-        if path is not None:
-            check(path.is_file(), "sprite file missing from the pack: %s" % relative)
-
     legend = ((world.get("town") or {}).get("legend")) or {}
     for glyph, entry in sorted(legend.items()):
         tile = entry.get("tile")
@@ -645,6 +692,30 @@ def check_art(world):
         if path is not None:
             check(path.is_file(),
                   "legend '%s' names the tile %r, which is not in the pack's tiles/" % (glyph, tile))
+
+
+def check_hero_sheet_with_vefr():
+    """With VEFR_DIR: vefr's own bake must pick up Bryn's walk sheet (cli._player_sprite_sheets),
+    so a sheet the engine would ignore fails here, not in a player's hands."""
+    engine = os.environ.get("VEFR_DIR")
+    if not engine:
+        print("hero sheet via vefr: SKIPPED (no VEFR_DIR)")
+        return
+    probe = ("import json,sys; from pathlib import Path; from vefr import cli; "
+             "p=Path(sys.argv[1]); w=json.loads((p/'world.json').read_text()); "
+             "s=cli._player_sprite_sheets(p, w); h=s.get('hero') or {}; "
+             "print(json.dumps({'has': 'hero' in s, 'dirs': sorted((h.get('directions') or {}).keys())}))")
+    done = subprocess.run(["uv", "run", "-q", "--project", engine, "python", "-c", probe, str(PACK)],
+                          capture_output=True, text=True)
+    if done.returncode != 0:
+        FAILURES.append("vefr sheet probe failed: %s" % done.stderr.strip()[-300:])
+        return
+    got = json.loads(done.stdout.strip().splitlines()[-1])
+    check(got.get("has"), "vefr bakes no 'hero' walk sheet from this pack: Bryn would not walk")
+    check(set(got.get("dirs") or []) >= {"down", "up", "right"},
+          "vefr's baked hero sheet lacks down/up/right: %r" % got.get("dirs"))
+    if got.get("has"):
+        print("hero sheet via vefr: baked, directions %s" % ", ".join(got.get("dirs") or []))
 
 
 def run_vefr_check():
@@ -671,9 +742,11 @@ def main():
     check_reachability(world)
     check_rules(world)
     check_say_lengths(world)
+    check_hero_sheet_with_vefr()
     check_named_items(world)
     check_town(world)
     check_art(world)
+    check_hero(world)
     run_vefr_check()
 
     if FAILURES:
@@ -682,7 +755,8 @@ def main():
         print("%d check(s) failed." % len(FAILURES))
         return 1
     print("M2b acceptance: PASS - 4 phases, 7 speakers, 8 items, 6 recipes, "
-          "%d rules over 5 beats, 3 outcomes, art wired from inside the pack."
+          "%d rules over 5 beats, 3 outcomes, art wired from inside the pack, "
+          "Bryn's sprite and walk sheet resolve inside the pack."
           % len(world.get("rules") or []))
     return 0
 

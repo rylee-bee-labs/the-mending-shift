@@ -1,17 +1,22 @@
-# The Mending Shift — world pack (M2c)
+# The Mending Shift — world pack (M2e)
 
 A VEFR world pack for one shift at Sallowquay Boat-yard, built from the four
 canon bibles in `bible/` (approved by Rylee 2026-10-17). M2a built the skeleton,
 the residents, the items and the recipes; **M2b builds the five beats of
 `bible/slice.md` as rules**, the fusion at the rack, and the three outcomes of
 the shingle; **M2c wires the approved anchor art** so the game opens on this
-yard and not on the engine's default cover. The bibles are canon and are never
-edited from here.
+yard and not on the engine's default cover; **M2e makes Bryn the hero in play**
+and fixes the shape the sprite map is written in. The bibles are canon and are
+never edited from here.
 
 ## What is built
 
 - **`world.json`**
   - `name: mending-shift`, `title: The Mending Shift`.
+  - `player`: `title_art` (the cover a shared file opens on) and `sprites`, the
+    map the hero and every `sprite` in the pack are drawn from — Bryn's six
+    approved frames under both the three-view names and the four facings, and
+    nothing else (see **Art**).
   - `phases`: the four tide hours as slugs — `the-turning`, `low-water`,
     `the-run`, `slack-water` — each with one tone sentence drawn from
     `bible/world.md`'s account of that hour.
@@ -158,7 +163,9 @@ to `art/`: a player runs the pack alone.
 | Where | What | From |
 |---|---|---|
 | `assets/title.png` | the 12x10-tile anchor scene, wired as `player.title_art` — the file the shared game opens on, in place of the engine's default cover | `option-anchor-scene.png` |
-| `sprites/bryn-{front,back,side}.png` | Bryn Aukett as the hero, three idle views, wired as `player.sprites` | `bryn-{front,back,side}.png` |
+| `sprites/hero.png` | Bryn Aukett's still, wired as `player.sprites.hero` | `bryn-front.png` (via `make_sheet.py`) |
+| `sprites/hero-sheet.png` + `hero.sheet.json` | Bryn's walk sheet: down, up and right (left mirrors right), idle plus a two-step walk | `bryn-{front,back,side}.png` + `-walk.png` |
+| `sprites/bryn-*.png` | the approved round-4 frames the sheet was built from | `bryn-*.png` |
 | `tiles/*.png` | the 18-tile set, named for the kinds `generate_pixel_art_v3.py`'s `TILES` list gives them | `tile-00..17.png` |
 
 Seven of the eight town glyphs name a tile; the `tile` value is the stem of a
@@ -180,38 +187,28 @@ the four copings and their corners, the cliff return and the five slip edges —
 are copied in and carry names the legend can use when a later slice draws the
 shoreline out of whole cells.
 
-**The walk frames are copied but not declared.** `sprites/bryn-*-walk.png` (the
-three contact poses) sit in the pack, and the doc excerpt this work followed
-names `sprites/` and `player.sprites` for the front, back and side views only —
-it does not spell out a key for a walk frame, so nothing is declared under a key
-that may not be read. They are one `player.sprites` entry away once the format
-is known.
+**How vefr finds the hero (M2e, read from the engine, not guessed).** `vefr`'s
+`cli.resolve_sprites` reads `player.sprites` as *key -> pack-relative path*, and
+the hero's key is `hero`. A walk sheet rides beside it as `sprites/hero.sheet.json`
+naming `hero-sheet.png` (`cli._player_sprite_sheets`). M2c wrote paths under view
+names (`front`/`back`/`side`) and M2e's first attempt wrote stems under both view
+and facing names; vefr reads neither, which is why the hero stayed a white circle.
+The sheet was built with vefr's own `tools/art/make_sheet.py` from the approved
+round-4 frames; each walk cycle pairs the standing pose with the walk pose, since
+the engine takes two or more walk frames. The seven residents have no approved
+sprite yet and keep the engine's default figure (see **Not built**).
 
-## How to check it
+## Acceptance coverage (selected)
 
-From the repo root:
-
-```sh
-python3 worlds/mending-shift/acceptance.py
-```
-
-It exits 0 only when every assertion holds, and without `VEFR_DIR` it prints
-`vefr check: SKIPPED (no VEFR_DIR)`. The gate holds two lines at once:
-
-- **M2a**: the four phases and their slugs, the time block, every speaker seeded
-  in every phase with a voice file on disk, full written names only, the eight
-  item records, the six recipes, and that only the four reachable items are ever
-  handed to the bag.
-- **M2b**: every beat has its rules; every phase is read by at least one rule;
-  every `say.who` is a speaker id; every resident's line for every phase is in
-  the rules; every rule writes `once`; every flag a rule sets is declared; no
-  rule names an item outside the eight canon items and the six heirlooms; each
-  of the three outcomes has a rule whose condition can be met; the outcome rules
-  agree on one hour and partition the satchel between them; and the pack stays
   under the engine's 40-rule ceiling.
 - **M2c**: `player.title_art` is set and the file is inside the pack, and every
   sprite and every `tile` the legend names resolves to a file inside the pack —
   a path that climbs out of the pack, or names a file that is not there, fails.
+- **M2e**: `player.sprites.hero` is a pack-relative path to a file inside the
+  pack, `sprites/hero.sheet.json` names an image that exists and gives down, up
+  and right an idle frame and at least two walk frames; and with `VEFR_DIR` set,
+  vefr's own `_player_sprite_sheets` must bake a `hero` sheet from this pack (so a
+  sheet the engine would not pick up fails).
 
 To run the engine's own gate as well:
 
@@ -249,14 +246,13 @@ engine.
 M2c's art keys are in the same position, and one is worth a decision on the
 host run. `title_art` and the legend's `tile` come out of
 `docs/guides/world-creation.md` as this brief quoted them. `player.sprites` is
-named by the same brief but its own shape is **not** in the excerpt — the keys
-used here (`front`, `back`, `side`, each a path to a file in `sprites/`) follow
-the guide's `tile` convention, and the host's `vefr check` is what confirms or
-corrects them. Separately: `world.json` still carries M2a's `"surface": "plain"`,
-which this step did not touch because it is not a key the brief names. If that
-key means the engine draws its plain dark look rather than the pack's art, the
-tiles and the hero will not be seen until it is changed or dropped — that is an
-art-direction call, and it is left as it stands.
+named by the same brief but its own shape is **not** in the excerpt.
+
+**M2e** read the hero's shape out of vefr's source (`resolve_sprites`,
+`_player_sprite_sheets`) after a host play-through showed the white circle, and a
+second host run shows Bryn drawn in play. `world.json` still carries M2a's
+`"surface": "plain"`, which only hides HUD rows (HP, level, the verb row) and
+does not affect sprites; it stays as M2a set it.
 
 ## Not built
 
@@ -269,8 +265,15 @@ art-direction call, and it is left as it stands.
   and still draws as its `base` colour, and the eleven shoreline and slip tiles,
   which are copied in but not yet named by any glyph. No voice recording is in
   this pack.
-- **`player.sprites` is declared for the three idle views only**, because the doc
-  excerpt names no key for a walk frame.
+- **The seven residents have no approved sprite**, and the decisions in force
+  for this step allow no new art, so each keeps the engine's own figure. To
+  commission, one line each: `warden-ottmar-vell` (Warden Ottmar Vell),
+  `roald-fisk` (Roald Fisk), `sable-kearn` (Sable Kearn), `margit-brack`
+  (Margit Brack), `tam-verrow` (Tam Verrow), `maud-bray` (Maud Bray),
+  `grissel-toft` (Grissel Toft). The wiring is a picture at `sprites/<speaker-key>.png`
+  (vefr resolves a speaker key by name) or a `player.sprites` entry with a
+  pack-relative path;
+  `acceptance.py` will hold both to a file inside this pack.
 - **The four worn slots and the bag cap** are in the bibles and in the prose;
   the engine has no cap on carried items, so the bind at the rack is said
   rather than enforced.
