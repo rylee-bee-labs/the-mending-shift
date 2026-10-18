@@ -270,12 +270,10 @@ does not affect sprites; it stays as M2a set it.
   commission, one line each: `warden-ottmar-vell` (Warden Ottmar Vell),
   `roald-fisk` (Roald Fisk), `sable-kearn` (Sable Kearn), `margit-brack`
   (Margit Brack), `tam-verrow` (Tam Verrow), `maud-bray` (Maud Bray),
-  `grissel-toft` (Grissel Toft). The wiring is `"sprite": "<name>"` on the
-  speaker plus one entry in `player.sprites` pointing at the file in `sprites/`;
+  `grissel-toft` (Grissel Toft). The wiring is a picture at `sprites/<speaker-key>.png`
+  (vefr resolves a speaker key by name) or a `player.sprites` entry with a
+  pack-relative path;
   `acceptance.py` will hold both to a file inside this pack.
-- **Which key the engine reads the hero under is unconfirmed** (see **Art**): the
-  pack declares both the three-view names and the four facings, and the host's
-  screenshots settle it. The walk-frame keys are the same kind of guess.
 - **The four worn slots and the bag cap** are in the bibles and in the prose;
   the engine has no cap on carried items, so the bind at the rack is said
   rather than enforced.

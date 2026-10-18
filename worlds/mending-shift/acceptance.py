@@ -23,10 +23,10 @@ is set so the engine's default cover is never what a player sees, and every
 sprite and `tile` the pack names resolves to a file inside the pack, never a
 path out to `art/`.
 
-M2e's line: Bryn is the hero. `player.sprites` names her front, back and side
-(plus the three approved walk contacts), and every one of those entries resolves
-to a file inside the pack, so the hero can be drawn from the approved anchor art
-and not from the engine's plain circle. A resident who has no approved art keeps
+M2e's line: Bryn is the hero, the way vefr reads it: `player.sprites.hero` is a
+pack-relative path to a file inside the pack, and `sprites/hero.sheet.json` with
+`hero-sheet.png` is her walk sheet (with VEFR_DIR, vefr's own bake must pick it up),
+so the hero is drawn from the approved anchor art and not the engine's plain circle. A resident who has no approved art keeps
 the engine's own figure; when one is commissioned, the gate holds it to the pack.
 
 With VEFR_DIR set it also runs `vefr check` against the pack and requires exit
