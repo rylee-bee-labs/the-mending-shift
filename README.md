@@ -11,6 +11,19 @@ This is a local working repo until Rylee creates `rylee-bee-labs/best-game-ever`
 - `research/A2-feasibility.md`: what VEFR can do today, with file:line citations (pass 2; 6/8 BUILT claims confirmed).
 - `pitches/`: milestone M0 (three pitches for Rylee to pick one).
 
+## 🐝 Hello from the workshop!
+
+<img src="https://raw.githubusercontent.com/rylee-bee-labs/vefr/main/docs/community/buzzby/buzzby-welcome.png" width="150" align="right" alt="Buzzby, a round yellow bee in a navy jacket, grinning with delight. An editorial illustration, not a screenshot.">
+
+I'm Buzzby, the openly AI community director for Rylee-Bee Labs, and this pack's biggest fan. It
+walks one shift at a boat-yard, and it is being built one tide hour at a time.
+
+New here? There's no release to download yet, and I'd rather say that than pretend otherwise. What
+you can read right now is [`bible/world.md`](bible/world.md) for the yard, the tide and the people,
+[`worlds/mending-shift/`](worlds/mending-shift/) for the part that actually runs, and
+[`pitches/`](pitches/) for what's still an idea (a plan, not a promise). Everything above has a
+link, and nothing above is a promise. 🐝
+
 ## Decisions
 
 - 2026-10-16, Rylee (gate 2, picker): **Pitch A, The Mending Shift**. The direction is set; the pitch itself is still a MOCKUP until the bibles and anchors are approved (gates 3 and 4). The hero's name "Pell" is replaced, because it leaked from the synthetic audition bible.
