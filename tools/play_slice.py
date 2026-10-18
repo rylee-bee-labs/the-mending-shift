@@ -111,10 +111,13 @@ DIRECTIONS = [
 
 REST_KEYS = ["r", "R"]
 
-# State probes. The woven player keeps its state in a top-level `STATE`
-# (web/player/parts/090-first-run-setup-vs-play.js:54), which a classic <script>
-# puts in scope for every other script in the page, so `evaluate` can read it by
-# name. The later probes are for a build that hangs the same state off window.
+# State probes. The first reads a top-level `STATE` with a `get()` method, which
+# is what the woven player is assumed to expose: a classic <script> puts a
+# top-level binding in scope for every other script in the page, so `evaluate`
+# can read it by name. This repo holds no player source to check that against,
+# so each probe is only believed when it returns a usable state (the run says
+# when none did). The later probes are for a build that hangs the state off
+# window.
 STATE_EXPRS = [
     "JSON.stringify((typeof STATE !== 'undefined' && STATE && STATE.get) ? STATE.get() : null)",
     "JSON.stringify(typeof VEFR_STATE !== 'undefined' ? VEFR_STATE : null)",
@@ -409,11 +412,29 @@ def plan_phase(world, phase, start, tiles, blocked=frozenset()):
     return plan
 
 
-def match_rule(rule, haystack):
-    """(matched, missing, total) lines of a rule, against everything said."""
+def match_rule(rule, haystack, world=None):
+    """(matched, missing, total) lines of a rule, against everything said.
+
+    A line matches when it is a whole line of what the game showed, or a whole
+    line with its speaker in front ("id: line" or "Display Name: line"). It can still
+    false-positive when the page shows the same sentence somewhere other than
+    the rule firing (a help text, a speaker's seed, a repeat from an earlier
+    phase), and a say spanning several lines is matched line by line.
+    """
+    shown = set(haystack.splitlines())
+    speakers = (world or {}).get("speakers", {}) or {}
+
+    def prefixes(who):
+        if not who:
+            return []
+        name = (speakers.get(who) or {}).get("name") if isinstance(speakers.get(who), dict) else None
+        return [norm(who)] + ([norm(name)] if name else [])
     matched, missing = [], []
     for who, line in rule_lines(rule):
-        (matched if norm(line) in haystack else missing).append((who, line))
+        parts = [norm(p) for p in line.splitlines() if norm(p)]
+        found = all(p in shown or any("%s: %s" % (pre, p) in shown for pre in prefixes(who))
+                    for p in parts)
+        (matched if found else missing).append((who, line))
     return matched, missing, len(matched) + len(missing)
 
 
@@ -741,8 +762,8 @@ class Game:
                     at = nxt  # no state to read: the keypress is taken at its word
                     continue
                 if seen == before and not moved:
-                    self.blocked.add(at)  # the legend disagrees with the game
-                    self.say("the hero did not move off %s; re-cutting the walk around it" % (at,))
+                    self.blocked.add(nxt)  # the legend disagrees with the game
+                    self.say("the game refused %s; re-cutting the walk around it" % (nxt,))
                     stalled = True
                     break
                 at = seen
@@ -900,10 +921,8 @@ class Game:
         """Match every rule's own lines against everything the game showed."""
         report = self.report
         haystack = self.seen_norm
-        turning = phase_order(self.world)[0][0] if phase_order(self.world) else None
-        failing = []
         for rule in self.world.get("rules", []):
-            matched, missing, total = match_rule(rule, haystack)
+            matched, missing, total = match_rule(rule, haystack, self.world)
             kind = rule_status_kind(rule, self.try_verbs)
             entry = {
                 "id": rule.get("id", "?"),
@@ -916,9 +935,7 @@ class Game:
             }
             report.rules.append(entry)
             if kind == "required" and entry["status"] != "fired":
-                failing.append(entry["id"])
-                if turning in rule_phases(rule):
-                    report.missing.append(entry["id"])
+                report.missing.append(entry["id"])
             if kind == "not-attempted":
                 report.not_attempted.append(entry["id"])
 
@@ -932,7 +949,7 @@ class Game:
         self.say("Rest control: %s" % (self.rest_control or "none found"))
         self.say("uses-verb beats: %s" % ("attempted" if self.try_verbs
                                           else "not attempted (--try-verbs presses them)"))
-        report.exit = 0 if (len(reached) == expected_phases and not failing) else 1
+        report.exit = 0 if (len(reached) == expected_phases and not report.missing) else 1
 
     def write_lines(self):
         path = self.outdir / "lines.txt"
@@ -1079,7 +1096,7 @@ def play(args):
     return report.exit
 
 
-def plan(world, outdir):
+def plan(world):
     """The walk this run would take, printed, with no browser at all."""
     tiles = walkable(world)
     start = hero_start(world)
@@ -1160,7 +1177,7 @@ def main(argv=None):
     if world_path is None or not Path(world_path).is_file():
         raise SystemExit("could not find world.json; pass --world worlds/mending-shift/world.json")
     if args.plan:
-        return plan(load_world(world_path), Path(args.out))
+        return plan(load_world(world_path))
     return play(args)
 
 
@@ -1197,8 +1214,10 @@ class FakePage:
     without a browser. It is a test double, not a game.
     """
 
-    def __init__(self, world, outdir, silent=False):
+    def __init__(self, world, outdir, silent=False, refuses=(), mute=()):
         self.world = world
+        self.mute = {line for _w, line in mute}  # lines this page never shows
+        self.refuses = set(refuses)  # legend-walkable tiles the game will not enter
         self.outdir = Path(outdir)
         self.lines = []
         self.silent = silent  # a page that never says anything
@@ -1257,14 +1276,14 @@ class FakePage:
         if not delta:
             return None
         nxt = (self.pos[0] + delta[0], self.pos[1] + delta[1])
-        if nxt in self.tiles:
+        if nxt in self.tiles and nxt not in self.refuses:
             self.pos = nxt
             self.arrive()
         return None
 
     # -- what the double does when a control is pressed --
     def emit(self, who, line):
-        if not self.silent and line:
+        if not self.silent and line and line not in self.mute:
             self.lines.append((self.phase, "say", line if not who else "%s: %s" % (who, line)))
 
     def arrive(self):
@@ -1376,6 +1395,43 @@ def self_test():
         check("the-turning-opens" in report.missing,
               "the-turning-opens is named as never fired", failures)
 
+    # 3b. a tile the legend calls walkable but the game refuses: the walk must
+    # bar that tile (not the hero's own), route around it, and still finish
+    first = next((path for slug, _t in phase_order(world)[:1]
+                  for target, path in plan_phase(world, slug, start, tiles)
+                  if path and len(path) > 2), None)
+    refused = None
+    if first:
+        refused = next((t for t in first[1:-1]
+                        if bfs(tiles - {t}, start, first[-1], frozenset()) is not None), None)
+    check(refused is not None, "a refusable tile with a way round exists", failures)
+    if refused:
+        with tempfile.TemporaryDirectory() as tmp:
+            page = FakePage(world, tmp, refuses=[refused])
+            game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+            report = game.run()
+            write_report(report, tmp)
+            check(refused in game.blocked, "legend-walkable but refused: the refused tile is barred", failures)
+            check(start not in game.blocked and len(game.blocked) == 1,
+                  "legend-walkable but refused: no other tile is barred", failures)
+            check(report.exit == 0 and report.missing == [],
+                  "legend-walkable but refused: the walk routes round it and the run passes", failures)
+
+    # 3c. a required rule outside The Turning that never fires is named, and
+    # the exit code and report.missing agree
+    with tempfile.TemporaryDirectory() as tmp:
+        later = next((r for r in world["rules"] if rule_status_kind(r) == "required"
+                      and turning not in rule_phases(r)
+                      and when_kind(r) == "comes-near"), None)
+        if later is None:
+            check(False, "a required comes-near rule outside The Turning exists", failures)
+        else:
+            page = FakePage(world, tmp, mute=rule_lines(later))
+            game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+            report = game.run()
+            check(report.missing == [later["id"]] and report.exit == 1,
+                  "a muted %s rule is the one rule named, and the run exits 1" % later["id"], failures)
+
     # 4. a page with no hero state in it must still finish, and say so
     with tempfile.TemporaryDirectory() as tmp:
         page = FakePage(world, tmp)
@@ -1396,7 +1452,7 @@ def self_test():
         for line in failures:
             print("  FAIL %s" % line)
         return 1
-    print("self-test: all checks passed (plan, a speaking page, a silent page, a stateless page)")
+    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page)")
     return 0
 
 
