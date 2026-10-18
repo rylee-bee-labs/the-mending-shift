@@ -693,7 +693,21 @@
    },
    "if": [
     {
-     "phase": "low-water"
+     "all-of": [
+      {
+       "phase": "low-water"
+      },
+      {
+       "has": "bone-fid"
+      },
+      {
+       "has": "tar-coat"
+      },
+      {
+       "flag": "work-mended",
+       "is": false
+      }
+     ]
     }
    ],
    "then": [
@@ -707,6 +721,46 @@
      "say": {
       "who": "maud-bray",
       "line": "Both elbows and the shoulder. I read it before and after and I don't read it kindly."
+     }
+    },
+    {
+     "set": "work-mended"
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-quiet-coat-is-laid-at-the-bench",
+   "when": {
+    "comes-near": {
+     "who": "the bench",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "all-of": [
+      {
+       "phase": "low-water"
+      },
+      {
+       "has": "quiet-coat"
+      },
+      {
+       "flag": "work-mended",
+       "is": false
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "say": "The quiet coat on the bench while there is light, both mends in it and both still readable: the fid's stem closed from the ferrule down, and the coat's elbows and shoulder seam."
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Two repairs in one coat. I read them both and I don't read them kindly."
      }
     },
     {
@@ -1143,7 +1197,7 @@
     {
      "say": {
       "who": "warden-ottmar-vell",
-      "line": "Satchel's empty. There is nothing to read and I am not going to read a compliment into an empty bag. Not tonight."
+      "line": "Nothing in there has been on the bench. I read mended work, and there is none to read, and I am not going to read a compliment into it. Not tonight."
      }
     },
     {

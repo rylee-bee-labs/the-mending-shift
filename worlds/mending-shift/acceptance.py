@@ -86,6 +86,7 @@ BEATS = {
         "the-warden-hands-over-the-fid",
         "the-knife-comes-off-the-rack",
         "the-repairs-are-laid-at-the-bench",
+        "the-quiet-coat-is-laid-at-the-bench",
         "the-rack-offers-the-preview",
         "the-rack-fuses-the-fid-and-the-coat",
     ],
