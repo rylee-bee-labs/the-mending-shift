@@ -112,7 +112,7 @@ and the stones at the yard's foot are visible for the only time in the shift. Wh
 the underside of the hull lying on the hard, which is the only hour anybody can get under it, the packet boat up
 on the blocks, which is the only hour the gear can go into her, and the far side of the channel, which you could
 cross right now if you chose to. Who is speaking: the most crowded hour. The
-day hands, the resident whose coat is on the rack, the warden with the shingle slate under one arm. This is the
+day hands, the resident whose coat is in the satchel, the warden with the shingle slate under one arm. This is the
 hour in which an ask arrives as a story about who owns the object and why it stopped working, and the hour in which
 the bench is loudest. Low water is the phase where the fusion choice has to be made, because it is the only phase
 with enough light in the yard to see what you are about to give up.
@@ -126,7 +126,7 @@ open: the shed, the bench, the rack, and the crossing for anyone with a reason t
 of them, and the ones who stayed. Roald Fisk is not one of them: he went under the hull at Low Water, and after
 that hour, before the flood, he crossed to the town bank to see his sister, the run put the water between him and
 the yard, and he is on the far side for the whole of this
-phase, saying what the water is doing from the far end of the causeway. He comes back with her at Slack Water. Nobody in the yard is unkind at this hour; they are simply too late in the
+phase, saying what the water is doing from the far end of the causeway. At Slack Water he waits at the town end while the kit-runner brings her over. Nobody in the yard is unkind at this hour; they are simply too late in the
 shift for an ask to be a story any more, and an hour of flood is an hour in which nothing can be put right. This is
 the phase in which the player crosses out and is refused: the town is there, the crossing is there, the answer is no,
 and the refusal is given on the wall in front of the yard. What comes back is nothing - no passenger, no errand

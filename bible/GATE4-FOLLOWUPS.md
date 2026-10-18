@@ -37,3 +37,15 @@ canon:
 Softer notes, not contradictions: world.md gives two shingle outcomes where systems/slice give three
 (including Refused); Tam's want ("counted once") has no beat; the `tarred-line` item may conflate
 Sable's line with the twelve-fathom record.
+
+## Decided 2026-10-17 (Rylee handed these to AI)
+
+Rylee, 2026-10-17: "The mending task is for ai to choose! Nothing blocks on me" and "You and minimax choose!" MiniMax judged and Claude agreed:
+
+- **J02, J05, J11: kept.** They answer the continuity findings her approval assumed were answered.
+- **C01: the kit-runner brings Roald's sister over; Roald waits at the town end of the causeway.** The crossing-with-a-passenger belongs only to the kit-runner (world.md, slice.md Beat 4), and the build is what decides what one trip is worth. Edited: cast.md and world.md ("comes back with her" becomes "waits at the town end while the kit-runner brings her over").
+- **C02: fixed.** world.md now says the coat is "in the satchel" at Low Water.
+- **C03: fixed.** systems.md now says the quiet-coat losses are the forms the pieces' `writes` keys supersede at pickup, not anything rule 4 spends (the line under the recipe table is updated to match).
+- **Not changed, on purpose:** world.md "twice" and slice.md "one crossing at a time". They describe the build WITHOUT the quiet coat, which really takes two crossings.
+
+All five bible gates pass. From here on, Mending's canon calls belong to Claude and MiniMax.

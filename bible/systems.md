@@ -239,7 +239,7 @@ The rule for what survives, stated once and applied to every pair below:
    survive into the heirloom. Where the union holds two forms of one verb, `keeps` names exactly one of the
    two - the one that survives - and the other form is spent with the piece that carried it. Where the two
    inputs bring one form of a verb between them, as every pair in the table below does, `keeps` names both
-   inputs and rule 2 spends nothing on its own; the losses listed under the table come from rule 4. The key
+   inputs and rule 2 spends nothing on its own; the losses listed under the table are the forms the two pieces' `writes` keys supersede at pickup, not anything rule 4 spends. The key
    is on every record so that the heirloom's verb list is readable out of the data and not out of the prose.
 3. The heirloom also carries one further verb, the one thing the two pieces were mended with together.
    This is the pitch's answer to "builds capped rather than deepened", and it is the only thing that
@@ -304,7 +304,7 @@ required to show it and there is nowhere else in the record for it to live.
 }
 ```
 
-What each one keeps and what it destroys, read off the `keeps` key and rule 4:
+What each one keeps and what it destroys, read off the `keeps` key and the `writes` supersession at pickup:
 
 - **quiet-coat** ("the quiet coat") keeps the quiet `Climb` and the hands-kept `Wade`, and carries `Shelter` - getting
   somebody under you and keeping the weather off both of you. Spent forever: the slow `Climb` and the
