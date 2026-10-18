@@ -683,6 +683,30 @@ def png_size(path):
     return struct.unpack(">II", head[16:24])
 
 
+def frames_of(states, name, key, direction):
+    """One state's frame list, [] when the sidecar has none.
+
+    Every entry is checked to be a whole frame number (a bool is not one) before
+    the list reaches the length checks or the `idle + walk` concatenation below, so
+    a malformed sidecar is a failed check naming the file and the entry, never a
+    TypeError out of the checker. None means that check has already failed and the
+    rest of this direction should stand down rather than read the same bad value.
+    """
+    raw = states.get(name)
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        check(False, "sprites/%s.sheet.json: %s %s must be a list of frame numbers, got %r"
+              % (key, direction, name, raw))
+        return None
+    for entry in raw:
+        if isinstance(entry, bool) or not isinstance(entry, int):
+            check(False, "sprites/%s.sheet.json: %s %s frame %r is not a whole frame number"
+                  % (key, direction, name, entry))
+            return None
+    return raw
+
+
 def check_resident(key):
     """M3b: one resident's still, sheet and sidecar, and every frame index fitting the sheet."""
     sprites = PACK / "sprites"
@@ -699,6 +723,9 @@ def check_resident(key):
         meta = json.loads(sidecar.read_text(encoding="utf-8"))
     except ValueError as failure:
         check(False, "sprites/%s.sheet.json is not JSON: %s" % (key, failure))
+        return
+    if not isinstance(meta, dict):
+        check(False, "sprites/%s.sheet.json is not a JSON object" % key)
         return
     frame = meta.get("frame")
     check(isinstance(frame, list) and len(frame) == 2
@@ -722,20 +749,28 @@ def check_resident(key):
           "sprites/%s.png is not one %dx%d frame" % (key, fw, fh))
     cols, rows = sheet[0] // fw, sheet[1] // fh
 
-    directions = meta.get("directions") or {}
-    check("down" in directions, "sprites/%s.sheet.json has no 'down' direction" % key)
+    directions = meta.get("directions")
+    if not isinstance(directions, dict):
+        check(False, "sprites/%s.sheet.json has no 'directions' map" % key)
+        return
+    for facing in RESIDENT_DIRECTIONS:
+        check(facing in directions,
+              "sprites/%s.sheet.json has no '%s' direction: the contract is down, up and right"
+              % (key, facing))
     for direction, states in directions.items():
         check(direction in RESIDENT_DIRECTIONS,
               "sprites/%s.sheet.json names the direction %r" % (key, direction))
         states = states if isinstance(states, dict) else {}
-        idle = states.get("idle") or []
-        walk = states.get("walk") or []
+        idle = frames_of(states, "idle", key, direction)
+        walk = frames_of(states, "walk", key, direction)
+        if idle is None or walk is None:
+            continue
         check(1 <= len(idle) <= 16,
               "sprites/%s.sheet.json: %s idle needs 1 to 16 frames" % (key, direction))
         check(not walk or 2 <= len(walk) <= 16,
               "sprites/%s.sheet.json: %s walk needs 2 to 16 frames" % (key, direction))
         for index in idle + walk:
-            check(isinstance(index, int) and 0 <= index < cols * rows,
+            check(0 <= index < cols * rows,
                   "sprites/%s.sheet.json: %s frame %r does not fit the %dx%d grid of %s-sheet.png"
                   % (key, direction, index, cols, rows, key))
 
