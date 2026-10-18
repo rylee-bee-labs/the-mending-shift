@@ -23,6 +23,12 @@ is set so the engine's default cover is never what a player sees, and every
 sprite and `tile` the pack names resolves to a file inside the pack, never a
 path out to `art/`.
 
+M2e's line: Bryn is the hero. `player.sprites` names her front, back and side
+(plus the three approved walk contacts), and every one of those entries resolves
+to a file inside the pack, so the hero can be drawn from the approved anchor art
+and not from the engine's plain circle. A resident who has no approved art keeps
+the engine's own figure; when one is commissioned, the gate holds it to the pack.
+
 With VEFR_DIR set it also runs `vefr check` against the pack and requires exit
 0. Without it, it says so and skips. Exit status is 0 only when every check
 holds.
@@ -607,12 +613,78 @@ def inside_pack(relative):
     return resolved
 
 
+# The three views Bryn is drawn from. A hero that only ever faces one way reads
+# as a pawn, so all three must be wired before the pack is finished art.
+HERO_VIEWS = ("front", "back", "side")
+
+# An enemy `sprite` and a `player.sprites` entry name the same thing: a picture
+# the pack owns. Only the pack's own files are ever named, so a player who runs
+# the pack alone sees the same yard the anchor art describes.
+IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
+
+
+def resolve_sprite(value, folder="sprites"):
+    """Where one `player.sprites` value points, or None if it points nowhere.
+
+    The legend's `tile` is a stem (`"wall"`), the engine's own rule docs call a
+    `sprite` an *entry* in this map, and M2c's wiring was drawn as a pack path
+    and drew a plain white circle in play - so a stem inside `sprites/` is read
+    first and a path is still accepted. Either way the answer is a file inside
+    the pack, never a path out to `art/`.
+    """
+    if not isinstance(value, str) or not value.strip():
+        return None
+    if value.lower().endswith(IMAGE_SUFFIXES):
+        return inside_pack(value)
+    stem = "%s/%s" % (folder, value)
+    return inside_pack(stem + ".png")
+
+
+def check_hero(world):
+    """M2e: Bryn is the hero, and the engine can find her pixels for it."""
+    player = world.get("player") or {}
+    sprites = player.get("sprites") or {}
+    check(isinstance(sprites, dict) and sprites,
+          "player.sprites must name the hero's front, back and side")
+
+    for view in HERO_VIEWS:
+        check(view in sprites,
+              "player.sprites has no '%s' view; the hero would never turn" % view)
+
+    for name, value in sorted((sprites or {}).items()):
+        path = resolve_sprite(value)
+        check(path is not None,
+              "sprite '%s' (%r) must be a name or a path inside the pack" % (name, value))
+        if path is not None:
+            check(path.is_file(),
+                  "sprite '%s' resolves to %s, which is not in the pack"
+                  % (name, path.relative_to(PACK)))
+
+    # Every approved walk contact is wired to a frame of its own, so a host run
+    # is what decides whether the engine reads them, never a missing file.
+    for view in HERO_VIEWS:
+        walk = "%s-walk" % view
+        if walk in sprites:
+            path = resolve_sprite(sprites[walk])
+            check(path is not None and path.is_file(),
+                  "walk frame '%s' resolves to %r, which is not in the pack" % (walk, sprites[walk]))
+
+    # A resident may be given art later; when one is, it must be the pack's own.
+    for key, speaker in (world.get("speakers") or {}).items():
+        sprite = (speaker or {}).get("sprite")
+        if sprite is None:
+            continue  # the engine's own figure stands in until that art is approved
+        path = resolve_sprite(sprite)
+        check(path is not None and path.is_file(),
+              "speaker '%s' names the sprite %r, which is not a file in the pack" % (key, sprite))
+
+
 def check_art(world):
     """M2c: the pack's own picture, all of it on disk and none of it borrowed.
 
-    `title_art` is set and names a file inside the pack; every sprite and every
-    `tile` the legend names resolves to a file inside the pack too, so the pack
-    never reaches out to `art/` for what a player sees.
+    `title_art` is set and names a file inside the pack; every `tile` the legend
+    names resolves to a file inside the pack too, so the pack never reaches out
+    to `art/` for what a player sees. The hero's own frames are `check_hero`.
     """
     player = world.get("player") or {}
     title = player.get("title_art")
@@ -624,16 +696,6 @@ def check_art(world):
               "player.title_art %r must be a relative path inside the pack" % title)
         if path is not None:
             check(path.is_file(), "title art missing from the pack: %s" % title)
-
-    sprites = player.get("sprites") or {}
-    check(isinstance(sprites, dict) and sprites,
-          "player.sprites must name the hero's front, back and side")
-    for facing, relative in sorted(sprites.items()):
-        path = inside_pack(relative)
-        check(path is not None,
-              "sprite %r must be a relative path inside the pack, got %r" % (facing, relative))
-        if path is not None:
-            check(path.is_file(), "sprite file missing from the pack: %s" % relative)
 
     legend = ((world.get("town") or {}).get("legend")) or {}
     for glyph, entry in sorted(legend.items()):
@@ -674,6 +736,7 @@ def main():
     check_named_items(world)
     check_town(world)
     check_art(world)
+    check_hero(world)
     run_vefr_check()
 
     if FAILURES:
@@ -682,7 +745,8 @@ def main():
         print("%d check(s) failed." % len(FAILURES))
         return 1
     print("M2b acceptance: PASS - 4 phases, 7 speakers, 8 items, 6 recipes, "
-          "%d rules over 5 beats, 3 outcomes, art wired from inside the pack."
+          "%d rules over 5 beats, 3 outcomes, art wired from inside the pack, "
+          "hero's front/back/side resolve to files."
           % len(world.get("rules") or []))
     return 0
 
