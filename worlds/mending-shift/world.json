@@ -14,6 +14,10 @@
   "rail": "locked",
   "persist": true
  },
+ "flags": {
+  "work-mended": "the two repairs were laid at the bench at Low Water",
+  "quiet-coat-made": "the rack fused the bone fid and the waxed tar-coat into the quiet coat"
+ },
  "verbs": [
   "Climb",
   "Wade"
@@ -383,6 +387,170 @@
  },
  "rules": [
   {
+   "id": "the-turning-opens",
+   "when": {
+    "phase-changes": {
+     "to": "the-turning"
+    }
+   },
+   "if": [
+    {
+     "phase": "the-turning"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "tam-verrow",
+      "line": "Hook's off the rack. I bent it. Shank's drawn a third along and the bend won't come back without a vice. Two. That's two. What's the third?"
+     }
+    },
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "There you are. Bench is warm enough. Boat's on the blocks at low water and the stem's split, and I don't hand a thing over I haven't looked at."
+     }
+    },
+    {
+     "say": {
+      "who": "roald-fisk",
+      "line": "Coat came out stiff. It'll take water at both elbows now, and the left shoulder seam's open to the lining. It's yours till the bench."
+     }
+    },
+    {
+     "say": {
+      "who": "sable-kearn",
+      "line": "Gear wants doing. Don't stand in my light and don't ask me what I haven't said."
+     }
+    },
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "Night crew's on the far bank. Nothing of mine to say at this hour, and I'm not pretending otherwise."
+     }
+    },
+    {
+     "say": {
+      "who": "tam-verrow",
+      "line": "Hook's off the rack. I bent it. Shank's drawn a third along and the bend won't come back without a vice. Two. That's two. What's the third?"
+     }
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "That seam's open to the lining and my scratch is under the wax. Re-lay it and keep the mark."
+     }
+    },
+    {
+     "say": {
+      "who": "grissel-toft",
+      "line": "Two more handfuls, then it's down and it's covered. Cuff's gone — I can't get a whole hand under that bone."
+     }
+    }
+   ],
+   "once": false
+  },
+  {
+   "id": "the-slow-climb-fails-at-the-wall",
+   "when": {
+    "uses-verb": {
+     "verb": "Climb"
+    }
+   },
+   "if": [
+    {
+     "phase": "the-turning"
+    },
+    {
+     "not": {
+      "has": "bone-fid"
+     }
+    }
+   ],
+   "then": [
+    {
+     "say": "The wall is a cliff at this hour and you take it the slow way, one hold at a time, where anybody on the coping can hear you working. The fid rewrites this climb into a quiet one, and the fid is on the warden's bench and not in your hands."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-hands-under-wade-fails-at-the-causeway-foot",
+   "when": {
+    "uses-verb": {
+     "verb": "Wade"
+    }
+   },
+   "if": [
+    {
+     "phase": "the-turning"
+    },
+    {
+     "not": {
+      "has": "tar-coat"
+     }
+    }
+   ],
+   "then": [
+    {
+     "say": "You go out to the foot of the causeway with both hands under the water and you are committed to not drowning. The coat keeps your hands up where they can hold something. The coat is on Roald Fisk's hook and not yours."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "tam-verrow-offers-the-bent-hook",
+   "when": {
+    "comes-near": {
+     "who": "the causeway head",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "the-turning"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "tam-verrow",
+      "line": "Take it, then. It's off the rack and I bent it and nobody's going to miss a hook Tam Verrow bent. One slot, and you'd be a hand at the rack before Slack Water. One slot."
+     }
+    },
+    {
+     "say": "It is not your mend to make. He has already taken it off the rack and already bent it, and you put it back on the hook where it hangs. It never takes a worn slot, and the rack is short one hook and nobody says so."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "grissel-toft-hands-over-the-heat-glove",
+   "when": {
+    "comes-near": {
+     "who": "the pitch pot",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "the-turning"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "grissel-toft",
+      "line": "Here. Left cuff's burnt out at the wrist and the cloth inside's gone to powder. The bone comes out on this glove and I can't get a whole hand under it. Mend it at the bench and it's back on my hand before the hour's out."
+     }
+    },
+    {
+     "say": "You mend it at the bench: the powder out of the cloth, a cuff rebuilt, the seam closed along the wrist. It goes straight back onto the hand that brought it in. No worn slot, no satchel, no record in the yard, and it is on her own hand again before The Turning is out of it."
+    }
+   ],
+   "once": true
+  },
+  {
    "id": "roald-fisk-hands-over-the-coat",
    "when": {
     "comes-near": {
@@ -407,6 +575,64 @@
     }
    ],
    "once": true
+  },
+  {
+   "id": "low-water-comes-in",
+   "when": {
+    "phase-changes": {
+     "to": "low-water"
+    }
+   },
+   "if": [
+    {
+     "phase": "low-water"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Take the fid to the bench. Split's open at the top and shut at the bottom. Get it sound and it's mine again, and no patched stem on my evening tide."
+     }
+    },
+    {
+     "say": {
+      "who": "roald-fisk",
+      "line": "I'm going under the hull while there's hard to go under on. Twelve fathom at the armhole, and not a fathom more."
+     }
+    },
+    {
+     "say": {
+      "who": "sable-kearn",
+      "line": "Seized sheave on the standing end of my line. New rope won't bring it back. The block stays on my bench — the becket's parting at the top third, and the gear comes before the block."
+     }
+    },
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "Not in your yard yet. Been at the blocks an hour before you'll see me."
+     }
+    },
+    {
+     "say": {
+      "who": "tam-verrow",
+      "line": "Four slots. I've counted the stitching. You're holding three and the fourth's split."
+     }
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Fusion takes it off. I say it now, at the bench, so nobody can say afterwards I didn't. Both elbows and the shoulder, and my scratch on the new stitching."
+     }
+    },
+    {
+     "say": {
+      "who": "grissel-toft",
+      "line": "Bone's whole and the glove's back on my hand, before the water's over the wall."
+     }
+    }
+   ],
+   "once": false
   },
   {
    "id": "the-warden-hands-over-the-fid",
@@ -458,6 +684,218 @@
    "once": true
   },
   {
+   "id": "the-repairs-are-laid-at-the-bench",
+   "when": {
+    "comes-near": {
+     "who": "the bench",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "all-of": [
+      {
+       "phase": "low-water"
+      },
+      {
+       "has": "bone-fid"
+      },
+      {
+       "has": "tar-coat"
+      },
+      {
+       "flag": "work-mended",
+       "is": false
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "say": "Two repairs, both on the bench while there is light. The fid's split stem closed from the ferrule down, whole and sound, which is the condition the warden states and can check for himself rather than take on trust."
+    },
+    {
+     "say": "The coat's wax gone hard at both elbows, and the left shoulder seam re-laid from the armhole down with Maud Bray's scratch cut across the new stitching."
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Both elbows and the shoulder. I read it before and after and I don't read it kindly."
+     }
+    },
+    {
+     "set": "work-mended"
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-quiet-coat-is-laid-at-the-bench",
+   "when": {
+    "comes-near": {
+     "who": "the bench",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "all-of": [
+      {
+       "phase": "low-water"
+      },
+      {
+       "has": "quiet-coat"
+      },
+      {
+       "flag": "work-mended",
+       "is": false
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "say": "The quiet coat on the bench while there is light, both mends in it and both still readable: the fid's stem closed from the ferrule down, and the coat's elbows and shoulder seam."
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Two repairs in one coat. I read them both and I don't read them kindly."
+     }
+    },
+    {
+     "set": "work-mended"
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-rack-offers-the-preview",
+   "when": {
+    "comes-near": {
+     "who": "the rack",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "all-of": [
+      {
+       "phase": "low-water"
+      },
+      {
+       "has": "bone-fid"
+      },
+      {
+       "has": "tar-coat"
+      },
+      {
+       "flag": "quiet-coat-made",
+       "is": false
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "say": "The bench turns the two of them over once, before anything is spent. The quiet coat. Climb, and do it quiet. Wade, and keep your hands. And Shelter: somebody under you, and the weather off both of you."
+    },
+    {
+     "say": "Gone for good, piece by piece: Ottmar's bone fid. Roald Fisk's waxed tar-coat. That is the whole of the look, and there is no second one and no way back."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-rack-fuses-the-fid-and-the-coat",
+   "when": {
+    "mends": {
+     "recipe": "fuse-fid-coat"
+    }
+   },
+   "if": [
+    {
+     "has": "quiet-coat"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Seam's unpicked and my scratch went with the thread. I said it at the bench before you started, so nobody can say afterwards I didn't."
+     }
+    },
+    {
+     "say": "The rack takes the fid and the coat off the hooks and gives back one coat with two patches on it. Bone fid. Waxed tar-coat."
+    },
+    {
+     "say": "Both names read on it by the yard, and neither piece in the yard for the rest of the shift. The slow climb and the hands-under wade went with them and are nowhere now."
+    },
+    {
+     "set": "quiet-coat-made"
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-run-floods",
+   "when": {
+    "phase-changes": {
+     "to": "the-run"
+    }
+   },
+   "if": [
+    {
+     "phase": "the-run"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Water's over the coping. If the stem's whole, she goes across on the evening."
+     }
+    },
+    {
+     "say": {
+      "who": "roald-fisk",
+      "line": "I'm at the far end of the causeway and the water's running over your coping. Don't go out on it. The crossing is at slack, and it's the coat's job."
+     }
+    },
+    {
+     "say": {
+      "who": "sable-kearn",
+      "line": "Still here. Nothing further from me this hour."
+     }
+    },
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "Crossed at the back of the afternoon. Whistle's yours — tongue's filed near flat, fipple split at the top. One thin note and it dies on the causeway."
+     }
+    },
+    {
+     "say": {
+      "who": "tam-verrow",
+      "line": "Whistle's yours now, so that's four. Whatever comes next stays on the rack."
+     }
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Bench, still. Coat's with you and I'm not asking after it."
+     }
+    },
+    {
+     "say": {
+      "who": "grissel-toft",
+      "line": "Gone before the run. Nothing of mine wants doing after this hour."
+     }
+    }
+   ],
+   "once": false
+  },
+  {
    "id": "margit-brack-hands-over-the-whistle",
    "when": {
     "comes-near": {
@@ -479,6 +917,333 @@
       "who": "margit-brack",
       "line": "Night crew's whistle. Loop of tarred twine, three names ground into the rim. Put a name out on it and the far side will answer."
      }
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-crossing-is-refused-at-the-causeway-head",
+   "when": {
+    "comes-near": {
+     "who": "the causeway head",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "the-run"
+    }
+   ],
+   "then": [
+    {
+     "say": "You go out along the causeway as far as the far step. Water over the coping, running faster than a person walks, and nobody on the far side will take a kit-runner off the water in a run."
+    },
+    {
+     "say": "The refusal is given on the wall in front of the yard, and it is about people and not about the water. What comes back is nothing: no passenger, no errand done across."
+    },
+    {
+     "say": {
+      "who": "roald-fisk",
+      "line": "I'm at the far end and I can't do it either. The crossing is at slack. It's the coat's job and not anybody else's."
+     }
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "slack-water-sets",
+   "when": {
+    "phase-changes": {
+     "to": "slack-water"
+    }
+   },
+   "if": [
+    {
+     "phase": "slack-water"
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "I want one note that carries across the water and calls the crew in off the channel where the shout dies. Thirty years I've done it by hand."
+     }
+    },
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Slate's under my arm. I'll read the satchel before I put a name on anything."
+     }
+    },
+    {
+     "say": {
+      "who": "roald-fisk",
+      "line": "She's at the far end with the doctor's hand on her. Bring her across and her feet stay out of the water."
+     }
+    },
+    {
+     "say": {
+      "who": "sable-kearn",
+      "line": "Hoist goes up once, in front of the town, and it'll be seen from the far bank. I'd like it seen."
+     }
+    },
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "I want one note that carries across the water and calls the crew in off the channel where the shout dies. Thirty years I've done it by hand."
+     }
+    },
+    {
+     "say": {
+      "who": "tam-verrow",
+      "line": "Say out loud that I was a hand at the rack. Not a carrier. A hand."
+     }
+    },
+    {
+     "say": {
+      "who": "maud-bray",
+      "line": "Is my scratch on it? That's the only question I've come over with."
+     }
+    },
+    {
+     "say": {
+      "who": "grissel-toft",
+      "line": "Pot's cold and covered. I'm not at the bench tonight."
+     }
+    }
+   ],
+   "once": false
+  },
+  {
+   "id": "the-note-carries-across-the-water",
+   "when": {
+    "uses-verb": {
+     "verb": "Call"
+    }
+   },
+   "if": [
+    {
+     "phase": "slack-water"
+    },
+    {
+     "has": "tin-whistle"
+    }
+   ],
+   "then": [
+    {
+     "say": "One thin note goes out over the channel, the wind off the far bank takes it flat and then gives it back, and an answer comes back from the blocks: one blast, and the night crew stand in to it. The far side knows to wait."
+    },
+    {
+     "say": {
+      "who": "margit-brack",
+      "line": "That's the note. Thirty years I've done that by hand and shouted it across a running channel."
+     }
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "she-comes-across-under-the-quiet-coat",
+   "when": {
+    "comes-near": {
+     "who": "the causeway head",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "slack-water"
+    },
+    {
+     "has": "quiet-coat"
+    }
+   ],
+   "then": [
+    {
+     "say": "Out empty to the town bank, and back with her held against you under the one coat. Shelter: somebody under you, and the weather off both of you, in one trip, with nothing about the two of you announced."
+    },
+    {
+     "say": "Her feet are out of the water the whole way, and she is put down on the yard end of the causeway, where the warden is standing."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "she-comes-across-one-crossing-at-a-time",
+   "when": {
+    "comes-near": {
+     "who": "the causeway head",
+     "distance": 1
+    }
+   },
+   "if": [
+    {
+     "phase": "slack-water"
+    },
+    {
+     "not": {
+      "has": "quiet-coat"
+     }
+    }
+   ],
+   "then": [
+    {
+     "say": "She comes over on the coat's hands-kept wade and the fid's quiet climb, one crossing at a time, with the whole bank watching every one of them. Her feet stay out of the water and her brother's face does the rest of it."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-shingle-is-signed",
+   "when": {
+    "comes-near": {
+     "who": "warden-ottmar-vell",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "phase": "slack-water"
+    },
+    {
+     "has": "quiet-coat"
+    },
+    {
+     "flag": "work-mended",
+     "is": true
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "One object, two patches on it. Ottmar's bone fid. Roald Fisk's waxed tar-coat. The yard knows what was spent and it does not hide it, and a name on this slate is a week of nights. You made a decision to have it. Name goes on."
+     }
+    },
+    {
+     "say": "The slate goes up over the yard end of the causeway, with the town's evening work lit behind it on the far bank. A week of nights, and nobody in this yard lowers their voice for a name that is not read."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-shingle-is-deferred",
+   "when": {
+    "comes-near": {
+     "who": "warden-ottmar-vell",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "all-of": [
+      {
+       "phase": "slack-water"
+      },
+      {
+       "flag": "work-mended",
+       "is": true
+      },
+      {
+       "not": {
+        "has": "quiet-coat"
+       }
+      },
+      {
+       "not": {
+        "has": "bend-hook"
+       }
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "He reads what is in the satchel and he reads it accurately, every mend and every tool in it, one at a time, and he takes as long over each as it took you."
+     }
+    },
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Nothing in there was made out of two other things. The work is good. The shift decided nothing. Come back at The Turning."
+     }
+    },
+    {
+     "say": "No name on the slate. He says the hour and you work out what he meant."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-shingle-is-refused-empty",
+   "when": {
+    "comes-near": {
+     "who": "warden-ottmar-vell",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "phase": "slack-water"
+    },
+    {
+     "flag": "work-mended",
+     "is": false
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Nothing in there has been on the bench. I read mended work, and there is none to read, and I am not going to read a compliment into it. Not tonight."
+     }
+    },
+    {
+     "say": "The slate stays under his arm. He does not look at it twice."
+    }
+   ],
+   "once": true
+  },
+  {
+   "id": "the-shingle-is-refused-over-a-refused-object",
+   "when": {
+    "comes-near": {
+     "who": "warden-ottmar-vell",
+     "distance": 2
+    }
+   },
+   "if": [
+    {
+     "all-of": [
+      {
+       "phase": "slack-water"
+      },
+      {
+       "flag": "work-mended",
+       "is": true
+      },
+      {
+       "not": {
+        "has": "quiet-coat"
+       }
+      },
+      {
+       "has": "bend-hook"
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "say": {
+      "who": "warden-ottmar-vell",
+      "line": "Tam Verrow's bent hook. He came to the bench for it and he was told no, and it is still in the satchel. An object whose owner was refused is not mended work. I do not put a name to that. Not tonight."
+     }
+    },
+    {
+     "say": "The slate stays under his arm. The yard does not lower its voice for a hook, and neither does anybody else."
     }
    ],
    "once": true
