@@ -9,3 +9,4 @@ This is a working anchor for building the slice, not canon. Canon and final art 
 - `option-anchor-tiles.png`, `tile-00..17.png`: the 18-tile set
 - `generate_pixel_art_v2.py` and `generate_pixel_art_v3.py`: original integer raster code, no external art. Run `python3 generate_pixel_art_v3.py`; it reproduces the scene byte-for-byte (checked 2026-10-17).
 - Judgements: `research/anchors-round-3-minimax-judgement.md`, `research/anchors-round-4-bryn-minimax-judgement.md`
+- Round 5 (M3b, residents): `generate_pixel_art_v5.py` draws the seven residents, one draw function each, on Palette A from v2 with no new roles. Run `python3 generate_pixel_art_v5.py` (default `--out` is the pack's `worlds/mending-shift/sprites/`; or `--out DIR`). Per resident it writes `<id>.png`, `<id>-sheet.png` and `<id>.sheet.json`, laid out as Bryn's. Rerunning reproduces the files byte for byte. Status: drawn, not yet judged.

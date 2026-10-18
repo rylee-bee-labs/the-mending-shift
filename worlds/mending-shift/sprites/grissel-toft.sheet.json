@@ -1,0 +1,37 @@
+{
+  "image": "grissel-toft-sheet.png",
+  "frame": [
+    26,
+    33
+  ],
+  "fps": 8,
+  "directions": {
+    "down": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        2,
+        3
+      ]
+    },
+    "up": {
+      "idle": [
+        4
+      ],
+      "walk": [
+        6,
+        7
+      ]
+    },
+    "right": {
+      "idle": [
+        8
+      ],
+      "walk": [
+        10,
+        11
+      ]
+    }
+  }
+}
