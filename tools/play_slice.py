@@ -848,7 +848,21 @@ class Game:
 
     def page_says(self):
         """All current page text sources used both for waiting and recording."""
-        return "\n".join(part for part in (self.text(), self.speech_text()) if part)
+        page_text = self.text()
+        speech = self.speech_text()
+        # A visible speech line can also be present in the log/body. Keep one
+        # copy, while retaining the speech-box copy when the box is hidden.
+        page_lines = {norm(line) for line in page_text.splitlines()}
+        page_bare_lines = {norm(line.split(": ", 1)[-1]) for line in page_text.splitlines()}
+        unique_speech = []
+        for line in speech.splitlines():
+            key = norm(line)
+            bare_key = norm(line.split(": ", 1)[-1])
+            if (key in page_lines or bare_key in page_lines
+                    or key in page_bare_lines or bare_key in page_bare_lines):
+                continue
+            unique_speech.append(line)
+        return "\n".join(part for part in (page_text, "\n".join(unique_speech)) if part)
 
     def state(self):
         """The player's own state, if this build exposes one."""
@@ -1065,17 +1079,18 @@ class Game:
         out = []
         speaker = self._query("#npc-name")
         try:
-            speaker_name = (speaker.inner_text() or "").strip() if speaker is not None else ""
+            speaker_name = (speaker.text_content() or "").strip() if speaker is not None else ""
         except Exception:
             speaker_name = ""
         for selector in SPEECH_SELECTORS:
             for el in self._query_all(selector):
                 try:
-                    chunk = el.inner_text() or ""
+                    chunk = (el.text_content() or "") if selector == "#npc-line" else (el.inner_text() or "")
                 except Exception:
                     continue
-                out += [("%s: %s" % (speaker_name, l) if selector == "#npc-line" and speaker_name else l)
-                        for l in chunk.splitlines() if not norm(l).startswith("talk")]
+                chunks = [line.strip() for line in chunk.splitlines() if line.strip()]
+                out += [("%s: %s" % (speaker_name, line) if selector == "#npc-line" and speaker_name else line)
+                        for line in chunks if not norm(line).startswith("talk")]
         return "\n".join(out)
 
     def shown(self):
@@ -1978,6 +1993,13 @@ class FakeElement:
         self.page.activate(self.label)
 
     def inner_text(self):
+        if self.label == "npc-line" and self.page.hidden_speech is not None:
+            return ""
+        if self.text is not None:
+            return self.text() if callable(self.text) else self.text
+        return "\n".join(line for _p, _s, line in self.page.lines)
+
+    def text_content(self):
         if self.text is not None:
             return self.text() if callable(self.text) else self.text
         return "\n".join(line for _p, _s, line in self.page.lines)
@@ -2035,8 +2057,10 @@ class FakePage:
         self.rest_el = FakeElement(self, "rest", text="Rest")
         self.talk_el = FakeElement(self, "talk", text="" if talk_aria else self.talk_label,
                                    attrs={"aria-label": self.talk_label})
-        self.npc_line = FakeElement(self, "npc-line", text=lambda: self.lines[-1][2].split(": ", 1)[-1]
-                                    if self.lines else "")
+        self.npc_line = FakeElement(self, "npc-line", text=lambda: self.hidden_speech
+                                    if self.hidden_speech is not None else
+                                    (self.lines[-1][2].split(": ", 1)[-1] if self.lines else ""))
+        self.hidden_speech = None
         self.npc_name = FakeElement(self, "npc-name", text=lambda: self.lines[-1][2].split(": ", 1)[0]
                                     if self.lines and ": " in self.lines[-1][2] else "")
         self.talk_btn = FakeElement(self, "talk", text=self.button_talk_text,
@@ -2316,6 +2340,38 @@ def self_test():
         said = [norm(line) for _p, _s, line in game.log_lines]
         check(len(said) == len(set(said)), "no line recorded twice", failures)
         check(len(said) > 20, "the run recorded the game's lines (%d)" % len(said), failures)
+
+    # 2a. speech-box text survives hiding during the same walk step. The old
+    # inner_text-only read returned an empty string for this hidden element.
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, Path(tmp))
+        page.hidden_speech = "A line spoken while the box is hidden."
+        game = Game(page, world, Path(tmp), html_path="fake.html", world_path=world_path, quiet=True)
+        captured = game.absorb()
+        check(captured == [page.hidden_speech], "a hidden speech box line is read", failures)
+        check(game.absorb() == [], "a hidden speech box line is recorded only once", failures)
+        page = FakePage(world, Path(tmp))
+        # The speech box prefixes the speaker; the page body carries the bare
+        # line. Without the dedup these normalise differently and both are
+        # recorded, so the count below fails.
+        said_once = "The same line appears in both sources."
+        page.lines.append((page.phase, "say", said_once))
+        page.hidden_speech = said_once
+        page.npc_name.text = "Roald Fisk"
+        game = Game(page, world, Path(tmp), html_path="fake.html", world_path=world_path, quiet=True)
+        game.absorb()
+        check(len(game.log_lines) == 1 and game.log_lines[0][2] == said_once,
+              "the page text and speech box keep the real line once", failures)
+
+    # Whitespace text nodes around a speech line must not create phantom lines.
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, Path(tmp))
+        page.hidden_speech = "\n  The coat is yours.\n"
+        page.npc_name.text = "Roald Fisk"
+        game = Game(page, world, Path(tmp), html_path="fake.html", world_path=world_path, quiet=True)
+        captured = game.absorb()
+        check(captured == ["Roald Fisk: The coat is yours."],
+              "padded speech text records one clean spoken line", failures)
 
     # 3. a page that says nothing must fail the run
     with tempfile.TemporaryDirectory() as tmp:
