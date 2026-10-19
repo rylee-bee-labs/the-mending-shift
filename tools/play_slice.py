@@ -853,11 +853,13 @@ class Game:
         # A visible speech line can also be present in the log/body. Keep one
         # copy, while retaining the speech-box copy when the box is hidden.
         page_lines = {norm(line) for line in page_text.splitlines()}
+        page_bare_lines = {norm(line.split(": ", 1)[-1]) for line in page_text.splitlines()}
         unique_speech = []
         for line in speech.splitlines():
             key = norm(line)
             bare_key = norm(line.split(": ", 1)[-1])
-            if key in page_lines or bare_key in page_lines:
+            if (key in page_lines or bare_key in page_lines
+                    or key in page_bare_lines or bare_key in page_bare_lines):
                 continue
             unique_speech.append(line)
         return "\n".join(part for part in (page_text, "\n".join(unique_speech)) if part)
@@ -1086,8 +1088,9 @@ class Game:
                     chunk = (el.text_content() or "") if selector == "#npc-line" else (el.inner_text() or "")
                 except Exception:
                     continue
-                out += [("%s: %s" % (speaker_name, l) if selector == "#npc-line" and speaker_name else l)
-                        for l in chunk.splitlines() if not norm(l).startswith("talk")]
+                chunks = [line.strip() for line in chunk.splitlines() if line.strip()]
+                out += [("%s: %s" % (speaker_name, line) if selector == "#npc-line" and speaker_name else line)
+                        for line in chunks if not norm(line).startswith("talk")]
         return "\n".join(out)
 
     def shown(self):
@@ -2357,7 +2360,18 @@ def self_test():
         page.npc_name.text = "Roald Fisk"
         game = Game(page, world, Path(tmp), html_path="fake.html", world_path=world_path, quiet=True)
         game.absorb()
-        check(len(game.log_lines) == 1, "the page text and speech box do not duplicate a line", failures)
+        check(len(game.log_lines) == 1 and game.log_lines[0][2] == said_once,
+              "the page text and speech box keep the real line once", failures)
+
+    # Whitespace text nodes around a speech line must not create phantom lines.
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, Path(tmp))
+        page.hidden_speech = "\n  The coat is yours.\n"
+        page.npc_name.text = "Roald Fisk"
+        game = Game(page, world, Path(tmp), html_path="fake.html", world_path=world_path, quiet=True)
+        captured = game.absorb()
+        check(captured == ["Roald Fisk: The coat is yours."],
+              "padded speech text records one clean spoken line", failures)
 
     # 3. a page that says nothing must fail the run
     with tempfile.TemporaryDirectory() as tmp:
