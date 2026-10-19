@@ -102,7 +102,8 @@ TALK_SELECTORS = [
 
 # Where a spoken answer can show up besides the log region: the Talk control itself, any live
 # region, and a speech box. Lines that only repeat the Talk label are dropped.
-SPEECH_SELECTORS = ["#talk", "[aria-live]", "#say", "#speech", ".speech", "[data-speech]"]
+SPEECH_SELECTORS = ["#talk", "[aria-live]", "#say", "#speech", ".speech", "[data-speech]",
+                    "#npc-line"]
 
 # Movement. The first candidate per direction is the player's own arrow key;
 # the rest are tried only when the driver can watch the hero and see it move.
@@ -845,6 +846,10 @@ class Game:
             except Exception:
                 return ""
 
+    def page_says(self):
+        """All current page text sources used both for waiting and recording."""
+        return "\n".join(part for part in (self.text(), self.speech_text()) if part)
+
     def state(self):
         """The player's own state, if this build exposes one."""
         exprs = [self.state_expr] if self.state_expr else STATE_EXPRS
@@ -925,7 +930,7 @@ class Game:
         the record is a list of what was said, not of how many times the log
         was redrawn.
         """
-        text = self.text() + "\n" + self.speech_text()
+        text = self.page_says()
         added = []
         for line in text.splitlines():
             key = norm(line)
@@ -941,7 +946,7 @@ class Game:
 
     def wait_for_change(self, before, timeout):
         """Wait, bounded, until the page says something new."""
-        changed = self.wait_for(lambda: self.text() != before, timeout)
+        changed = self.wait_for(lambda: self.page_says() != before, timeout)
         self.absorb()
         return changed is not None
 
@@ -1058,13 +1063,19 @@ class Game:
         """What the Talk control, the live regions and the speech box say, less the
         Talk label itself (`Talk to <name>` is an offer, not a line spoken)."""
         out = []
+        speaker = self._query("#npc-name")
+        try:
+            speaker_name = (speaker.inner_text() or "").strip() if speaker is not None else ""
+        except Exception:
+            speaker_name = ""
         for selector in SPEECH_SELECTORS:
             for el in self._query_all(selector):
                 try:
                     chunk = el.inner_text() or ""
                 except Exception:
                     continue
-                out += [l for l in chunk.splitlines() if not norm(l).startswith("talk")]
+                out += [("%s: %s" % (speaker_name, l) if selector == "#npc-line" and speaker_name else l)
+                        for l in chunk.splitlines() if not norm(l).startswith("talk")]
         return "\n".join(out)
 
     def shown(self):
@@ -1512,7 +1523,7 @@ class Game:
             stand = stands[attempt % len(stands)][0]
             self.step_out(target)
             self.tag = "walk to %s" % target.who
-            before = self.text()
+            before = self.page_says()
             at, steps = self.walk_to(stand)
             line["walked"] = at == stand
             line["tile_reached"] = list(at) if at else None
@@ -1570,7 +1581,7 @@ class Game:
             if index < len(phases):
                 nxt = phases[index][0]
                 self.tag = "rest into %s" % nxt
-                before = self.text()
+                before = self.page_says()
                 if not self.rest():
                     self.say("no Rest control and no Rest key answered")
                     break
@@ -2024,6 +2035,10 @@ class FakePage:
         self.rest_el = FakeElement(self, "rest", text="Rest")
         self.talk_el = FakeElement(self, "talk", text="" if talk_aria else self.talk_label,
                                    attrs={"aria-label": self.talk_label})
+        self.npc_line = FakeElement(self, "npc-line", text=lambda: self.lines[-1][2].split(": ", 1)[-1]
+                                    if self.lines else "")
+        self.npc_name = FakeElement(self, "npc-name", text=lambda: self.lines[-1][2].split(": ", 1)[0]
+                                    if self.lines and ": " in self.lines[-1][2] else "")
         self.talk_btn = FakeElement(self, "talk", text=self.button_talk_text,
                                     attrs={"aria-label": self.button_talk_text})
         self.play_el = FakeElement(self, "play", text="Begin")
@@ -2085,6 +2100,8 @@ class FakePage:
 
     # -- the Playwright calls the driver makes --
     def query_selector(self, selector):
+        if selector == "#npc-name":
+            return self.npc_name
         if selector == "#log":
             return self.log
         if selector == "[data-rest]":
@@ -2120,6 +2137,8 @@ class FakePage:
             return [self.talk_el]
         if selector == "[aria-live]":
             return [self.log]
+        if selector == "#npc-line":
+            return [self.npc_line]
         return []
 
     def evaluate(self, expr):
