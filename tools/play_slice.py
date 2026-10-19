@@ -1083,7 +1083,7 @@ class Game:
         for selector in SPEECH_SELECTORS:
             for el in self._query_all(selector):
                 try:
-                    chunk = (el.text_content() or "") if selector in ("#npc-line", "#npc-name") else (el.inner_text() or "")
+                    chunk = (el.text_content() or "") if selector == "#npc-line" else (el.inner_text() or "")
                 except Exception:
                     continue
                 out += [("%s: %s" % (speaker_name, l) if selector == "#npc-line" and speaker_name else l)
@@ -1977,12 +1977,11 @@ def main(argv=None):
 class FakeElement:
     """The slice of Playwright's ElementHandle the driver uses."""
 
-    def __init__(self, page, label, attrs=None, text=None, hidden=False):
+    def __init__(self, page, label, attrs=None, text=None):
         self.page = page
         self.label = label
         self.attrs = attrs or {}
         self.text = text  # a control's own words (str or callable); None for the log
-        self.hidden = hidden
 
     def click(self, timeout=None, force=False):
         # `force` is the driver's: it presses a control the page lays out at 0x0, the
@@ -1991,7 +1990,7 @@ class FakeElement:
         self.page.activate(self.label)
 
     def inner_text(self):
-        if self.hidden or (self.label == "npc-line" and self.page.hidden_speech is not None):
+        if self.label == "npc-line" and self.page.hidden_speech is not None:
             return ""
         if self.text is not None:
             return self.text() if callable(self.text) else self.text
@@ -2349,8 +2348,13 @@ def self_test():
         check(captured == [page.hidden_speech], "a hidden speech box line is read", failures)
         check(game.absorb() == [], "a hidden speech box line is recorded only once", failures)
         page = FakePage(world, Path(tmp))
-        page.lines.append((page.phase, "say", "The same line appears in both sources."))
-        page.hidden_speech = "The same line appears in both sources."
+        # The speech box prefixes the speaker; the page body carries the bare
+        # line. Without the dedup these normalise differently and both are
+        # recorded, so the count below fails.
+        said_once = "The same line appears in both sources."
+        page.lines.append((page.phase, "say", said_once))
+        page.hidden_speech = said_once
+        page.npc_name.text = "Roald Fisk"
         game = Game(page, world, Path(tmp), html_path="fake.html", world_path=world_path, quiet=True)
         game.absorb()
         check(len(game.log_lines) == 1, "the page text and speech box do not duplicate a line", failures)
