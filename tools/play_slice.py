@@ -61,7 +61,6 @@ LOG_SELECTORS = [
     "#say-line",
     "#message",
     "#messages",
-    "#talk",
     "#dialogue",
     "#narration",
     "#transcript",
@@ -92,6 +91,7 @@ REST_SELECTORS = ["[data-rest]", "button[data-rest]", "#rest"]
 # Talking. The nearest resident gets an entry in the action row; the speaker's
 # own name is the fallback handle.
 TALK_SELECTORS = [
+    "#talk",
     "button:has-text('Talk')",
     "button:has-text('Speak')",
     "button:has-text('Interact')",
@@ -99,6 +99,11 @@ TALK_SELECTORS = [
     "[data-talk]",
     "[data-interact]",
 ]
+
+# Where a spoken answer can show up besides the log region: the Talk control itself, any live
+# region, and a speech box. Lines that only repeat the Talk label are dropped.
+SPEECH_SELECTORS = ["#talk", "[aria-live]", "#say", "#speech", ".speech", "[data-speech]",
+                    "#npc-line"]
 
 # Movement. The first candidate per direction is the player's own arrow key;
 # the rest are tried only when the driver can watch the hero and see it move.
@@ -110,6 +115,23 @@ DIRECTIONS = [
 ]
 
 REST_KEYS = ["r", "R"]
+TALK_KEYS = ["f", "F"]  # the player's own Talk keybind
+
+# Mend. The pack's recipes are pressed from a Mend control; the player names none in this repo,
+# so each is tried and the report lists what the page offered when none answers.
+MEND_SELECTORS = [
+    "[data-mend]",
+    "#mend",
+    "button:has-text('Mend')",
+    "button:has-text('Fuse')",
+]
+MEND_PICK_SELECTORS = ["[data-recipe='%(id)s']", "[data-mend='%(id)s']"]
+
+# Talk refuses beyond this many tiles ("No one is close enough to talk to.").
+TALK_REACH = 2
+
+# The hero's tile, published by the player after every accepted step and once at setup.
+HERO_EXPR = "window.VEFR_HERO_AT ? JSON.stringify(window.VEFR_HERO_AT) : null"
 
 # State probes. The first reads a top-level `STATE` with a `get()` method, which
 # is what the woven player is assumed to expose: a classic <script> puts a
@@ -275,7 +297,7 @@ def rule_lines(rule):
 # The events a driver that walks, talks and rests can actually produce. The
 # rest of the pack (`mends`, and `uses-verb` unless asked for) is reported as
 # not attempted rather than counted against the run.
-DRIVEN_EVENTS = {"comes-near", "phase-changes"}
+DRIVEN_EVENTS = {"comes-near", "phase-changes", "starts"}
 
 
 def rule_status_kind(rule, try_verbs=False):
@@ -358,15 +380,69 @@ class Target:
     kind: str  # "speaker", "poi" or "unresolved"
     distance: int
     rules: list = field(default_factory=list)
+    needs: set = field(default_factory=set)  # items its rules want held
+    gives: set = field(default_factory=set)  # items its rules hand over
 
     def label(self, world):
         spec = world.get("speakers", {}).get(self.who)
         return spec.get("name", self.who) if spec else self.who
 
 
-def comes_near_targets(world, phase):
+def cond_items(cond, want=True, acc=None):
+    """Items a condition tests: held when `want`, not held otherwise, through
+    `all-of` and `not`."""
+    acc = set() if acc is None else acc
+    if isinstance(cond, dict):
+        if isinstance(cond.get("has"), str) and want:
+            acc.add(cond["has"])
+        if isinstance(cond.get("not"), dict):
+            cond_items(cond["not"], not want, acc)
+        for sub in cond.get("all-of") or []:
+            cond_items(sub, want, acc)
+    return acc
+
+
+def rule_needs(rule):
+    """Items a rule wants held."""
+    out = set()
+    for cond in rule.get("if", []) or []:
+        cond_items(cond, True, out)
+    return out
+
+
+def rule_gives(rule):
+    return {a["give"] for a in rule.get("then", []) or [] if isinstance(a, dict) and isinstance(a.get("give"), str)}
+
+
+def mend_recipes(world):
+    """{recipe id: recipe} for every recipe a `mends` rule is keyed on."""
+    wanted = {r["when"]["mends"].get("recipe") for r in world.get("rules", [])
+              if isinstance(r.get("when"), dict) and isinstance(r["when"].get("mends"), dict)}
+    return {rc["id"]: rc for rc in world.get("recipes", []) if rc.get("id") in wanted}
+
+
+def mend_outputs(world):
+    return {rc.get("output") for rc in mend_recipes(world).values()}
+
+
+def earlier_gives(world, phase):
+    """Items rules of hours before `phase` hand over."""
+    order = [slug for slug, _ in phase_order(world)]
+    before = set(order[:order.index(phase)]) if phase in order else set()
+    held = set()
+    for rule in world.get("rules", []):
+        phases = rule_phases(rule)
+        if phases and phases <= before:
+            held |= rule_gives(rule)
+    return held
+
+
+def comes_near_targets(world, phase, held=None, only=None):
     """Every place and resident the rules for `phase` name in `comes-near`,
-    nearest-first, ties broken by name so two runs walk the same yard."""
+    in dependency order: a target whose rules need an item waits for the
+    target that hands it over. Nearest-first among those that can go, ties
+    broken by name so two runs walk the same yard. `only` narrows to a set of
+    rule ids."""
     found = {}
     for rule in world.get("rules", []):
         when = rule.get("when", {})
@@ -374,6 +450,8 @@ def comes_near_targets(world, phase):
             continue
         near = when.get("comes-near")
         if not isinstance(near, dict) or phase not in rule_phases(rule):
+            continue
+        if only is not None and rule.get("id") not in only:
             continue
         who = near.get("who")
         if not isinstance(who, str):
@@ -385,31 +463,197 @@ def comes_near_targets(world, phase):
             distance = 1
         entry = found.setdefault(who, {
             "tile": tile, "kind": kind, "distance": distance, "rules": [],
+            "needs": set(), "gives": set(),
         })
         entry["distance"] = max(entry["distance"], distance)
         entry["rules"].append(rule.get("id", "?"))
-    targets = [Target(who=who, tile=v["tile"], kind=v["kind"], distance=v["distance"], rules=v["rules"])
+        # what a mend makes is not another target's gift, so it is no wait
+        entry["needs"] |= rule_needs(rule) - mend_outputs(world)
+        entry["gives"] |= rule_gives(rule)
+    targets = [Target(who=who, tile=v["tile"], kind=v["kind"], distance=v["distance"], rules=v["rules"],
+                      needs=v["needs"], gives=v["gives"])
                for who, v in found.items()]
     targets.sort(key=lambda t: (t.tile is None, manhattan(hero_start(world) or (0, 0), t.tile)
                                 if t.tile else 999, t.who))
-    return targets
+    held = set(earlier_gives(world, phase) if held is None else held)
+    ordered = []
+    while targets:
+        ready = next((t for t in targets if t.needs <= held), targets[0])
+        targets.remove(ready)
+        ordered.append(ready)
+        held |= ready.gives
+    return ordered
 
 
-def plan_phase(world, phase, start, tiles, blocked=frozenset()):
-    """The walk for one hour: every comes-near target, nearest-first, each with
-    the tile path to it. A target with no coordinates or no route comes back
-    flagged, so the report can name it instead of quietly dropping it."""
+def stand_tiles(world, target, start, tiles, blocked=frozenset()):
+    """Every tile worth standing on for `target`, best first, as (tile, path). A place is
+    stood on or beside; a speaker is stood beside, with that speaker strictly the nearest
+    (Talk takes the nearest), inside the rule's distance and Talk's reach of two."""
+    if target.tile is None:
+        return []
+    if target.kind != "speaker":
+        found = []
+        for tile in sorted(tiles, key=lambda t: (manhattan(t, target.tile), t)):
+            if manhattan(tile, target.tile) > 2:
+                break
+            path = bfs(tiles, start, tile, blocked)
+            if path:
+                found.append(((manhattan(tile, target.tile), len(path)), tile, path))
+        found.sort(key=lambda f: f[0])
+        return [(tile, path) for _score, tile, path in found]
+    others = [at for sid, at in speaker_coords(world).items() if at != target.tile]
+    reach = max(1, min(target.distance, TALK_REACH))
+    found = []
+    for tile in sorted(tiles):
+        d = manhattan(tile, target.tile)
+        if d > reach:
+            continue
+        path = bfs(tiles, start, tile, blocked)
+        if not path:
+            continue
+        crowded = any(manhattan(tile, o) <= d for o in others)
+        found.append(((crowded, d == 0, d, len(path)), tile, path))
+    found.sort(key=lambda f: f[0])
+    return [(tile, path) for _score, tile, path in found]
+
+
+def stand_tile(world, target, start, tiles, blocked=frozenset()):
+    """Where to stand for `target`: the best of `stand_tiles`, with its path."""
+    if target.kind != "speaker" and target.tile is not None:
+        return nearest_reachable(tiles, target.tile, start, blocked)
+    found = stand_tiles(world, target, start, tiles, blocked)
+    return found[0] if found else (None, None)
+
+
+def plan_phase(world, phase, start, tiles, blocked=frozenset(), only=None):
+    """The walk for one hour: every comes-near target, in dependency order,
+    each with the tile path to it. A target with no coordinates or no route
+    comes back flagged, so the report can name it instead of quietly dropping it."""
     plan = []
     at = start
-    for target in comes_near_targets(world, phase):
+    for target in comes_near_targets(world, phase, only=only):
         if target.tile is None:
             plan.append((target, None))
             continue
-        tile, path = nearest_reachable(tiles, target.tile, at, blocked)
+        tile, path = stand_tile(world, target, at, tiles, blocked)
         if path:
             at = path[-1]
         plan.append((target, path))
     return plan
+
+
+def phase_script(world, phase):
+    """What the driver does in one hour, in order, as (op, argument):
+
+    verb   a uses-verb beat; the ones that need an item not held yet wait
+           until after the walk, and the ones that need it NOT held go first
+    target walk to a place or resident (and Talk, for a resident)
+    mend   press a recipe, once
+    again  the targets whose rules need what the mend made, walked a second time
+    """
+    verb_rules = [r for r in world.get("rules", [])
+                  if when_kind(r) == "uses-verb" and phase in rule_phases(r)]
+    before = [r["when"]["uses-verb"]["verb"] for r in verb_rules if not rule_needs(r)]
+    after = [r["when"]["uses-verb"]["verb"] for r in verb_rules if rule_needs(r)]
+    script = [("verb", v) for v in before]
+    script += [("target", t) for t in comes_near_targets(world, phase)]
+    script += [("verb", v) for v in after]
+    outputs = mend_outputs(world)
+    later = [r for r in world.get("rules", []) if phase in rule_phases(r) and rule_needs(r) & outputs
+             and when_kind(r) == "comes-near"]
+    last = [slug for slug, _ in phase_order(world)
+            if any(slug in rule_phases(r) and rule_needs(r) & outputs for r in world.get("rules", []))][-1:]
+    if later and phase in last:
+        ids = {r["id"] for r in later}
+        script += [("mend", rc) for _rid, rc in sorted(mend_recipes(world).items())
+                   if rc.get("output") in outputs]
+        script += [("again", t) for t in comes_near_targets(world, phase, only=ids)]
+    return script
+
+
+def why_unfireable(world, rule):
+    """Plain words for a rule the script cannot fire."""
+    givers = set().union(*(rule_gives(r) for r in world.get("rules", [])), set())
+    made = mend_outputs(world)
+    gone = sorted(i for i in rule_needs(rule) if i not in givers | made)
+    if gone:
+        return "needs %s, which no rule hands over" % ", ".join(gone)
+    flags = []
+
+    def collect(cond):
+        if isinstance(cond, dict):
+            if "flag" in cond and cond.get("is") is False:
+                flags.append(cond["flag"])
+            for sub in cond.get("all-of") or []:
+                collect(sub)
+
+    for cond in rule.get("if", []) or []:
+        collect(cond)
+    if flags:
+        return ("needs %s unset, but the walk has already set it by the time this hour's "
+                "walk reaches it (the bench, an hour earlier, sets it)" % ", ".join(flags))
+    if rule_needs(rule) & made:
+        return "its branch excludes the other: the walk takes the one that leaves this unmet"
+    return "no point in the walk meets its event and its `if` together"
+
+
+def holds(cond, phase, items, flags):
+    """Whether one `if` condition holds in a state."""
+    if isinstance(cond, dict):
+        if "phase" in cond:
+            return cond["phase"] == phase
+        if "has" in cond:
+            return cond["has"] in items
+        if "flag" in cond:
+            return bool(flags.get(cond["flag"], False)) == bool(cond.get("is", True))
+        if "not" in cond:
+            return not holds(cond["not"], phase, items, flags)
+        if "all-of" in cond:
+            return all(holds(c, phase, items, flags) for c in cond["all-of"])
+        if "any-of" in cond:
+            return any(holds(c, phase, items, flags) for c in cond["any-of"])
+    return False
+
+
+def simulate(world, try_verbs=True):
+    """The rules this walk should fire, by playing the script against the
+    pack's own rules: no browser, so only what stepping, Talk, verbs, Rest and
+    one Mend are known to do. A rule fires wherever its event and its `if`
+    meet; walking past a place on the way to another is not counted."""
+    items, flags, fired = set(), {}, []
+
+    def fire(match, phase):
+        for rule in world.get("rules", []):
+            if not match(rule.get("when", {})):
+                continue
+            if not all(holds(c, phase, items, flags) for c in rule.get("if", []) or []):
+                continue
+            if rule["id"] not in fired:
+                fired.append(rule["id"])
+            for action in rule.get("then", []) or []:
+                if isinstance(action, dict) and "give" in action:
+                    items.add(action["give"])
+                if isinstance(action, dict) and "set" in action:
+                    flags[action["set"]] = True
+
+    phases = [slug for slug, _ in phase_order(world)]
+    fire(lambda w: isinstance(w, dict) and "starts" in w, phases[0] if phases else None)
+    for index, phase in enumerate(phases):
+        fire(lambda w, p=phase: isinstance(w, dict) and w.get("phase-changes", {}).get("to") == p, phase)
+        for op, arg in phase_script(world, phase):
+            if op == "verb" and try_verbs:
+                fire(lambda w, v=arg: isinstance(w, dict) and w.get("uses-verb", {}).get("verb") == v, phase)
+            elif op in ("target", "again"):
+                def near(w, a=arg):
+                    n = w.get("comes-near") if isinstance(w, dict) else None
+                    return isinstance(n, dict) and n.get("who") == a.who
+                fire(near, phase)
+            elif op == "mend":
+                if set(arg.get("inputs", [])) <= items:
+                    items.difference_update(arg.get("inputs", []))
+                    items.add(arg.get("output"))
+                    fire(lambda w, r=arg["id"]: isinstance(w, dict) and w.get("mends", {}).get("recipe") == r, phase)
+    return fired
 
 
 def match_rule(rule, haystack, world=None):
@@ -499,6 +743,8 @@ class Report:
         self.shots = []
         self.missing = []
         self.not_attempted = []
+        self.unreachable = []
+        self.debug = None  # None: --debug-talk is off; else one block of text per Talk
         self.exit = 1
 
     def note(self, text):
@@ -515,7 +761,9 @@ class Report:
             "screenshots": self.shots,
             "missing": self.missing,
             "not_attempted": self.not_attempted,
+            "unreachable": self.unreachable,
             "notes": self.notes,
+            **({"debug": self.debug} if self.debug is not None else {}),
             "exit": self.exit,
         }
 
@@ -525,7 +773,7 @@ class Game:
 
     def __init__(self, page, world, outdir, html_path=None, world_path=None,
                  step_timeout=STEP_TIMEOUT, settle=SETTLE_TIMEOUT,
-                 try_verbs=False, talk=True, quiet=False):
+                 try_verbs=False, talk=True, quiet=False, debug_talk=False):
         self.page = page
         self.world = world
         self.html_path = html_path or ""
@@ -538,12 +786,16 @@ class Game:
         self.talk = talk
         self.quiet = quiet
         self.report = Report(self.html_path, self.world_path, self.outdir)
+        self.debug_talk = debug_talk
+        if debug_talk:
+            self.report.debug = []
         self.tiles = walkable(world)
         self.blocked = set()
         self.keys = {}  # direction name -> the key that actually moved the hero
         self.rest_control = None
         self.state_expr = None
         self.hero_probe = "unverified"
+        self.hero_region = None
         self.log_selector = None
         self.pos = hero_start(world)
         self.tag = "start"  # what the driver is doing, for the lines file
@@ -594,6 +846,10 @@ class Game:
             except Exception:
                 return ""
 
+    def page_says(self):
+        """All current page text sources used both for waiting and recording."""
+        return "\n".join(part for part in (self.text(), self.speech_text()) if part)
+
     def state(self):
         """The player's own state, if this build exposes one."""
         exprs = [self.state_expr] if self.state_expr else STATE_EXPRS
@@ -618,7 +874,17 @@ class Game:
         return None
 
     def hero_pos(self):
-        """(x, y) if the state names it, else None."""
+        """(x, y) from `window.VEFR_HERO_AT`, which the player sets after every
+        accepted step; else from the player state if that names it; else None."""
+        try:
+            raw = self.page.evaluate(HERO_EXPR)
+            at = json.loads(raw) if raw else None
+        except Exception:
+            at = None
+        if isinstance(at, dict) and all(isinstance(at.get(k), int) for k in ("x", "y")):
+            self.hero_probe = "VEFR_HERO_AT"
+            self.hero_region = at.get("region")
+            return (at["x"], at["y"])
         state = self.state()
         if state is None:
             return None
@@ -664,7 +930,7 @@ class Game:
         the record is a list of what was said, not of how many times the log
         was redrawn.
         """
-        text = self.text()
+        text = self.page_says()
         added = []
         for line in text.splitlines():
             key = norm(line)
@@ -680,7 +946,7 @@ class Game:
 
     def wait_for_change(self, before, timeout):
         """Wait, bounded, until the page says something new."""
-        changed = self.wait_for(lambda: self.text() != before, timeout)
+        changed = self.wait_for(lambda: self.page_says() != before, timeout)
         self.absorb()
         return changed is not None
 
@@ -787,40 +1053,389 @@ class Game:
         self.pos = at
         return at, steps
 
-    def talk_to(self, name):
-        """Best effort: a resident's own line, where the page offers a control."""
+    def _query_all(self, selector):
+        try:
+            return self.page.query_selector_all(selector) or []
+        except Exception:
+            return []
+
+    def speech_text(self):
+        """What the Talk control, the live regions and the speech box say, less the
+        Talk label itself (`Talk to <name>` is an offer, not a line spoken)."""
+        out = []
+        speaker = self._query("#npc-name")
+        try:
+            speaker_name = (speaker.inner_text() or "").strip() if speaker is not None else ""
+        except Exception:
+            speaker_name = ""
+        for selector in SPEECH_SELECTORS:
+            for el in self._query_all(selector):
+                try:
+                    chunk = el.inner_text() or ""
+                except Exception:
+                    continue
+                out += [("%s: %s" % (speaker_name, l) if selector == "#npc-line" and speaker_name else l)
+                        for l in chunk.splitlines() if not norm(l).startswith("talk")]
+        return "\n".join(out)
+
+    def shown(self):
+        """Every line on screen, the log region, the speech sources and the page body, folded."""
+        lines = set()
+        for chunk in (self.text(), self.speech_text(), self._body()):
+            lines |= {norm(l) for l in chunk.splitlines() if len(norm(l)) >= 3}
+        return lines
+
+    def _body(self):
+        try:
+            return self.page.inner_text("body") or ""
+        except Exception:
+            return ""
+
+    def press_control(self, selectors, keys=()):
+        """Click the first control that answers, else press a key. Returns what
+        was pressed, or None."""
+        for selector in selectors:
+            el = self._query(selector)
+            if el is None:
+                continue
+            try:
+                el.click(timeout=1000)
+                return selector
+            except Exception:
+                continue
+        for key in keys:
+            try:
+                self.page.keyboard.press(key)
+                return "key %s" % key
+            except Exception:
+                continue
+        return None
+
+    def new_lines(self, before, timeout=TALK_TIMEOUT, wanted=None):
+        """Lines that appeared since `before` (a `shown()` snapshot); waits,
+        bounded, for one that `wanted` accepts (any, when None)."""
+        def fresh():
+            lines = [l for l in self.shown() - before if wanted is None or wanted(l)]
+            return lines
+        got = self.wait_for(fresh, timeout) or []
+        self.absorb()
+        return got
+
+    def controls(self):
+        """(element, every label it carries) for each button the page offers."""
+        out = []
+        for el in self._query_all("button"):
+            labels = []
+            try:
+                labels.append((el.inner_text() or "").strip().replace("\n", " "))
+                for attr in ("aria-label", "title"):
+                    labels.append((el.get_attribute(attr) or "").strip())
+            except Exception:
+                pass
+            labels = [l for l in labels if l]
+            if labels:
+                out.append((el, labels))
+        return out
+
+    def offered(self):
+        """The controls the page is offering, for a failure note."""
+        names = []
+        for _el, labels in self.controls():
+            if labels[0] not in names:
+                names.append(labels[0])
+        return names[:16]
+
+    def press_labelled(self, words):
+        """Click the first control whose text carries one of `words`. Returns the
+        label pressed, or None. The click is forced: the touch layout lays its Talk
+        button out at 0x0, and the player's own labelled control is still the one
+        that fires the rule where a bare key press would reach the POI instead."""
+        words = [norm(w) for w in words if w]
+        for el, labels in self.controls():
+            if any(w in norm(label) for w in words for label in labels):
+                try:
+                    el.click(timeout=1000, force=True)
+                    return labels[0]
+                except Exception:
+                    continue
+        return None
+
+    def talk_label(self):
+        """What the action row's Talk control says it would reach, as the player words it
+        (`Talk to Maud Bray`). Empty when no Talk control is offered."""
+        texts = []
+
+        def add(text):
+            text = (text or "").strip().replace("\n", " ")
+            if text and text not in texts:
+                texts.append(text)
+
+        for el in self._query_all("#talk"):
+            try:
+                add(el.inner_text())
+                add(el.get_attribute("aria-label"))
+                add(el.get_attribute("title"))
+            except Exception:
+                pass
+        for _el, labels in self.controls():
+            for label in labels:
+                if norm(label).startswith("talk"):
+                    add(label)
+        return " | ".join(texts)
+
+    def offers_talk_to(self, name):
+        """Whether the page is offering the `Talk to <name>` control right now - the control
+        the player reads, which the F key is not. On some tiles the label names a resident
+        while the row offers no such control: pressing F from there reaches a different
+        interact target and the rule stays unfired, so that tile is not a stand."""
+        wanted = "talk to %s" % norm(name)
+        return any(wanted in norm(label) for _el, labels in self.controls() for label in labels)
+
+    def aim_talk(self, who, name, distance=1):
+        """Stand where the player's own `Talk to <name>` control is offered. Returns
+        (ok, label).
+
+        The control is the truth: the tile the hero is on is read first, and when the
+        control is not offered there - or the label names someone else, or the speaker is
+        further than the rule's distance - the other tiles around the speaker are tried
+        nearest-first, from the real hero tile, rather than pressing F where it is not the
+        player's Talk.
+        """
+        speaker = speaker_coords(self.world).get(who)
+        reach = max(1, min(distance, TALK_REACH))
+        target = norm(name)
+        label = self.talk_label()
+        here = self.hero_pos() or self.pos
+        if speaker is None or here is None:
+            return target in norm(label), label
+
+        def stands_for_it(at):
+            return target in norm(label) and manhattan(at, speaker) <= reach \
+                and self.offers_talk_to(name)
+
+        if stands_for_it(here):
+            return True, label
+        others = {at for sid, at in speaker_coords(self.world).items() if sid != who}
+        tiles = self.tiles - self.blocked
+        for tile in sorted(tiles - others, key=lambda t: (manhattan(t, speaker), manhattan(t, here), t)):
+            d = manhattan(tile, speaker)
+            if d == 0 or d > TALK_REACH or tile == here:
+                continue
+            path = bfs(tiles, here, tile)
+            if not path:
+                continue
+            at, _steps = self.walk_to(tile)
+            here = self.hero_pos() or at
+            label = self.talk_label()
+            if stands_for_it(here):
+                return True, label
+        return False, label
+
+    def speaker_words(self, who, name):
+        """What counts as that resident talking: their name, or their seeded words."""
+        spec = (self.world.get("speakers", {}) or {}).get(who) or {}
+        seeds = [norm(v) for v in (spec.get("seeds") or {}).values() if isinstance(v, str) and len(norm(v)) >= 8]
+        names = {norm(name), norm(who)} - {""}
+
+        def said(line):
+            return any(n in line for n in names) or any(sd in line or (len(line) >= 12 and line in sd)
+                                                        for sd in seeds)
+        return said
+
+    def raw_hero_at(self):
+        """`window.VEFR_HERO_AT` exactly as the page holds it (None when unset)."""
+        try:
+            return self.page.evaluate("window.VEFR_HERO_AT ? JSON.stringify(window.VEFR_HERO_AT) : null")
+        except Exception as exc:
+            return "unreadable: %s" % exc
+
+    def fired_list(self):
+        """The ids in `VEFR_RULES_STATE.fired`, sorted (object or array form)."""
+        try:
+            return sorted(self.page.evaluate(
+                "(function () { var f = (window.VEFR_RULES_STATE || {}).fired;"
+                " if (!f) return []; return Array.isArray(f) ? f.slice() : Object.keys(f); })()") or [])
+        except Exception:
+            return []
+
+    def page_speaker_probe(self):
+        """The nearest speaker as the page itself exposes it, or a statement that it exposes
+        none. Only `window.VEFR_*` globals whose name mentions near, speaker or talk are read."""
+        try:
+            found = self.page.evaluate(
+                "(function () { var out = {}; Object.keys(window).forEach(function (k) {"
+                " if (/^VEFR_/.test(k) && /NEAR|SPEAKER|TALK/i.test(k)) {"
+                " try { out[k] = JSON.stringify(window[k]); } catch (e) { out[k] = String(e); } } });"
+                " return JSON.stringify(out); })()")
+            found = json.loads(found) if found else {}
+        except Exception as exc:
+            return "unreadable: %s" % exc
+        if not found:
+            return "the page exposes no nearest-speaker global (no window.VEFR_* named near/speaker/talk)"
+        return "; ".join("%s = %s" % kv for kv in sorted(found.items()))
+
+    def debug_block(self, n, who, name, label, hero, fired, probe, pressed):
+        """One `--debug-talk` block, written after the press from what was read before it."""
+        after_hero = self.raw_hero_at()
+        after = self.fired_list()
+        new = [r for r in after if r not in fired]
+        speaker = speaker_coords(self.world).get(who)
+        lines = [
+            "talk %d to %s (rule who: %s)" % (n, name, who),
+            "  VEFR_HERO_AT before press: %s" % hero,
+            "  VEFR_HERO_AT after press: %s" % after_hero,
+            "  speaker at (world.json): %s" % (list(speaker) if speaker else "none"),
+            "  Talk label at press: %s" % (label or "none"),
+            "  control pressed: %s" % (pressed or "none"),
+            "  page nearest speaker: %s" % probe,
+            "  fired before: %s" % fired,
+            "  fired after: %s" % after,
+            "  newly fired: %s" % (new or "none"),
+        ]
+        wrong = norm(name) not in norm(label)
+        moved = hero != after_hero
+        lines.append("  label names a different resident than the rule's who: %s" % ("YES" if wrong else "no"))
+        lines.append("  hero moved across the press: %s" % ("YES" if moved else "no"))
+        self.report.debug.append("\n".join(lines))
+
+    def talk_to(self, name, who=None, distance=1):
+        """Talk to a resident and VERIFY it: aim at the tile offering the player's own
+        `Talk to <name>` control, press, and count it only when a new line naming them (or in
+        their words) turns up."""
         if not self.talk:
             return False
-        for selector in TALK_SELECTORS:
-            el = self._query(selector)
-            if el is None:
-                continue
-            self.tag = "talk %s" % name
-            before = self.text()
-            try:
-                el.click(timeout=1000)
-            except Exception:
-                continue
-            self.wait_for_change(before, TALK_TIMEOUT)
+        who = who or name
+        self.tag = "talk %s" % name
+        ok, label = self.aim_talk(who, name, distance)
+        if not ok:
+            self.say("no tile within %d of %s offers a Talk to it (label: %s; controls offered: %s)"
+                     % (TALK_REACH, who, label or "none", ", ".join(self.offered()) or "none readable"))
+            self.say("talk to %s: nothing" % who)
+            return False
+        # the label can change between aiming and pressing (the hero moved): read it again at
+        # the press, and never press a Talk that names someone else
+        label = self.talk_label()
+        if norm(name) not in norm(label) or not self.offers_talk_to(name):
+            ok, label = self.aim_talk(who, name, distance)
+            if not ok:
+                self.say("the Talk label named someone else at the press, or offered no Talk to %s"
+                         " (label: %s)" % (name, label or "none"))
+                self.say("talk to %s: nothing" % who)
+                return False
+        debugging = self.debug_talk and len(self.report.debug) < 3
+        if debugging:
+            hero, fired, probe = self.raw_hero_at(), self.fired_list(), self.page_speaker_probe()
+        before = self.shown()
+        # the player's own labelled Talk control first -- the `Talk to <name>` button, the
+        # same one the report names -- and the F key only when the page offers no such
+        # control. A bare key press is not the player's Talk: from a tile that offers no
+        # labelled control it does not fire what the button fires.
+        pressed = self.press_labelled(["Talk to %s" % name]) or self.press_control(TALK_SELECTORS, TALK_KEYS)
+        if debugging:
+            self.page.wait_for_timeout(300)
+            self.debug_block(len(self.report.debug) + 1, who, name, label, hero, fired, probe, pressed)
+        got = self.new_lines(before, wanted=self.speaker_words(who, name)) if pressed else []
+        if got:
+            self.say("talk to %s: line captured" % who)
             return True
+        here = self.hero_pos() or self.pos
+        speaker = speaker_coords(self.world).get(who)
+        self.say("talk to %s at distance %s produced nothing%s (label: %s)"
+                 % (name, manhattan(here, speaker) if here and speaker else "?",
+                    "" if pressed else " (no Talk control or F key answered)", label))
+        self.say("talk to %s: nothing" % who)
         return False
 
+    def verb_places(self, verb):
+        """Where the pack could offer a verb, best guess first: the places the rule's own id
+        names (`...-at-the-wall`), then the residents its lines come from, then the rest."""
+        rules = [r for r in self.world.get("rules", []) if when_kind(r) == "uses-verb"
+                 and (r["when"]["uses-verb"] or {}).get("verb") == verb]
+        words = {w for r in rules for w in re.split(r"[^a-z]+", str(r.get("id", "")).lower()) if len(w) >= 4}
+        places = []
+        for label, tile in poi_coords(self.world).items():
+            if words & {w for w in re.split(r"[^a-z]+", label.lower()) if len(w) >= 4}:
+                places.append((label, tile))
+        speakers = speaker_coords(self.world)
+        for r in rules:
+            for who, _line in rule_lines(r):
+                if who in speakers and (who, speakers[who]) not in places:
+                    places.append((who, speakers[who]))
+        here = self.hero_pos() or self.pos
+        rest = sorted(poi_coords(self.world).items(), key=lambda kv: (manhattan(kv[1], here) if here else 0, kv[0]))
+        places += [kv for kv in rest if kv not in places]
+        return places[:4]
+
+    def has_control(self, verb):
+        word = norm(verb)
+        return any(word in norm(label) for _el, labels in self.controls() for label in labels)
+
     def try_verb(self, verb):
-        """Press a verb by its label, for the uses-verb beats."""
+        """Press a verb's control and VERIFY it: True only when a new line shows.
+
+        The action row only offers a verb where the pack offers it, so when no control is
+        showing the hero walks the places the rule names, then the residents it speaks
+        through, and looks again at each. A control that never appears is a content
+        finding: the tiles tried, the controls offered there and the rule's `when` are said."""
         self.tag = "verb %s" % verb
-        for selector in ("[data-verb='%s']" % verb,
-                         "button:has-text('%s')" % verb,
-                         "button:has-text(\"%s\")" % verb):
-            el = self._query(selector)
-            if el is None:
-                continue
-            before = self.text()
-            try:
-                el.click(timeout=1000)
-            except Exception:
-                continue
-            self.wait_for_change(before, TALK_TIMEOUT)
+        tried = []
+        for place, tile in [("here", None)] + self.verb_places(verb):
+            if tile is not None:
+                stand, _path = nearest_reachable(self.tiles - self.blocked, tile, self.hero_pos() or self.pos)
+                if stand is None:
+                    continue
+                self.walk_to(stand)
+            at = self.hero_pos() or self.pos
+            if self.has_control(verb):
+                before = self.shown()
+                pressed = self.press_labelled([verb]) or self.press_control(
+                    ["[data-verb='%s']" % verb, "button:has-text('%s')" % verb])
+                if pressed and self.new_lines(before):
+                    return True
+                self.say("verb %s produced nothing at %s (%s); controls offered: %s"
+                         % (verb, list(at) if at else "?", place, ", ".join(self.offered()) or "none readable"))
+                return False
+            tried.append((place, list(at) if at else None, self.offered()))
+        rule = next((r for r in self.world.get("rules", []) if when_kind(r) == "uses-verb"
+                     and (r["when"]["uses-verb"] or {}).get("verb") == verb), {})
+        self.say("verb %s has no control at any tile tried: %s; rule %s when %s if %s"
+                 % (verb, "; ".join("%s %s offered %s" % (p, t, ", ".join(o) or "none") for p, t, o in tried),
+                    rule.get("id", "?"), json.dumps(rule.get("when")), json.dumps(rule.get("if"))))
+        return False
+
+    def held_items(self):
+        """Items the hero should hold now: what the rules the player marked fired hand
+        over, plus any rule whose every line has been seen. (Used only to know whether a
+        Mend is worth reaching for.)"""
+        try:
+            fired = set(self.page.evaluate("Object.keys(((window.VEFR_RULES_STATE || {}).fired) || {})") or [])
+        except Exception:
+            fired = set()
+        held = set()
+        for rule in self.world.get("rules", []):
+            if rule.get("id") in fired or (rule_lines(rule) and not match_rule(rule, self.seen_norm, self.world)[1]):
+                held |= rule_gives(rule)
+        return held
+
+    def try_mend(self, recipe):
+        """Reach for the Mend only when its inputs are held; press the control whose text
+        carries Mend/Fuse and verify the recipe's line or the output's name appears."""
+        self.tag = "mend %s" % recipe["id"]
+        lacking = sorted(set(recipe.get("inputs", [])) - self.held_items())
+        if lacking:
+            self.say("mend %s: not reached, %s not held" % (recipe["id"], ", ".join(lacking)))
+            return False
+        before = self.shown()
+        pressed = self.press_labelled(["mend", "fuse"]) or self.press_control(MEND_SELECTORS)
+        if pressed:
+            self.press_control([sel % {"id": recipe["id"]} for sel in MEND_PICK_SELECTORS])
+        said = norm(recipe.get("say"))
+        out = norm((self.world.get("items", {}).get(recipe.get("output")) or {}).get("name"))
+        if pressed and self.new_lines(before, wanted=lambda l: (said and said in l) or (out and out in l)):
             return True
+        self.say("mend %s: %s; controls offered: %s"
+                 % (recipe["id"], "pressed %s but the quiet coat did not appear" % pressed if pressed
+                    else "no Mend control is offered", ", ".join(self.offered()) or "none readable"))
         return False
 
     def rest(self):
@@ -854,6 +1469,79 @@ class Game:
             self.say("screenshot %s failed: %s" % (name, exc))
             return None
 
+    def fired_ids(self):
+        """The rule ids the player itself marked fired (empty when it exposes none)."""
+        try:
+            return set(self.page.evaluate("Object.keys(((window.VEFR_RULES_STATE || {}).fired) || {})") or [])
+        except Exception:
+            return set()
+
+    def rule_done(self, rule):
+        """A rule has fired when the player says so, or every line it speaks has been seen."""
+        if rule.get("id") in self.fired_ids():
+            return True
+        return bool(rule_lines(rule)) and not match_rule(rule, self.seen_norm, self.world)[1]
+
+    def step_out(self, target):
+        """Walk to the nearest tile outside the rule's distance, so the walk back in is a
+        new arrival: a place or a resident fires when stepped near, not when stood near."""
+        here = self.hero_pos() or self.pos
+        if here is None or manhattan(here, target.tile) > target.distance:
+            return
+        tiles = self.tiles - self.blocked
+        for tile in sorted(tiles, key=lambda t: (manhattan(t, here), t)):
+            if manhattan(tile, target.tile) > target.distance and bfs(tiles, here, tile):
+                self.walk_to(tile)
+                return
+
+    def visit(self, target, again=False):
+        """Walk to a target as a fresh arrival and, for a resident, Talk and verify it.
+
+        The hero steps out of range first whenever it is standing in range (not only on a
+        repeat visit), so the walk in is always a new `comes-near` event. When the player
+        marks none of the target's reachable rules fired, it is tried again from another
+        tile, up to three arrivals in all.
+        """
+        line = {"who": target.who, "kind": target.kind, "tile": target.tile,
+                "rules": target.rules, "walked": False, "steps": 0, "again": again, "arrivals": 0}
+        if target.tile is None:
+            line["note"] = "world.json names no coordinates for %r" % target.who
+            self.say("%s has no coordinates" % target.who)
+            return line
+        here = self.hero_pos() or self.pos
+        tiles = self.tiles - self.blocked
+        stands = stand_tiles(self.world, target, here, tiles) if target.kind == "speaker" else None
+        if stands is None:
+            tile, path = nearest_reachable(tiles, target.tile, here)
+            stands = [(tile, path)] if path else []
+        if not stands:
+            line["note"] = "no walkable route to %s" % (target.tile,)
+            self.say("no route to %r at %s" % (target.who, target.tile))
+            return line
+        rules = [r for r in self.world.get("rules", []) if r.get("id") in target.rules]
+        for attempt in range(3):
+            stand = stands[attempt % len(stands)][0]
+            self.step_out(target)
+            self.tag = "walk to %s" % target.who
+            before = self.page_says()
+            at, steps = self.walk_to(stand)
+            line["walked"] = at == stand
+            line["tile_reached"] = list(at) if at else None
+            line["steps"] += steps
+            line["arrivals"] += 1
+            # a comes-near rule fires on arrival, so give the line its moment
+            self.wait_for_change(before, min(self.step_timeout, 1.5))
+            if target.kind == "speaker":
+                line["talked"] = self.talk_to(target.label(self.world), target.who, target.distance) \
+                    or line.get("talked", False)
+            held = self.held_items()
+            live = [r for r in rules if rule_needs(r) - mend_outputs(self.world) <= held]
+            if not live or any(self.rule_done(r) for r in rules):
+                break
+            self.say("%s: no rule of %s marked fired after arrival %d at %s; arriving again"
+                     % (target.who, ", ".join(target.rules), attempt + 1, list(at) if at else "?"))
+        return line
+
     # ---- the run ---------------------------------------------------------
 
     def run(self):
@@ -874,36 +1562,17 @@ class Game:
             self.phase = phase or slug
             self.tag = "arrive %s" % slug
             self.absorb()
-            start = self.hero_pos() or self.pos
-            for target, path in plan_phase(world, slug, start, self.tiles - self.blocked):
-                line = {"who": target.who, "kind": target.kind, "tile": target.tile,
-                        "rules": target.rules, "walked": False, "steps": 0}
-                if target.tile is None:
-                    line["note"] = "world.json names no coordinates for %r" % target.who
-                    entry["targets"].append(line)
-                    self.say("%s: %r has no coordinates" % (slug, target.who))
-                    continue
-                if path is None:
-                    line["note"] = "no walkable route to %s" % (target.tile,)
-                    entry["targets"].append(line)
-                    self.say("%s: no route to %r at %s" % (slug, target.who, target.tile))
-                    continue
-                self.tag = "walk to %s" % target.who
-                before = self.text()
-                at, steps = self.walk_to(target.tile)
-                line["walked"] = at == target.tile
-                line["tile_reached"] = list(at) if at else None
-                line["steps"] = steps
-                # a comes-near rule fires on arrival, so give the line its moment
-                self.wait_for_change(before, min(self.step_timeout, 1.5))
-                if target.kind == "speaker":
-                    line["talked"] = self.talk_to(target.label(world))
-                entry["targets"].append(line)
+            for op, arg in phase_script(world, slug):
+                if op == "verb":
+                    if self.try_verbs:
+                        entry.setdefault("verbs", []).append({"verb": arg, "pressed": self.try_verb(arg)})
+                elif op == "mend":
+                    entry["mend"] = {"recipe": arg["id"], "made": self.try_mend(arg)}
+                else:
+                    entry["targets"].append(self.visit(arg, again=(op == "again")))
 
-            if slug == phases[0][0] and self.try_verbs:
-                entry["verbs"] = [{"verb": verb, "pressed": self.try_verb(verb)}
-                                  for verb in world.get("verbs", [])]
-
+            here = self.hero_pos() or self.pos
+            entry["hero"] = list(here) if here else None
             shot = "phase-%02d-%s.png" % (index, slug)
             self.screenshot(shot)
             entry["screenshot"] = shot
@@ -912,7 +1581,7 @@ class Game:
             if index < len(phases):
                 nxt = phases[index][0]
                 self.tag = "rest into %s" % nxt
-                before = self.text()
+                before = self.page_says()
                 if not self.rest():
                     self.say("no Rest control and no Rest key answered")
                     break
@@ -933,6 +1602,7 @@ class Game:
         """Match every rule's own lines against everything the game showed."""
         report = self.report
         haystack = self.seen_norm
+        expected = simulate(self.world, self.try_verbs)
         # The player's own record of what ran: the rules engine marks every rule id that fired
         # in window.VEFR_RULES_STATE.fired. It is the authority; matching said lines against the
         # page text is the fallback (a line can be drawn somewhere this script does not read).
@@ -955,19 +1625,26 @@ class Game:
                 "status": "fired" if (rule.get("id") in engine_fired or matched or total == 0) else "missing",
                 "missing_lines": [line for _who, line in missing][:3],
             }
+            if entry["status"] == "fired" and total and not matched:
+                self.say("the player marked %s fired but none of its lines was seen" % entry["id"])
+                entry["status"] = "missing"
             report.rules.append(entry)
             if kind == "required" and entry["status"] != "fired":
-                report.missing.append(entry["id"])
-            if kind == "not-attempted":
+                # a rule the pack's own conditions keep out of any one walk is a finding, not a miss
+                (report.missing if entry["id"] in expected else report.unreachable).append(entry["id"])
+            if kind == "not-attempted" and entry["status"] != "fired":
                 report.not_attempted.append(entry["id"])
 
         reached = [p for p in report.phases if p["reached"]]
         expected_phases = len(phase_order(self.world))
         self.say("phases reached: %d/%d" % (len(reached), expected_phases))
         self.say("hero position: %s" % (
-            "read from player state" if self.hero_probe == "state"
-            else "NOT VERIFIED (no hero position in the player state), so the walk "
+            "read from %s" % self.hero_probe if self.hero_probe != "unverified"
+            else "NOT VERIFIED (no VEFR_HERO_AT and none in the player state), so the walk "
                  "takes every keypress at its word"))
+        for rule in self.world.get("rules", []):
+            if rule.get("id") not in expected:
+                self.say("unfireable by this walk: %s: %s" % (rule.get("id"), why_unfireable(self.world, rule)))
         self.say("Rest control: %s" % (self.rest_control or "none found"))
         self.say("uses-verb beats: %s" % ("attempted" if self.try_verbs
                                           else "not attempted (--try-verbs presses them)"))
@@ -1000,15 +1677,17 @@ def write_report(report, outdir):
     add("")
     add("## Phases")
     add("")
-    add("| # | phase | reached | read by | walked to | screenshot |")
-    add("|---|---|---|---|---|---|")
+    add("| # | phase | reached | read by | hero (x, y) | walked to | screenshot |")
+    add("|---|---|---|---|---|---|---|")
     for phase in report.phases:
         walked = ", ".join(
             "%s%s" % (t["who"], "" if t.get("walked") else " (NOT REACHED)")
             for t in phase["targets"]) or "-"
-        add("| %d | `%s` | %s | %s | %s | %s |" % (
+        hero = phase.get("hero")
+        add("| %d | `%s` | %s | %s | %s | %s | %s |" % (
             phase["index"], phase["phase"], "yes" if phase["reached"] else "**no**",
-            phase["read_by"], walked, phase["screenshot"] or "-"))
+            phase["read_by"], "(%d, %d)" % tuple(hero) if hero else "-", walked,
+            phase["screenshot"] or "-"))
     add("")
     add("## Rules")
     add("")
@@ -1028,11 +1707,23 @@ def write_report(report, outdir):
         add("Not attempted (no walking, resting or talking produces them): "
             + ", ".join("`%s`" % rid for rid in report.not_attempted))
         add("")
+    if report.unreachable:
+        add("Cannot fire together with a rule that did (the pack's own conditions exclude them): "
+            + ", ".join("`%s`" % rid for rid in report.unreachable))
+        add("")
     add("## Notes")
     add("")
     for note in report.notes:
         add("- %s" % note)
     add("")
+    if report.debug is not None:
+        add("## Debug")
+        add("")
+        for block in report.debug or ["no Talk was pressed"]:
+            add("```")
+            add(block)
+            add("```")
+            add("")
     (outdir / "report.md").write_text("\n".join(out), encoding="utf-8")
     (outdir / "report.json").write_text(json.dumps(report.to_json(), indent=2, default=str), encoding="utf-8")
     return outdir / "report.md"
@@ -1059,7 +1750,17 @@ def derive_world(html_path, pack=None):
     return None
 
 
-def open_page(html_path, headed=False):
+def parse_viewport(text):
+    try:
+        width, height = (int(n) for n in text.lower().split("x"))
+        if width > 0 and height > 0:
+            return {"width": width, "height": height}
+    except ValueError:
+        pass
+    raise SystemExit("--viewport must look like 1440x900, not %r" % text)
+
+
+def open_page(html_path, headed=False, record=None, size=None):
     """The browser: headless Chromium at the phone viewport, on a clean profile.
 
     The context is new every run, so the pack's `time.persist` standing phase
@@ -1077,12 +1778,15 @@ def open_page(html_path, headed=False):
         )
     playwright = sync_playwright().start()
     browser = playwright.chromium.launch(headless=not headed)
-    context = browser.new_context(
+    options = dict(
         viewport=VIEWPORT,
         device_scale_factor=2,
         is_mobile=True,
         has_touch=True,
     )
+    if record:
+        options.update(record_video_dir=str(record), record_video_size=dict(size), viewport=dict(size))
+    context = browser.new_context(**options)
     page = context.new_page()
     page.set_default_timeout(5000)
     return playwright, browser, context, page
@@ -1100,12 +1804,16 @@ def play(args):
     outdir = Path(args.out)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    playwright, browser, context, page = open_page(html_path, args.headed)
+    record = Path(args.record) if args.record else None
+    size = parse_viewport(args.viewport)
+    if record:
+        record.mkdir(parents=True, exist_ok=True)
+    playwright, browser, context, page = open_page(html_path, args.headed, record, size)
     try:
         page.goto(html_path.as_uri())
         game = Game(page, world, outdir, html_path=html_path, world_path=world_path,
                     step_timeout=args.step_timeout, try_verbs=args.try_verbs,
-                    talk=not args.no_talk)
+                    talk=not args.no_talk, debug_talk=args.debug_talk)
         report = game.run()
         game.write_lines()
         path = write_report(report, outdir)
@@ -1115,10 +1823,30 @@ def play(args):
         playwright.stop()
 
     print_report(report, path)
-    return report.exit
+    exit_code = report.exit
+    if record:
+        missing = finish_video(record, args.label)
+        exit_code = exit_code or missing
+    return exit_code
 
 
-def plan(world):
+def finish_video(record, label):
+    """Rename the one .webm Playwright wrote to DIR/<label>.webm. Returns 1 if none."""
+    target = record / (label + ".webm")
+    found = [f for f in sorted(record.glob("*.webm")) if f != target]
+    if not found:
+        if target.is_file():
+            found = [target]
+        else:
+            print("video: none produced")
+            return 1
+    if found[0] != target:
+        found[0].replace(target)
+    print("video: %s (%d bytes)" % (target, target.stat().st_size))
+    return 0
+
+
+def plan(world, try_verbs=False):
     """The walk this run would take, printed, with no browser at all."""
     tiles = walkable(world)
     start = hero_start(world)
@@ -1128,25 +1856,40 @@ def plan(world):
     problems = 0
     for slug, _tone in phases:
         print("\n%s" % slug)
-        for target, path in plan_phase(world, slug, start, tiles):
-            rules = ", ".join(target.rules)
-            if target.tile is None:
-                print("  %-30s %-11s NO COORDINATES (%s)" % (target.who, target.kind, rules))
+        at = start
+        for op, arg in phase_script(world, slug):
+            if op == "verb":
+                print("  %-30s %s" % (arg, "press the verb, expect a new line" if try_verbs
+                                      else "skipped (--try-verbs presses it)"))
+                continue
+            if op == "mend":
+                print("  %-30s press Mend once, expect %s" % (arg["id"], arg.get("output")))
+                continue
+            label = arg.who + (" (again, after the mend)" if op == "again" else "")
+            if arg.tile is None:
+                print("  %-30s %-11s NO COORDINATES (%s)" % (label, arg.kind, ", ".join(arg.rules)))
                 problems += 1
                 continue
+            _tile, path = stand_tile(world, arg, at, tiles)
             if path is None:
                 print("  %-30s %-11s at %-8s UNREACHABLE (%s)"
-                      % (target.who, target.kind, target.tile, rules))
+                      % (label, arg.kind, arg.tile, ", ".join(arg.rules)))
                 problems += 1
                 continue
+            at = path[-1]
             print("  %-30s %-11s at %-8s %2d steps, ends %s (%s)"
-                  % (target.who, target.kind, target.tile, len(path) - 1, path[-1], rules))
+                  % (label, arg.kind, arg.tile, len(path) - 1, path[-1], ", ".join(arg.rules)))
     turning = phases[0][0] if phases else None
     required = [r.get("id") for r in world.get("rules", [])
                 if rule_status_kind(r) == "required" and turning in rule_phases(r)]
     print("\nrequired beats of %s: %d" % (turning, len(required)))
     for rid in required:
         print("  %s" % rid)
+    expected = simulate(world, try_verbs)
+    print("\nrules the plan expects to fire: %d/%d" % (len(expected), len(world.get("rules", []))))
+    for rule in world.get("rules", []):
+        if rule.get("id") not in expected:
+            print("  not expected: %s: %s" % (rule.get("id"), why_unfireable(world, rule)))
     return 0 if problems == 0 else 1
 
 
@@ -1155,8 +1898,10 @@ def print_report(report, path):
     print("phases reached: %d/%d" % (sum(1 for p in report.phases if p["reached"]),
                                      len(report.phases)))
     for phase in report.phases:
-        print("  %d %-14s %-6s %s" % (phase["index"], phase["phase"],
-                                       "ok" if phase["reached"] else "MISSED", phase["read_by"]))
+        hero = phase.get("hero")
+        print("  %d %-14s %-6s %-6s hero %s" % (phase["index"], phase["phase"],
+                                               "ok" if phase["reached"] else "MISSED", phase["read_by"],
+                                               "(%d, %d)" % tuple(hero) if hero else "?"))
     fired = [r for r in report.rules if r["status"] == "fired"]
     print("rules whose lines appeared: %d/%d" % (len(fired), len(report.rules)))
     if report.missing:
@@ -1185,21 +1930,32 @@ def main(argv=None):
     parser.add_argument("--try-verbs", action="store_true",
                         help="also press the verb buttons, for the uses-verb beats")
     parser.add_argument("--no-talk", action="store_true", help="do not press Interact on residents")
+    parser.add_argument("--debug-talk", action="store_true",
+                        help="report hero tile, Talk label, control and fired rules around the "
+                             "first three Talks, under ## Debug")
     parser.add_argument("--plan", action="store_true",
                         help="print the walk this run would take and exit, no browser")
+    parser.add_argument("--record", metavar="DIR",
+                        help="record the run as a video into DIR (the walk is unchanged)")
+    parser.add_argument("--viewport", default="1440x900", metavar="WxH",
+                        help="recording size and viewport (default: %(default)s; phone: 390x844)")
+    parser.add_argument("--label", default="run",
+                        help="the recording is renamed DIR/<label>.webm (default: %(default)s)")
     parser.add_argument("--self-test", action="store_true",
                         help="run the driver against a fake page and exit, no browser")
     args = parser.parse_args(argv)
 
     if args.self_test:
         return self_test()
+    if args.plan and not args.html and not args.world:
+        args.world = str(Path(__file__).resolve().parent.parent / "worlds" / "mending-shift" / "world.json")
     if not args.html and not args.world:
         parser.error("a woven pack HTML path is required (or --world with --plan)")
     world_path = Path(args.world) if args.world else derive_world(args.html, args.pack)
     if world_path is None or not Path(world_path).is_file():
         raise SystemExit("could not find world.json; pass --world worlds/mending-shift/world.json")
     if args.plan:
-        return plan(load_world(world_path))
+        return plan(load_world(world_path), args.try_verbs)
     return play(args)
 
 
@@ -1209,21 +1965,34 @@ def main(argv=None):
 class FakeElement:
     """The slice of Playwright's ElementHandle the driver uses."""
 
-    def __init__(self, page, label, attrs=None):
+    def __init__(self, page, label, attrs=None, text=None):
         self.page = page
         self.label = label
         self.attrs = attrs or {}
+        self.text = text  # a control's own words (str or callable); None for the log
 
-    def click(self, timeout=None):
+    def click(self, timeout=None, force=False):
+        # `force` is the driver's: it presses a control the page lays out at 0x0, the
+        # touch layout's Talk button, which Playwright would otherwise refuse.
+        self.page.presses.append((self.label, "control"))
         self.page.activate(self.label)
 
     def inner_text(self):
+        if self.text is not None:
+            return self.text() if callable(self.text) else self.text
         return "\n".join(line for _p, _s, line in self.page.lines)
 
     def get_attribute(self, name):
         if name == "class":
             return self.attrs.get("class", "")
-        return self.attrs.get(name) or None
+        value = self.attrs.get(name)
+        if callable(value):
+            value = value()
+        if value:
+            return value
+        if name == "aria-label" and self.text is not None:
+            return self.inner_text()
+        return None
 
 
 class FakePage:
@@ -1236,21 +2005,44 @@ class FakePage:
     without a browser. It is a test double, not a game.
     """
 
-    def __init__(self, world, outdir, silent=False, refuses=(), mute=()):
+    def __init__(self, world, outdir, silent=False, refuses=(), mute=(), deaf=False, mend=True,
+                 verb_at=None, stuck_label=None, arrival_only=False, talk_aria=False,
+                 blunt_talk_at=()):
         self.world = world
+        self.items = set()  # what the hero holds, from the rules that gave
+        self.flags = {}  # flags the rules set
+        self.fired = set()  # rule ids that have fired
+        self.verb_at = verb_at or {}  # verb -> the tile it is offered beside; absent = everywhere
+        self.stuck_label = stuck_label  # a Talk label that names this person whatever the tile
+        self.arrival_only = arrival_only  # residents' comes-near fires on a step into range, never on Talk
+        self.talk_aria = talk_aria  # a Talk control that names its resident on the aria-label alone
+        self.blunt_talk_at = set(blunt_talk_at)  # tiles where the label names the resident but
+        # the row offers no `Talk to <name>` control, so F reaches some other interact target
+        self.deaf = deaf  # Talk answers with nothing at all, even in reach
+        self.mend = mend  # the page offers a Mend control
+        self.verbs = {}
         self.mute = {line for _w, line in mute}  # lines this page never shows
         self.refuses = set(refuses)  # legend-walkable tiles the game will not enter
         self.outdir = Path(outdir)
         self.lines = []
+        self.presses = []  # (what was pressed, "control" for a click, "key" for a key)
         self.silent = silent  # a page that never says anything
         self.tiles = walkable(world)
         self.phases = [slug for slug, _ in phase_order(world)]
         self.phase = self.phases[0]
         self.pos = hero_start(world) or (0, 0)
         self.log = FakeElement(self, "log")
-        self.rest_el = FakeElement(self, "rest")
-        self.talk_el = FakeElement(self, "talk")
-        self.play_el = FakeElement(self, "play")
+        self.rest_el = FakeElement(self, "rest", text="Rest")
+        self.talk_el = FakeElement(self, "talk", text="" if talk_aria else self.talk_label,
+                                   attrs={"aria-label": self.talk_label})
+        self.npc_line = FakeElement(self, "npc-line", text=lambda: self.lines[-1][2].split(": ", 1)[-1]
+                                    if self.lines else "")
+        self.npc_name = FakeElement(self, "npc-name", text=lambda: self.lines[-1][2].split(": ", 1)[0]
+                                    if self.lines and ": " in self.lines[-1][2] else "")
+        self.talk_btn = FakeElement(self, "talk", text=self.button_talk_text,
+                                    attrs={"aria-label": self.button_talk_text})
+        self.play_el = FakeElement(self, "play", text="Begin")
+        self.mend_el = FakeElement(self, "mend", text="Mend")
         self.rail = {slug: FakeElement(self, "rail:%s" % slug, {"class": "phase-btn"})
                      for slug in self.phases}
         self.keyboard = self
@@ -1261,14 +2053,68 @@ class FakePage:
         for slug, el in self.rail.items():
             el.attrs["class"] = "phase-btn active" if slug == self.phase else "phase-btn"
 
+    def nearest(self):
+        """(distance, id) of the speaker Talk would reach: nearest, world order on a tie."""
+        order = list(self.world.get("speakers", {}))
+        near = sorted((manhattan(self.pos, at), order.index(sid), sid)
+                      for sid, at in speaker_coords(self.world).items())
+        return (near[0][0], near[0][2]) if near else None
+
+    def talk_label(self):
+        """The action row's Talk label, naming the nearest speaker, as the player does."""
+        if self.stuck_label:
+            return "Talk to %s F" % self.stuck_label
+        near = self.nearest()
+        if not near or near[0] > TALK_REACH:
+            return "Talk F"
+        return "Talk to %s F" % self.world["speakers"][near[1]].get("name", near[1])
+
+    def button_talk_text(self):
+        """What the row's Talk control says on these tiles: on a blunt tile it names nobody,
+        even though the label the player reads still does - the measured shape, where the F
+        key reaches some other interact target and the rule stays unfired."""
+        if self.pos in self.blunt_talk_at:
+            return "Talk F"
+        return self.talk_label()
+
+    def verb_offered(self, verb):
+        at = self.verb_at.get(verb)
+        return at is None or manhattan(self.pos, at) <= 1
+
+    def mend_offered(self):
+        return self.mend and any(set(rc.get("inputs", [])) <= self.items
+                                 for rc in mend_recipes(self.world).values())
+
+    def can_fire(self, rule):
+        return all(holds(c, self.phase, self.items, self.flags) for c in rule.get("if", []) or []) \
+            and not (rule.get("once") and rule.get("id") in self.fired)
+
+    def fire(self, rule):
+        self.fired.add(rule.get("id"))
+        for action in rule.get("then", []) or []:
+            if isinstance(action, dict) and isinstance(action.get("set"), str):
+                self.flags[action["set"]] = True
+        for who, line in rule_lines(rule):
+            self.emit(who, line)
+        self.items |= rule_gives(rule)
+
     # -- the Playwright calls the driver makes --
     def query_selector(self, selector):
+        if selector == "#npc-name":
+            return self.npc_name
         if selector == "#log":
             return self.log
         if selector == "[data-rest]":
             return self.rest_el
         if selector in TALK_SELECTORS:
-            return self.talk_el
+            if self.talk_aria or self.pos in self.blunt_talk_at:
+                return None  # a tile with no labelled Talk offers no Talk control to press
+            return self.talk_btn
+        if selector in MEND_SELECTORS:
+            return self.mend_el if self.mend_offered() else None
+        for verb in self.world.get("verbs", []) + ["Call"]:
+            if selector in ("[data-verb='%s']" % verb, "button:has-text('%s')" % verb):
+                return self.verb_el(verb) if self.verb_offered(verb) else None
         if selector in ENTER_SELECTORS:
             return self.play_el
         for slug, el in self.rail.items():
@@ -1279,7 +2125,25 @@ class FakePage:
     def inner_text(self, selector):
         return "\n".join(line for _p, _s, line in self.lines)
 
+    def verb_el(self, verb):
+        return self.verbs.setdefault(verb, FakeElement(self, "verb:%s" % verb, text=verb))
+
+    def query_selector_all(self, selector):
+        if selector == "button":
+            row = [self.talk_btn, self.rest_el]
+            row += [self.verb_el(v) for v in self.world.get("verbs", []) + ["Call"] if self.verb_offered(v)]
+            return row + ([self.mend_el] if self.mend_offered() else [])
+        if selector == "#talk":
+            return [self.talk_el]
+        if selector == "[aria-live]":
+            return [self.log]
+        if selector == "#npc-line":
+            return [self.npc_line]
+        return []
+
     def evaluate(self, expr):
+        if "VEFR_HERO_AT" in expr:
+            return json.dumps({"x": self.pos[0], "y": self.pos[1], "region": "town"})
         if "STATE" in expr and "get" in expr:
             return json.dumps({"phase": self.phase, "hero": {"x": self.pos[0], "y": self.pos[1]}})
         return None
@@ -1292,15 +2156,21 @@ class FakePage:
 
     def press(self, key):
         if key in ("r", "R"):
+            self.presses.append(("rest", "key"))
             return self.activate("rest")
+        if key in ("f", "F"):
+            self.presses.append(("talk", "key"))
+            if self.pos in self.blunt_talk_at:
+                return None  # the F key is not the player's Talk here: it reaches something else
+            return self.activate("talk")
         deltas = {"ArrowUp": (0, -1), "ArrowDown": (0, 1), "ArrowLeft": (-1, 0), "ArrowRight": (1, 0)}
         delta = deltas.get(key)
         if not delta:
             return None
         nxt = (self.pos[0] + delta[0], self.pos[1] + delta[1])
         if nxt in self.tiles and nxt not in self.refuses:
-            self.pos = nxt
-            self.arrive()
+            old, self.pos = self.pos, nxt
+            self.arrive(old)
         return None
 
     # -- what the double does when a control is pressed --
@@ -1308,21 +2178,30 @@ class FakePage:
         if not self.silent and line and line not in self.mute:
             self.lines.append((self.phase, "say", line if not who else "%s: %s" % (who, line)))
 
-    def arrive(self):
+    def arrive(self, old=None):
+        old = old or self.pos
         for rule in self.world.get("rules", []):
             when = rule.get("when", {})
             near = when.get("comes-near") if isinstance(when, dict) else None
             if not isinstance(near, dict) or self.phase not in rule_phases(rule):
                 continue
-            tile, _kind = resolve_who(self.world, near.get("who", ""))
-            if tile and manhattan(tile, self.pos) <= int(near.get("distance", 1)):
-                for who, line in rule_lines(rule):
-                    self.emit(who, line)
+            tile, kind = resolve_who(self.world, near.get("who", ""))
+            # a resident's comes-near only fires from Talk, as in the player
+            if kind == "poi" and manhattan(tile, self.pos) <= int(near.get("distance", 1)) and self.can_fire(rule):
+                self.fire(rule)
+            elif kind == "speaker" and self.arrival_only and self.can_fire(rule):
+                dist = int(near.get("distance", 1))
+                if manhattan(tile, self.pos) <= dist < manhattan(tile, old):
+                    self.fire(rule)
 
     def activate(self, label):
         if self.silent:
             return None
         if label == "play":
+            for rule in self.world.get("rules", []):
+                when = rule.get("when", {})
+                if isinstance(when, dict) and "starts" in when and self.phase in rule_phases(rule):
+                    self.fire(rule)
             return None
         if label == "rest":
             index = self.phases.index(self.phase)
@@ -1335,19 +2214,50 @@ class FakePage:
                     continue
                 if when["phase-changes"].get("to") != self.phase:
                     continue
-                for who, line in rule_lines(rule):
-                    self.emit(who, line)
+                self.fire(rule)
             self.arrive()
             return None
+        if label == "mend":
+            for recipe in mend_recipes(self.world).values():
+                if set(recipe.get("inputs", [])) <= self.items:
+                    self.items -= set(recipe["inputs"])
+                    self.items.add(recipe.get("output"))
+                    self.emit(None, recipe.get("say"))
+                    for rule in self.world.get("rules", []):
+                        when = rule.get("when", {})
+                        if isinstance(when, dict) and (when.get("mends") or {}).get("recipe") == recipe["id"] \
+                                and self.can_fire(rule):
+                            self.fire(rule)
+            return None
+        if label.startswith("verb:"):
+            verb = label.split(":", 1)[1]
+            for rule in self.world.get("rules", []):
+                when = rule.get("when", {})
+                if isinstance(when, dict) and when.get("uses-verb", {}).get("verb") == verb \
+                        and self.phase in rule_phases(rule):
+                    self.fire(rule)
+            return None
         if label == "talk":
-            near = [(manhattan(self.pos, at), sid)
-                    for sid, at in speaker_coords(self.world).items()]
+            if self.deaf:
+                return None
+            near = self.nearest()
             if not near:
                 return None
-            _d, sid = min(near)
-            seed = self.world["speakers"][sid].get("seeds", {}).get(self.phase)
+            d, sid = near
+            if d > TALK_REACH:
+                self.emit(None, "No one is close enough to talk to.")
+                return None
+            speaker = self.world["speakers"][sid]
+            for rule in self.world.get("rules", []):
+                when = rule.get("when", {})
+                n = when.get("comes-near") if isinstance(when, dict) else None
+                if isinstance(n, dict) and not self.arrival_only and n.get("who") == sid \
+                        and d <= int(n.get("distance", 1)) \
+                        and self.phase in rule_phases(rule):
+                    self.fire(rule)
+            seed = speaker.get("seeds", {}).get(self.phase)
             if isinstance(seed, str):
-                self.emit(self.world["speakers"][sid].get("name", sid), seed)
+                self.emit(speaker.get("name", sid), seed)
             return None
         return None
 
@@ -1396,7 +2306,7 @@ def self_test():
         check(len(report.shots) == 4, "one screenshot per phase", failures)
         check(game.rest_control and game.rest_control.startswith("button"),
               "Rest used the [data-rest] button", failures)
-        check(game.hero_probe == "state", "hero position read from player state", failures)
+        check(game.hero_probe == "VEFR_HERO_AT", "hero position read from VEFR_HERO_AT", failures)
         walked = [t for p in report.phases for t in p["targets"]]
         check(all(t["walked"] for t in walked), "every target walked to", failures)
         check(any(t.get("talked") for t in walked if t["kind"] == "speaker"),
@@ -1416,6 +2326,23 @@ def self_test():
         check(report.exit == 1, "a silent page exits 1", failures)
         check("the-turning-opens" in report.missing,
               "the-turning-opens is named as never fired", failures)
+
+    # 3a. residents whose comes-near fires only on a step into range, never on Talk: the
+    # driver has to arrive as a new event, and arrive again for the repeat visit
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, tmp, arrival_only=True, mend=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True, try_verbs=True)
+        report = game.run()
+        write_report(report, tmp)
+        resident_rules = [r["id"] for r in world["rules"] if when_kind(r) == "comes-near"
+                          and resolve_who(world, r["when"]["comes-near"]["who"])[1] == "speaker"]
+        statuses = {r["id"]: r["status"] for r in report.rules}
+        check(statuses.get("roald-fisk-hands-over-the-coat") == "fired", "an arrival-only resident hands over the coat", failures)
+        check(statuses.get("the-warden-hands-over-the-fid") == "fired", "an arrival-only warden hands over the fid", failures)
+        check(statuses.get("margit-brack-hands-over-the-whistle") == "fired", "an arrival-only Margit hands over the whistle", failures)
+        check(statuses.get("the-shingle-is-signed") == "fired",
+              "a repeat visit after the mend is a new arrival and the shingle is signed", failures)
+        check(any(r["status"] == "fired" for r in report.rules if r["id"] in resident_rules), "resident rules fire", failures)
 
     # 3b. a tile the legend calls walkable but the game refuses: the walk must
     # bar that tile (not the hero's own), route around it, and still finish
@@ -1442,8 +2369,10 @@ def self_test():
     # 3c. a required rule outside The Turning that never fires is named, and
     # the exit code and report.missing agree
     with tempfile.TemporaryDirectory() as tmp:
+        reachable = simulate(world, False)
         later = next((r for r in world["rules"] if rule_status_kind(r) == "required"
-                      and turning not in rule_phases(r)
+                      and turning not in rule_phases(r) and r["id"] in reachable
+                      and not rule_gives(r) and not any(isinstance(a, dict) and "set" in a for a in r.get("then", []))
                       and when_kind(r) == "comes-near"), None)
         if later is None:
             check(False, "a required comes-near rule outside The Turning exists", failures)
@@ -1469,12 +2398,114 @@ def self_test():
         check(all(p["reached"] for p in report.phases),
               "a stateless page reaches every phase", failures)
 
+    # 5. a refused step is seen, not taken at its word
+    with tempfile.TemporaryDirectory() as tmp:
+        page = FakePage(world, tmp, refuses=[(6, 4)])
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        before = game.hero_pos()
+        check(game.press_dir(0, -1) is False and game.hero_pos() == before,
+              "a refused step reports False and leaves the hero's tile alone", failures)
+
+    # 6. Talk goes by the player's own label
+    with tempfile.TemporaryDirectory() as tmp:  # a silent talk in reach is named, not counted
+        page = FakePage(world, tmp, deaf=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        page.pos = (5, 5)
+        check(game.talk_to("Roald Fisk", "roald-fisk") is False, "a silent talk in reach returns False", failures)
+        check(any("talk to Roald Fisk at distance 1 produced nothing" in n for n in game.report.notes),
+              "a silent talk is noted with its distance", failures)
+        check("talk to roald-fisk: nothing" in game.report.notes, "a silent talk is recorded as nothing", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # wrong speaker named, a step, then the right one
+        page = FakePage(world, tmp)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        check("Maud Bray" in page.talk_label() and "Roald" not in page.talk_label(),
+              "at the start tile the Talk label names Maud, not Roald", failures)
+        check(game.talk_to("Roald Fisk", "roald-fisk") is True,
+              "a talk that first names the wrong speaker steps until it names the right one", failures)
+        check(page.pos != start and "Roald Fisk" in page.talk_label(), "the hero stepped to a tile that names Roald", failures)
+        check("talk to roald-fisk: line captured" in game.report.notes, "a captured talk is recorded", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # the label is on the aria-label alone: the
+        # control the player reads is pressed, not the F key a selector cannot see
+        page = FakePage(world, tmp, talk_aria=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        check(game.talk_to("Roald Fisk", "roald-fisk") is True,
+              "an aria-labelled Talk is still aimed at by its own label and answers", failures)
+        check(page.presses and page.presses[-1] == ("talk", "control"),
+              "an aria-labelled Talk is pressed by clicking it, not by the F key", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # no tile names the target
+        page = FakePage(world, tmp, stuck_label="Maud Bray")
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        check(game.talk_to("Roald Fisk", "roald-fisk") is False, "a Talk that never names the target returns False", failures)
+        check(any(n.startswith("no tile within 2 of roald-fisk offers a Talk to it (label: Talk to Maud Bray")
+                  for n in game.report.notes), "the missing tile is named with the label it gave", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # a stand whose label names the resident but
+        # offers no Talk control: step off it rather than press F, which fires nothing there
+        page = FakePage(world, tmp, blunt_talk_at=[(5, 5)])
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        page.pos = (5, 5)
+        check("Roald Fisk" in page.talk_label() and page.button_talk_text() == "Talk F",
+              "the blunt tile labels Roald but offers no Talk to him", failures)
+        check(game.talk_to("Roald Fisk", "roald-fisk") is True,
+              "a stand with no labelled Talk is stepped off to a stand that has one", failures)
+        check(page.pos != (5, 5) and "Roald Fisk" in page.talk_label(),
+              "the hero left the tile that offers no Talk control", failures)
+        check(not any(p == ("talk", "key") for p in page.presses),
+              "the F key is never pressed where the page offers no Talk control", failures)
+        check(any(p == ("talk", "control") for p in page.presses),
+              "the talk that answers is the player's own labelled control", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # every stand is blunt: nothing is pressed at all
+        stands = {t for t in walkable(world) - {at for sid, at in speaker_coords(world).items() if sid != "roald-fisk"}
+                  if 0 < manhattan(t, speaker_coords(world)["roald-fisk"]) <= TALK_REACH}
+        page = FakePage(world, tmp, blunt_talk_at=stands)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True)
+        game.enter_play()
+        check(game.talk_to("Roald Fisk", "roald-fisk") is False,
+              "no stand offering the control means no talk, not an F key press", failures)
+        check(not any(p == ("talk", "key") for p in page.presses),
+              "the F key is not pressed once every stand is tried", failures)
+
+    # 7. verbs and the Mend are verified by their effect
+    for offered in (True, False):
+        with tempfile.TemporaryDirectory() as tmp:
+            page = FakePage(world, tmp, mend=offered)
+            game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True,
+                        try_verbs=True)
+            report = game.run()
+            verbs = [v for p in report.phases for v in p.get("verbs", [])]
+            check(verbs and all(v["pressed"] for v in verbs), "every verb pressed produced a line", failures)
+            mends = [p["mend"] for p in report.phases if "mend" in p]
+            check(len(mends) == 1 and mends[0]["made"] is offered,
+                  "the Mend is pressed once and %s" % ("verified" if offered else "reported as not offered"), failures)
+            check(offered or sum("no Mend control is offered" in n for n in report.notes) == 1,
+                  "an absent Mend control is said so once", failures)
+            check(all(p.get("hero") for p in report.phases), "the hero's tile is reported per phase", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # a verb offered only at the right place
+        page = FakePage(world, tmp, verb_at={"Climb": start, "Wade": (0, 0)})
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True, try_verbs=True)
+        game.enter_play()
+        check(game.try_verb("Climb") is True, "a verb that is offered is pressed and shows a line", failures)
+        check(game.try_verb("Wade") is False, "a verb that is not offered is not forced", failures)
+        check(any(n.startswith("verb Wade has no control at any tile tried: ") and "Talk to" in n
+                  and "the-hands-under-wade-fails-at-the-causeway-foot" in n for n in game.report.notes),
+              "an absent verb names the tiles, the controls offered and the rule", failures)
+    with tempfile.TemporaryDirectory() as tmp:  # no fid or coat held: the Mend is not reached
+        page = FakePage(world, tmp, mend=True, deaf=True)
+        game = Game(page, world, tmp, html_path="fake.html", world_path=world_path, quiet=True, try_verbs=True)
+        report = game.run()
+        check(any("mend fuse-fid-coat: not reached" in n for n in report.notes),
+              "the Mend is not reached when the fid and coat are not held", failures)
+
     if failures:
         print("self-test: %d FAILED" % len(failures))
         for line in failures:
             print("  FAIL %s" % line)
         return 1
-    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page)")
+    print("self-test: all checks passed (plan, a speaking page, a silent page, a legend-walkable-but-refused tile, a stateless page, a refused step, a talk by the player's label, a silent talk, a talk by the labelled control, a stand that offers no Talk control, verbs offered and absent, the Mend)")
     return 0
 
 

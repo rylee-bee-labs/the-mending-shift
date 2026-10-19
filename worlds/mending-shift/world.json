@@ -395,9 +395,7 @@
   {
    "id": "the-turning-opens",
    "when": {
-    "phase-changes": {
-     "to": "the-turning"
-    }
+    "starts": {}
    },
    "if": [
     {
@@ -1255,6 +1253,51 @@
    "once": true
   }
  ],
+ "voices": {
+  "warden-ottmar-vell": {
+   "file": "voices/warden-ottmar-vell.md",
+   "strike": "Write as the shift boss: short statements of fact in tide language, never raised, the slate mentioned when pleased and mentioned harder when embarrassed."
+  },
+  "roald-fisk": {
+   "file": "voices/roald-fisk.md",
+   "strike": "Write as the diver and tide-watcher: say what the channel is doing before it has finished doing it, and keep the want to hands that stay above the water."
+  },
+  "sable-kearn": {
+   "file": "voices/sable-kearn.md",
+   "strike": "Write as the sailmaker: describe every object by where it sits, talk about what is wrong with a thing, and keep the thing itself on her own bench."
+  },
+  "maud-bray": {
+   "file": "voices/maud-bray.md",
+   "strike": "Write as the kit-runner: give the shortest true answer and do not improve it, repeat the player's words back, and say in advance that fusion takes the mark off."
+  },
+  "grissel-toft": {
+   "file": "voices/grissel-toft.md",
+   "strike": "Write as the keeper of the pitch pot: set the pace by the hour, want the pot down and covered before the water is over the wall, and be gone before the run."
+  },
+  "margit-brack": {
+   "file": "voices/margit-brack.md",
+   "strike": "Write as night crew come late: short answers that assume you have been awake as long as she has, wanting one note that carries across the water."
+  },
+  "tam-verrow": {
+   "file": "voices/tam-verrow.md",
+   "strike": "Write as the boy who carries: ask the same question four ways without waiting, repeat the player's words with one changed, count out loud, and want to be counted as a hand."
+  }
+ },
+ "bonds": {
+  "given": {
+   "card": "Work given by expectation: someone at the bench has already decided you will mend it.",
+   "prompt": "Write the card as a task handed over without being asked, where the yard's expectation is the only instruction and the mending is owed before the hour turns."
+  },
+  "found": {
+   "card": "Salvage found: a thing nobody claimed, worn and put down where the tide left it.",
+   "prompt": "Write the card as a piece of salvage the player came across, described by where it sits and what is wrong with it, with no one standing by to say whose it is."
+  },
+  "cold": {
+   "card": "Tools that do not care: the bench knife, the line and the bar, which work the same for anyone.",
+   "prompt": "Write the card as plain tools that carry no want and no favour, so the work is the player's alone and the yard neither helps nor watches."
+  }
+ },
+ "bond_draw": "Draw given most often, found next, and cold least, since the yard hands out work more readily than it leaves salvage or tools to chance.",
  "town": {
   "tile": 32,
   "bg": "#12100e",
