@@ -175,13 +175,15 @@ def draw_maud_bray(view, walk):
 
 
 def draw_grissel_toft(view, walk):
-    """Grissel Toft: dark long coat, the lit lamp of the pitch pot hung at her hip."""
+    """Grissel Toft: green-grey long coat, the lit lamp of the pitch pot hung at her hip."""
     def ident(a, hem):
         x = 16 if view == "right" else 19
         a.rect((x, 17, x + 1, 17), 0)
         a.rect((x, 18, x + 1, 21), 22)
         a.dot(x, 19, 23)
-    return figure(view, walk, dict(coat=1, coat_lo=0, coat_hi=2, trousers=2, trousers_lo=0,
+    # Weed shadow, not the warden's navy: a green hue 61 degrees off #343a4b and dark
+    # enough (lamp amber reads 3.9:1 on it) that the lamp stays the lit thing on her.
+    return figure(view, walk, dict(coat=10, coat_lo=0, coat_hi=11, trousers=2, trousers_lo=0,
                                    boot=15, hair=15, long=True), ident)
 
 
