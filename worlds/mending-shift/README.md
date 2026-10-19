@@ -158,7 +158,9 @@ the 18-tile set) and round 4 (Bryn), approved by Claude 2026-10-17. Nothing was
 regenerated or repainted for this step; every file below is a byte-for-byte copy
 out of that folder, checked with `cmp`, and `generate_pixel_art_v3.py` /
 `generate_pixel_art_v4.py` reproduce all 25 of them. The pack holds no path out
-to `art/`: a player runs the pack alone.
+to `art/`: a player runs the pack alone. The seven residents' sprites are the
+exception: `generate_pixel_art_v5.py` writes them into this folder, and rerunning
+it reproduces every file byte for byte.
 
 | Where | What | From |
 |---|---|---|
@@ -166,6 +168,7 @@ to `art/`: a player runs the pack alone.
 | `sprites/hero.png` | Bryn Aukett's still, wired as `player.sprites.hero` | `bryn-front.png` (via `make_sheet.py`) |
 | `sprites/hero-sheet.png` + `hero.sheet.json` | Bryn's walk sheet: down, up and right (left mirrors right), idle plus a two-step walk | `bryn-{front,back,side}.png` + `-walk.png` |
 | `sprites/bryn-*.png` | the approved round-4 frames the sheet was built from | `bryn-*.png` |
+| `sprites/<id>.png`, `sprites/<id>-sheet.png` + `<id>.sheet.json`, for each of the seven residents (M3b) | each resident's still (wired by speaker key), walk sheet and sidecar, in Bryn's layout: down, up and right, idle plus a two-step walk; cells 1, 5 and 9 are blank | `generate_pixel_art_v5.py` (written straight into this folder) |
 | `tiles/*.png` | the 18-tile set, named for the kinds `generate_pixel_art_v3.py`'s `TILES` list gives them | `tile-00..17.png` |
 
 Seven of the eight town glyphs name a tile; the `tile` value is the stem of a
@@ -195,8 +198,8 @@ names (`front`/`back`/`side`) and M2e's first attempt wrote stems under both vie
 and facing names; vefr reads neither, which is why the hero stayed a white circle.
 The sheet was built with vefr's own `tools/art/make_sheet.py` from the approved
 round-4 frames; each walk cycle pairs the standing pose with the walk pose, since
-the engine takes two or more walk frames. The seven residents have no approved
-sprite yet and keep the engine's default figure (see **Not built**).
+the engine takes two or more walk frames. The seven residents have sprites of their
+own, drawn by `generate_pixel_art_v5.py` (M3b, see **Art**).
 
 ## Acceptance coverage (selected)
 
@@ -209,6 +212,10 @@ sprite yet and keep the engine's default figure (see **Not built**).
   and right an idle frame and at least two walk frames; and with `VEFR_DIR` set,
   vefr's own `_player_sprite_sheets` must bake a `hero` sheet from this pack (so a
   sheet the engine would not pick up fails).
+- **M3b**: each speaker key has its still `sprites/<key>.png`, its sheet
+  `sprites/<key>-sheet.png` and its sidecar `sprites/<key>.sheet.json` beside it;
+  the sidecar names that sheet, its frame fits the sheet's grid, and every frame
+  index it gives fits that grid. A missing file or an index off the grid fails.
 
 To run the engine's own gate as well:
 
@@ -265,15 +272,6 @@ does not affect sprites; it stays as M2a set it.
   and still draws as its `base` colour, and the eleven shoreline and slip tiles,
   which are copied in but not yet named by any glyph. No voice recording is in
   this pack.
-- **The seven residents have no approved sprite**, and the decisions in force
-  for this step allow no new art, so each keeps the engine's own figure. To
-  commission, one line each: `warden-ottmar-vell` (Warden Ottmar Vell),
-  `roald-fisk` (Roald Fisk), `sable-kearn` (Sable Kearn), `margit-brack`
-  (Margit Brack), `tam-verrow` (Tam Verrow), `maud-bray` (Maud Bray),
-  `grissel-toft` (Grissel Toft). The wiring is a picture at `sprites/<speaker-key>.png`
-  (vefr resolves a speaker key by name) or a `player.sprites` entry with a
-  pack-relative path;
-  `acceptance.py` will hold both to a file inside this pack.
 - **The four worn slots and the bag cap** are in the bibles and in the prose;
   the engine has no cap on carried items, so the bind at the rack is said
   rather than enforced.

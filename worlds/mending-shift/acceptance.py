@@ -29,6 +29,12 @@ pack-relative path to a file inside the pack, and `sprites/hero.sheet.json` with
 so the hero is drawn from the approved anchor art and not the engine's plain circle. A resident who has no approved art keeps
 the engine's own figure; when one is commissioned, the gate holds it to the pack.
 
+M3b's line: every resident has a sprite of their own, drawn by
+`art/anchor-r3/generate_pixel_art_v5.py`. Each speaker key has its still
+`sprites/<key>.png`, its sheet `sprites/<key>-sheet.png` and its sidecar
+`sprites/<key>.sheet.json` beside it; the sidecar names that sheet, its frame fits
+the sheet's real grid, and every frame index it gives down, up and right fits that grid.
+
 With VEFR_DIR set it also runs `vefr check` against the pack and requires exit
 0. Without it, it says so and skips. Exit status is 0 only when every check
 holds.
@@ -36,6 +42,7 @@ holds.
 
 import json
 import os
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -664,6 +671,122 @@ def check_hero(world):
             check(d in dirs and dirs[d].get("idle") and len(dirs[d].get("walk") or []) >= 2,
                   "hero.sheet.json needs %s idle and at least two walk frames" % d)
 
+
+RESIDENT_DIRECTIONS = ("down", "up", "right")
+
+
+def png_size(path):
+    """(width, height) from a PNG's header, read with the standard library; None if not a PNG."""
+    head = path.read_bytes()[:24]
+    if head[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return struct.unpack(">II", head[16:24])
+
+
+def frames_of(states, name, key, direction):
+    """One state's frame list, [] when the sidecar has none.
+
+    Every entry is checked to be a whole frame number (a bool is not one) before
+    the list reaches the length checks or the `idle + walk` concatenation below, so
+    a malformed sidecar is a failed check naming the file and the entry, never a
+    TypeError out of the checker. None means that check has already failed and the
+    rest of this direction should stand down rather than read the same bad value.
+    """
+    raw = states.get(name)
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        check(False, "sprites/%s.sheet.json: %s %s must be a list of frame numbers, got %r"
+              % (key, direction, name, raw))
+        return None
+    for entry in raw:
+        if isinstance(entry, bool) or not isinstance(entry, int):
+            check(False, "sprites/%s.sheet.json: %s %s frame %r is not a whole frame number"
+                  % (key, direction, name, entry))
+            return None
+    return raw
+
+
+def check_resident(key):
+    """M3b: one resident's still, sheet and sidecar, and every frame index fitting the sheet.
+
+    A frame that is not `[w, h]` of positive whole numbers is a failed check and
+    this function stands down before the grid modulo or division can read it, so a
+    `[0, 33]` sidecar is a message naming the value, never a ZeroDivisionError.
+    """
+    sprites = PACK / "sprites"
+    still = sprites / ("%s.png" % key)
+    sheet_png = sprites / ("%s-sheet.png" % key)
+    sidecar = sprites / ("%s.sheet.json" % key)
+    check(still.is_file(), "resident '%s' has no still at sprites/%s.png" % (key, key))
+    check(sheet_png.is_file(), "resident '%s' has no sheet at sprites/%s-sheet.png" % (key, key))
+    check(sidecar.is_file(), "resident '%s' has no sidecar at sprites/%s.sheet.json" % (key, key))
+    if not (still.is_file() and sheet_png.is_file() and sidecar.is_file()):
+        return
+
+    try:
+        meta = json.loads(sidecar.read_text(encoding="utf-8"))
+    except ValueError as failure:
+        check(False, "sprites/%s.sheet.json is not JSON: %s" % (key, failure))
+        return
+    if not isinstance(meta, dict):
+        check(False, "sprites/%s.sheet.json is not a JSON object" % key)
+        return
+    frame = meta.get("frame")
+    sized = (isinstance(frame, list) and len(frame) == 2
+             and all(isinstance(v, int) and v > 0 for v in frame))
+    check(sized,
+          "sprites/%s.sheet.json needs a frame [w, h] of positive whole numbers, got %r"
+          % (key, frame))
+    check(meta.get("image") == sheet_png.name,
+          "sprites/%s.sheet.json names image %r, not %s" % (key, meta.get("image"), sheet_png.name))
+    fps = meta.get("fps")
+    check(isinstance(fps, int) and 1 <= fps <= 30,
+          "sprites/%s.sheet.json needs fps from 1 to 30, got %r" % (key, fps))
+
+    sheet = png_size(sheet_png)
+    check(sheet is not None, "sprites/%s-sheet.png is not a PNG" % key)
+    if not (sheet and sized):
+        return
+    fw, fh = frame
+    check(sheet[0] % fw == 0 and sheet[1] % fh == 0,
+          "sprites/%s-sheet.png is %dx%d, not a whole grid of %dx%d frames"
+          % (key, sheet[0], sheet[1], fw, fh))
+    check(png_size(still) == (fw, fh),
+          "sprites/%s.png is not one %dx%d frame" % (key, fw, fh))
+    cols, rows = sheet[0] // fw, sheet[1] // fh
+
+    directions = meta.get("directions")
+    if not isinstance(directions, dict):
+        check(False, "sprites/%s.sheet.json has no 'directions' map" % key)
+        return
+    for facing in RESIDENT_DIRECTIONS:
+        check(facing in directions,
+              "sprites/%s.sheet.json has no '%s' direction: the contract is down, up and right"
+              % (key, facing))
+    for direction, states in directions.items():
+        check(direction in RESIDENT_DIRECTIONS,
+              "sprites/%s.sheet.json names the direction %r" % (key, direction))
+        states = states if isinstance(states, dict) else {}
+        idle = frames_of(states, "idle", key, direction)
+        walk = frames_of(states, "walk", key, direction)
+        if idle is None or walk is None:
+            continue
+        check(1 <= len(idle) <= 16,
+              "sprites/%s.sheet.json: %s idle needs 1 to 16 frames" % (key, direction))
+        check(not walk or 2 <= len(walk) <= 16,
+              "sprites/%s.sheet.json: %s walk needs 2 to 16 frames" % (key, direction))
+        for index in idle + walk:
+            check(0 <= index < cols * rows,
+                  "sprites/%s.sheet.json: %s frame %r does not fit the %dx%d grid of %s-sheet.png"
+                  % (key, direction, index, cols, rows, key))
+
+
+def check_residents(world):
+    for key in world.get("speakers") or {}:
+        check_resident(key)
+
+
 def check_art(world):
     """M2c: the pack's own picture, all of it on disk and none of it borrowed.
 
@@ -747,6 +870,7 @@ def main():
     check_town(world)
     check_art(world)
     check_hero(world)
+    check_residents(world)
     run_vefr_check()
 
     if FAILURES:
