@@ -1136,12 +1136,14 @@ class Game:
 
     def press_labelled(self, words):
         """Click the first control whose text carries one of `words`. Returns the
-        label pressed, or None."""
+        label pressed, or None. The click is forced: the touch layout lays its Talk
+        button out at 0x0, and the player's own labelled control is still the one
+        that fires the rule where a bare key press would reach the POI instead."""
         words = [norm(w) for w in words if w]
         for el, labels in self.controls():
             if any(w in norm(label) for w in words for label in labels):
                 try:
-                    el.click(timeout=1000)
+                    el.click(timeout=1000, force=True)
                     return labels[0]
                 except Exception:
                     continue
@@ -1958,7 +1960,9 @@ class FakeElement:
         self.attrs = attrs or {}
         self.text = text  # a control's own words (str or callable); None for the log
 
-    def click(self, timeout=None):
+    def click(self, timeout=None, force=False):
+        # `force` is the driver's: it presses a control the page lays out at 0x0, the
+        # touch layout's Talk button, which Playwright would otherwise refuse.
         self.page.presses.append((self.label, "control"))
         self.page.activate(self.label)
 
