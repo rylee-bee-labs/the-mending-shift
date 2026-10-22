@@ -12,7 +12,7 @@ reached, the rule ids whose lines appeared, and the expected rules that never
 fired.
 
 Exit status is 0 only when every phase in `world.json`'s `phases` order was
-reached and every beat of The Turning fired.
+reached and every required rule, in any phase, fired.
 
 Read-only toward the game: it plays and it reports, and it never writes to
 `world.json` or to anything else in the pack. Everything it writes goes under
@@ -133,13 +133,10 @@ TALK_REACH = 2
 # The hero's tile, published by the player after every accepted step and once at setup.
 HERO_EXPR = "window.VEFR_HERO_AT ? JSON.stringify(window.VEFR_HERO_AT) : null"
 
-# State probes. The first reads a top-level `STATE` with a `get()` method, which
-# is what the woven player is assumed to expose: a classic <script> puts a
-# top-level binding in scope for every other script in the page, so `evaluate`
-# can read it by name. This repo holds no player source to check that against,
-# so each probe is only believed when it returns a usable state (the run says
-# when none did). The later probes are for a build that hangs the state off
-# window.
+# State probes. The first tries a top-level `STATE` with a `get()` method.
+# This repo holds no player source to confirm that contract, so each probe is
+# only believed when it returns a usable state (the run says when none did).
+# The later probes are for a build that hangs the state off window.
 STATE_EXPRS = [
     "JSON.stringify((typeof STATE !== 'undefined' && STATE && STATE.get) ? STATE.get() : null)",
     "JSON.stringify(typeof VEFR_STATE !== 'undefined' ? VEFR_STATE : null)",
@@ -663,7 +660,8 @@ def match_rule(rule, haystack, world=None):
     line with its speaker in front ("id: line" or "Display Name: line"). It can still
     false-positive when the page shows the same sentence somewhere other than
     the rule firing (a help text, a speaker's seed, a repeat from an earlier
-    phase), and a say spanning several lines is matched line by line.
+    phase), and every nonblank line of a say spanning several lines must appear for the
+    rule to match.
     """
     shown = set(haystack.splitlines())
     speakers = (world or {}).get("speakers", {}) or {}
