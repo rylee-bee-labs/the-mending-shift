@@ -1,11 +1,11 @@
-DRAFT - not canon until Rylee approves (gate 4)
+CANON - approved by Rylee 2026-10-17 (gate 4, Project Home decision 228)
 
 # Slice bible: one shift at Sallowquay Boat-yard
 
-Draft for milestone M1, written against `pitches/pitch-a.md` and the sibling drafts `bible/world.md`,
-`bible/cast.md` and `bible/systems.md`. Nothing here is canon, nothing here has been built, and no play has been run
-against it; every beat below is a proposal for Rylee to approve, amend or delete at gate 4. No visual anchors are
-chosen here and none are implied.
+Status: canon, approved by Rylee 2026-10-17 (gate 4). Later canon calls were decided by Claude and MiniMax on her
+handover the same day; see `bible/GATE4-FOLLOWUPS.md`. Written for milestone M1 against `pitches/pitch-a.md` and the
+sibling bibles `bible/world.md`, `bible/cast.md` and `bible/systems.md`. Every beat below is canon as approved at
+gate 4. No visual anchors are chosen here and none are implied.
 
 **Length target** is 30 to 60 minutes. The beat budgets below total 41 minutes, which is the floor of the target
 rather than its middle: the slice should not outstay its welcome at any speed.

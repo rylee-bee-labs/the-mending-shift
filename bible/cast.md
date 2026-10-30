@@ -1,10 +1,10 @@
-DRAFT - not canon until Rylee approves (gate 4)
+CANON - approved by Rylee 2026-10-17 (gate 4, Project Home decision 228)
 
 # Cast bible: The Mending Shift
 
-Status: draft for milestone M1, written against `pitches/pitch-a.md` and the sibling draft `bible/world.md`.
-Nothing here is a design of record. Every person below is a proposal for Rylee to approve, amend or delete at gate 4,
-and the whole file can be deleted without leaving a hole in the pitch. No visual anchors are chosen here and none are
+Status: canon, approved by Rylee 2026-10-17 (gate 4). Later canon calls were decided by Claude and MiniMax on her
+handover the same day; see `bible/GATE4-FOLLOWUPS.md`. Written for milestone M1 against `pitches/pitch-a.md` and
+`bible/world.md`. Every person below is canon as approved at gate 4. No visual anchors are chosen here and none are
 implied: what is written down is what people do, want, hand over and how they talk. This file does not repeat the
 world bible or the systems bible. Where a want below is checkable, it is checkable against the object named in the
 same entry.

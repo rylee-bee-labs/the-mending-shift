@@ -1,11 +1,11 @@
-DRAFT - not canon until Rylee approves (gate 4)
+CANON - approved by Rylee 2026-10-17 (gate 4, Project Home decision 228)
 
 # World bible: The Mending Shift
 
-Status: draft for milestone M1. Written against `pitches/pitch-a.md` and `research/A2-feasibility.md`.
-Nothing here is a design of record. Where this file states a rule about the yard, the rule is a proposal for Rylee
-to approve, amend or delete at gate 4, not a fact about a shipped game. No visual anchors are chosen here and none
-are implied.
+Status: canon, approved by Rylee 2026-10-17 (gate 4). Later canon calls were decided by Claude and MiniMax on her
+handover the same day; see `bible/GATE4-FOLLOWUPS.md`. Written for milestone M1 against `pitches/pitch-a.md` and
+`research/A2-feasibility.md`. Where this file states a rule about the yard, the rule is canon as approved at gate 4.
+No visual anchors are chosen here and none are implied.
 
 ## The place
 
