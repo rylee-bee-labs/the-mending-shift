@@ -1,6 +1,7 @@
 # Continuity-4: the M1e re-check answer sheet
 
-2026-10-17. This is a DRAFT answer record for the gate-4 re-check, not canon: it answers every finding J01..J11 in
+2026-10-17. This is the answer record for the gate-4 re-check (J02, J05 and J11 were kept on 2026-10-17, see
+`bible/GATE4-FOLLOWUPS.md`): it answers every finding J01..J11 in
 `bible/continuity-findings-4.md` against the four bibles as they stand after the M1e fixes (T1 in `bible/world.md`
 and `bible/systems.md`, T2 in `bible/cast.md` and `bible/slice.md`), one line per finding, each checked against the
 current text. It adds no canon.

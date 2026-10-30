@@ -1,11 +1,11 @@
-DRAFT - not canon until Rylee approves (gate 4)
+CANON - approved by Rylee 2026-10-17 (gate 4, Project Home decision 228)
 
 # Systems bible: the kit layer of The Mending Shift
 
-Status: draft for milestone M1. Written against `pitches/pitch-a.md`, `bible/world.md` and
-`research/A2-feasibility.md`. Nothing here is a design of record. Every rule below is a proposal for Rylee
-to approve, amend or delete at gate 4. No visual anchors are chosen here and none are implied, and no
-playtest has been run against any of it.
+Status: canon, approved by Rylee 2026-10-17 (gate 4). Later canon calls were decided by Claude and MiniMax on her
+handover the same day; see `bible/GATE4-FOLLOWUPS.md`. Written for milestone M1 against `pitches/pitch-a.md`,
+`bible/world.md` and `research/A2-feasibility.md`. Every rule below is canon as approved at gate 4. No visual
+anchors are chosen here and none are implied.
 
 The kit layer is the layer A2 did not study. `pitches/pitch-a.md` says so in its own words: the kit has
 no A2 coverage and that gap is the top risk. So the shapes written here are the engine's *planned* shapes
